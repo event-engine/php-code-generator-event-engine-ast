@@ -36,12 +36,14 @@ class AggregateStateFactory
     public static function withDefaultConfig(
         callable $filterConstName,
         callable $filterConstValue,
+        callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true
     ): self {
         $self = new self(new AggregateState());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
+        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
         $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
 
         if (true === $useAggregateFolder) {

@@ -37,11 +37,13 @@ class AggregateDescriptionFactory
     public static function withDefaultConfig(
         callable $filterConstName,
         callable $filterConstValue,
+        callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true
     ): self {
         $self = new self(new Config\AggregateDescription());
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
+        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
         $self->config->setFilterAggregateIdName(new Id($filterConstValue));
 
         if ($useAggregateFolder) {
@@ -91,7 +93,7 @@ class AggregateDescriptionFactory
     {
         return new CodeAggregateDescription(
             $this->config->getParser(),
-            $this->config->getFilterDirectoryToNamespace(),
+            $this->config->getFilterConstName(),
             $this->config->getFilterAggregateIdName(),
             $this->config->getFilterCommandMethodName(),
             $this->config->getFilterEventMethodName()
@@ -101,7 +103,7 @@ class AggregateDescriptionFactory
     public function classConstant(): ClassConstant
     {
         return new ClassConstant(
-            $this->config->getFilterDirectoryToNamespace(),
+            $this->config->getFilterConstName(),
             $this->config->getFilterConstValue()
         );
     }

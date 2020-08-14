@@ -41,25 +41,29 @@ final class WorkflowConfigFactory
      * @return Component
      */
     public static function prototypeConfig(
-       CodeGenerator\Workflow\WorkflowContext $workflowContext,
+        CodeGenerator\Workflow\WorkflowContext $workflowContext,
         string $inputSlotEventSourcingAnalyzer,
         string $domainModelPath,
         string $apiDescriptionPath,
         callable $filterConstName,
-        callable $filterConstValue
+        callable $filterConstValue,
+        callable $filterDirectoryToNamespace
     ): Component {
         $eeAggregateStateFactory = AggregateStateFactory::withDefaultConfig(
             $filterConstName,
-            $filterConstValue
+            $filterConstValue,
+            $filterDirectoryToNamespace
         );
         $eeAggregateBehaviourFactory = AggregateBehaviourFactory::withDefaultConfig(
             $filterConstName,
             $filterConstValue,
+            $filterDirectoryToNamespace,
             $eeAggregateStateFactory->config()
         );
         $eeAggregateDescriptionFactory = AggregateDescriptionFactory::withDefaultConfig(
             $filterConstName,
-            $filterConstValue
+            $filterConstValue,
+            $filterDirectoryToNamespace
         );
         $eeCommandDescriptionFactory = CommandDescriptionFactory::withDefaultConfig(
             $filterConstName,
@@ -70,7 +74,7 @@ final class WorkflowConfigFactory
             $filterConstValue
         );
         $eeDescriptionFileMethodFactory = DescriptionFileMethodFactory::withDefaultConfig();
-        $phpEmptyClassFactory = EmptyClassFactory::withDefaultConfig();
+        $phpEmptyClassFactory = EmptyClassFactory::withDefaultConfig($filterDirectoryToNamespace);
 
         $workflowContext->put(self::SLOT_AGGREGATE_PATH, $domainModelPath);
         $workflowContext->put(self::SLOT_AGGREGATE_STATE_PATH, $domainModelPath);
@@ -151,14 +155,19 @@ final class WorkflowConfigFactory
         return new CodeGenerator\Config\ArrayConfig(...$componentDescription);
     }
 
-    public static function codeToFilesConfig(): Component
+    /**
+     * Configures a workflow to save the generated code of prototypeConfig() to files.
+     *
+     * @return Component
+     */
+    public static function codeToFilesForPrototypeConfig(): Component
     {
         $stringToFile = new Transformator\StringToFile();
 
         return new CodeGenerator\Config\ArrayConfig(
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_COMMAND_FILE, self::SLOT_EE_API_COMMAND_FILENAME),
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_EVENT_FILE, self::SLOT_EE_API_EVENT_FILENAME),
-            Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_AGGREGATE_FILE, self::SLOT_EE_API_COMMAND_FILENAME),
+            Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_AGGREGATE_FILE, self::SLOT_EE_API_AGGREGATE_FILENAME),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_BEHAVIOUR),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_STATE),
         );

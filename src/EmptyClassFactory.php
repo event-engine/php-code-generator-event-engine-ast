@@ -31,9 +31,11 @@ class EmptyClassFactory
         return $this->config;
     }
 
-    public static function withDefaultConfig(): self
-    {
+    public static function withDefaultConfig(
+        callable $filterDirectoryToNamespace
+    ): self {
         $self = new self(new Config\EmptyClass());
+        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
 
         $autoloadFile = 'vendor/autoload.php';
 

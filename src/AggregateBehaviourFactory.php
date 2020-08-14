@@ -44,12 +44,14 @@ class AggregateBehaviourFactory
     public static function withDefaultConfig(
         callable $filterConstName,
         callable $filterConstValue,
+        callable $filterDirectoryToNamespace,
         AggregateState $stateConfig,
         bool $useAggregateFolder = true
     ): self {
         $self = new self(new AggregateBehaviour(), $stateConfig);
         $self->config->setFilterDirectoryToNamespace($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
+        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
 
         if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($filterConstValue);
