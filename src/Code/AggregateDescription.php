@@ -61,6 +61,7 @@ final class AggregateDescription
     public function generate(
         string $aggregateBehaviourCommandClassName,
         string $aggregateBehaviourEventClassName,
+        ?string $storeStateIn,
         Command $command,
         Aggregate $aggregate,
         Event ...$events
@@ -83,6 +84,8 @@ final class AggregateDescription
             $code .= \sprintf("->%s(Event::%s)->apply([%s::class, '%s'])", $recordThatName, $eventConstName, $aggregateBehaviourEventClassName, $eventMethodName);
             $recordThatName = 'orRecordThat';
         }
+
+        $code .= $command->initial() && $storeStateIn ? \sprintf("->storeStateIn('%s');", $storeStateIn) : '';
 
         $code .= ';';
 

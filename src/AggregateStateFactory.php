@@ -84,4 +84,33 @@ class AggregateStateFactory
             $output
         );
     }
+
+    public function workflowComponentDescriptionModifyMethod(
+        string $inputAnalyzer,
+        string $inputFiles,
+        string $output
+    ): Description {
+        return AggregateStateModifyMethod::workflowComponentDescription(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->config->getFilterWithMethodName(),
+            $inputAnalyzer,
+            $inputFiles,
+            $output
+        );
+    }
+
+    public function workflowComponentDescriptionImmutableRecordOverride(
+        string $inputAnalyzer,
+        string $inputFiles,
+        string $output
+    ): Description {
+        return AggregateStateImmutableRecordOverride::workflowComponentDescription(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $inputAnalyzer,
+            $inputFiles,
+            $output
+        );
+    }
 }

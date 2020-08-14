@@ -150,6 +150,16 @@ final class WorkflowConfigFactory
                 self::SLOT_AGGREGATE_BEHAVIOUR,
                 self::SLOT_AGGREGATE_BEHAVIOUR
             ),
+            $eeAggregateStateFactory->workflowComponentDescriptionModifyMethod(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_AGGREGATE_STATE,
+                self::SLOT_AGGREGATE_STATE
+            ),
+            $eeAggregateStateFactory->workflowComponentDescriptionImmutableRecordOverride(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_AGGREGATE_STATE,
+                self::SLOT_AGGREGATE_STATE
+            ),
         ];
 
         return new CodeGenerator\Config\ArrayConfig(...$componentDescription);

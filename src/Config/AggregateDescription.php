@@ -17,6 +17,7 @@ final class AggregateDescription
     use ClassInfoListTrait;
     use FilterAggregateFolderTrait;
     use FilterAggregateIdNameTrait;
+    use FilterAggregateStoreStateInTrait;
     use FilterClassNameTrait;
     use FilterCommandMethodNameTrait;
     use FilterConstNameTrait;

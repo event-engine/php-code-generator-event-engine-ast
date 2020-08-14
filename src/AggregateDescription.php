@@ -55,6 +55,11 @@ final class AggregateDescription
     private $filterAggregatePath;
 
     /**
+     * @var callable
+     **/
+    private $filterStoreStateIn;
+
+    /**
      * @var CodeAggregateDescription
      **/
     private $aggregateDescription;
@@ -66,7 +71,8 @@ final class AggregateDescription
         CodeAggregateDescription $aggregateDescription,
         CodeClassConstant $classConstant,
         callable $filterAggregateClassName,
-        ?callable $filterAggregatePath
+        ?callable $filterAggregatePath,
+        ?callable $filterStoreStateIn
     ) {
         $this->parser = $parser;
         $this->printer = $printer;
@@ -75,6 +81,7 @@ final class AggregateDescription
         $this->classConstant = $classConstant;
         $this->filterAggregateClassName = $filterAggregateClassName;
         $this->filterAggregatePath = $filterAggregatePath;
+        $this->filterStoreStateIn = $filterStoreStateIn;
     }
 
     public function __invoke(EventSourcingAnalyzer $analyzer, string $code, string $aggregatePath): string
@@ -89,10 +96,14 @@ final class AggregateDescription
 
             $aggregateBehaviourClassName = ($this->filterAggregateClassName)($aggregateVertex->label());
 
+            $storeStateIn = null;
             $pathAggregate = $aggregatePath;
 
             if ($this->filterAggregatePath !== null) {
                 $pathAggregate .= DIRECTORY_SEPARATOR . ($this->filterAggregatePath)($aggregateVertex->label());
+            }
+            if ($this->filterStoreStateIn !== null) {
+                $storeStateIn = ($this->filterStoreStateIn)($aggregateVertex->label());
             }
 
             $filename = $classInfo->getFilenameFromPathAndName($pathAggregate, $aggregateBehaviourClassName);
@@ -106,6 +117,7 @@ final class AggregateDescription
                     $this->aggregateDescription->generate(
                         $aggregateBehaviourClassName,
                         $aggregateBehaviourClassName,
+                        $storeStateIn,
                         $commandVertex,
                         $aggregateVertex,
                         ...$commandsToEventsMap[$commandVertex]
@@ -138,6 +150,7 @@ final class AggregateDescription
         CodeClassConstant $classConstant,
         callable $filterAggregateClassName,
         ?callable $filterAggregatePath,
+        ?callable $filterStoreStateIn,
         string $inputAnalyzer,
         string $inputCode,
         string $inputAggregatePath,
@@ -150,7 +163,8 @@ final class AggregateDescription
             $aggregateDescription,
             $classConstant,
             $filterAggregateClassName,
-            $filterAggregatePath
+            $filterAggregatePath,
+            $filterStoreStateIn
         );
 
         return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(

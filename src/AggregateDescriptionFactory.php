@@ -13,6 +13,7 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateDescription as CodeAggregateDescription;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\Id;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\StateName;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
@@ -38,7 +39,8 @@ class AggregateDescriptionFactory
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
-        bool $useAggregateFolder = true
+        bool $useAggregateFolder = true,
+        bool $useStoreStateIn = true
     ): self {
         $self = new self(new Config\AggregateDescription());
         $self->config->setFilterConstName($filterConstName);
@@ -48,6 +50,9 @@ class AggregateDescriptionFactory
 
         if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($filterConstValue);
+        }
+        if ($useStoreStateIn) {
+            $self->config->setFilterAggregateStoreStateIn(new StateName($filterConstValue));
         }
         $autoloadFile = 'vendor/autoload.php';
 
@@ -82,6 +87,7 @@ class AggregateDescriptionFactory
             $this->classConstant(),
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
+            $this->config->getFilterAggregateStoreStateIn(),
             $inputAnalyzer,
             $inputCode,
             $inputAggregatePath,
