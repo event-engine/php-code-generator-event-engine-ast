@@ -16,7 +16,7 @@ use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-class AggregateStateFactory
+final class AggregateStateFactory
 {
     /**
      * @var AggregateState

@@ -13,7 +13,7 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use PhpParser\Node;
 
-class ClassMethodDescribeEvent extends AbstractClassMethodDescribe
+final class ClassMethodDescribeEvent extends AbstractClassMethodDescribe
 {
     /**
      * @var IdentifierGenerator

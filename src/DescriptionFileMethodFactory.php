@@ -12,7 +12,7 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-class DescriptionFileMethodFactory
+final class DescriptionFileMethodFactory
 {
     /**
      * @var Config\DescriptionFileMethod
