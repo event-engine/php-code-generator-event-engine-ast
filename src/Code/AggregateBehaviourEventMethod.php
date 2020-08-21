@@ -58,7 +58,9 @@ final class AggregateBehaviourEventMethod
         ];
         $methodBody = \sprintf('return State::fromArray($%s->payload());', $eventParameterName);
 
-        if (false === $command->initial()) {
+        $metadataInstance = $command->metadataInstance();
+
+        if ($metadataInstance === null || false === $metadataInstance->newAggregate()) {
             \array_unshift($params, new ParameterGenerator('state', 'State'));
             $methodBody = \sprintf('return $state->with($%s->payload());', $eventParameterName);
         }

@@ -63,7 +63,8 @@ class CommandDescriptionFactory
     {
         return new CodeCommandDescription(
             $this->config->getParser(),
-            $this->config->getFilterConstName()
+            $this->config->getFilterConstName(),
+            $this->config->getFilterConstValue()
         );
     }
 
