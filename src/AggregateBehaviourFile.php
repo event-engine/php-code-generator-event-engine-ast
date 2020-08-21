@@ -21,7 +21,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
 
-class AggregateBehaviourFile
+final class AggregateBehaviourFile
 {
     /**
      * @var Parser

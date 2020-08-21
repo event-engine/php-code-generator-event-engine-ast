@@ -16,8 +16,11 @@ use OpenCodeModeling\CodeGenerator\Transformator;
 
 final class WorkflowConfigFactory
 {
+    public const SLOT_COMMAND_PATH = 'event_engine-command_path';
+    public const SLOT_EVENT_PATH = 'event_engine-command_path';
     public const SLOT_AGGREGATE_PATH = 'event_engine-aggregate_path';
     public const SLOT_AGGREGATE_STATE_PATH = 'event_engine-aggregate_state_path';
+
     public const SLOT_EE_API_COMMAND_FILENAME = 'event_engine-ee_api_command_filename';
     public const SLOT_EE_API_EVENT_FILENAME = 'event_engine-ee_api_event_filename';
     public const SLOT_EE_API_AGGREGATE_FILENAME = 'event_engine-ee_api_aggregate_filename';
@@ -28,6 +31,9 @@ final class WorkflowConfigFactory
 
     public const SLOT_AGGREGATE_STATE = 'event_engine-aggregate_state';
     public const SLOT_AGGREGATE_BEHAVIOUR = 'event_engine-aggregate_behaviour';
+
+    public const SLOT_COMMAND = 'event_engine-command';
+    public const SLOT_EVENT = 'event_engine-event';
 
     /**
      * Configures the workflow for event engine prototype flavour with common options.
@@ -167,6 +173,56 @@ final class WorkflowConfigFactory
     }
 
     /**
+     * Configures the workflow for event engine functional flavour with common options.
+     *
+     * @param CodeGenerator\Workflow\WorkflowContext $workflowContext
+     * @param string $inputSlotEventSourcingAnalyzer
+     * @param string $commandPath
+     * @param callable $filterConstName
+     * @param callable $filterConstValue
+     * @param callable $filterDirectoryToNamespace
+     * @return Component
+     */
+    public static function functionalConfig(
+        CodeGenerator\Workflow\WorkflowContext $workflowContext,
+        string $inputSlotEventSourcingAnalyzer,
+        string $commandPath,
+        callable $filterConstName,
+        callable $filterConstValue,
+        callable $filterDirectoryToNamespace
+    ): Component {
+        $eeCommandFactory = CommandFactory::withDefaultConfig(
+            $filterConstName,
+            $filterConstValue,
+            $filterDirectoryToNamespace
+        );
+
+        $eeEventFactory = EventFactory::withDefaultConfig(
+            $filterConstName,
+            $filterConstValue,
+            $filterDirectoryToNamespace
+        );
+
+        $workflowContext->put(self::SLOT_COMMAND_PATH, $commandPath);
+
+        $componentDescription = [
+            // Configure Event Engine command generation
+            $eeCommandFactory->workflowComponentDescriptionFile(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_COMMAND_PATH,
+                self::SLOT_COMMAND
+            ),
+            $eeEventFactory->workflowComponentDescriptionFile(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_EVENT_PATH,
+                self::SLOT_EVENT
+            ),
+        ];
+
+        return new CodeGenerator\Config\ArrayConfig(...$componentDescription);
+    }
+
+    /**
      * Configures a workflow to save the generated code of prototypeConfig() to files.
      *
      * @return Component
@@ -181,6 +237,21 @@ final class WorkflowConfigFactory
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_AGGREGATE_FILE, self::SLOT_EE_API_AGGREGATE_FILENAME),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_BEHAVIOUR),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_STATE),
+        );
+    }
+
+    /**
+     * Configures a workflow to save the generated code of prototypeConfig() to files.
+     *
+     * @return Component
+     */
+    public static function codeToFilesForFunctionalConfig(): Component
+    {
+        $stringToFile = new Transformator\StringToFile();
+
+        return new CodeGenerator\Config\ArrayConfig(
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_COMMAND),
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_EVENT),
         );
     }
 }

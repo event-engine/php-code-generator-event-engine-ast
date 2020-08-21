@@ -18,7 +18,7 @@ use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
 
-class DescriptionFileMethod
+final class DescriptionFileMethod
 {
     /**
      * @var Parser

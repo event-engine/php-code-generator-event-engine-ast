@@ -18,7 +18,7 @@ use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-class AggregateDescriptionFactory
+final class AggregateDescriptionFactory
 {
     /**
      * @var Config\AggregateDescription

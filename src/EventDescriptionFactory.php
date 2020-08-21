@@ -14,7 +14,7 @@ use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\EventDescription as CodeEventDescription;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Description;
 
-class EventDescriptionFactory
+final class EventDescriptionFactory
 {
     /**
      * @var Description

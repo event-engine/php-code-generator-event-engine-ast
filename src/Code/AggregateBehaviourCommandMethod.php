@@ -18,7 +18,7 @@ use OpenCodeModeling\CodeAst\Code\MethodGenerator;
 use OpenCodeModeling\CodeAst\Code\ParameterGenerator;
 use PhpParser\Parser;
 
-class AggregateBehaviourCommandMethod
+final class AggregateBehaviourCommandMethod
 {
     /**
      * @var Parser

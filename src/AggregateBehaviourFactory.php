@@ -18,7 +18,7 @@ use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-class AggregateBehaviourFactory
+final class AggregateBehaviourFactory
 {
     /**
      * @var AggregateBehaviour
@@ -49,7 +49,7 @@ class AggregateBehaviourFactory
         bool $useAggregateFolder = true
     ): self {
         $self = new self(new AggregateBehaviour(), $stateConfig);
-        $self->config->setFilterDirectoryToNamespace($filterConstName);
+        $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
 

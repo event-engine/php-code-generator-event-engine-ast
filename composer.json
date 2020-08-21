@@ -32,10 +32,6 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/event-engine/php-inspectio-graph"
-        },
-        {
-            "type": "vcs",
             "url": "https://github.com/sandrokeil/graphml"
         }
     ],

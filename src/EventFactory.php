@@ -10,44 +10,53 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\AggregateState;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\AggregateStateClassName;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Event;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-final class AggregateStateFactory
+final class EventFactory
 {
     /**
-     * @var AggregateState
+     * @var Event
      **/
     private $config;
 
-    public function __construct(AggregateState $config)
+    public function __construct(Event $config)
     {
         $this->config = $config;
     }
 
-    public function config(): AggregateState
+    public function config(): Event
     {
         return $this->config;
     }
 
+    /**
+     * @param callable $filterConstName
+     * @param callable $filterConstValue
+     * @param callable $filterDirectoryToNamespace
+     * @param bool $useAggregateFolder Indicates if the event folder with events should be generated under the aggregate name
+     * @param bool $useEventFolder Indicates if each event should be generated in it's own folder depending on event name
+     * @return EventFactory
+     */
     public static function withDefaultConfig(
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
-        bool $useAggregateFolder = true
+        bool $useAggregateFolder = true,
+        bool $useEventFolder = false
     ): self {
-        $self = new self(new AggregateState());
-
-        $self->config->setFilterConstName($filterConstName);
+        $self = new self(new Event());
         $self->config->setFilterConstValue($filterConstValue);
+        $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
-        $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
 
-        if (true === $useAggregateFolder) {
+        if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($filterConstValue);
+        }
+        if ($useEventFolder) {
+            $self->config->setFilterEventFolder($filterConstValue);
         }
         $autoloadFile = 'vendor/autoload.php';
 
@@ -70,46 +79,18 @@ final class AggregateStateFactory
 
     public function workflowComponentDescriptionFile(
         string $inputAnalyzer,
-        string $inputPath,
+        string $inputEventPath,
         string $output
     ): Description {
-        return AggregateStateFile::workflowComponentDescription(
+        return EventFile::workflowComponentDescription(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
+            $this->config->getFilterEventFolder(),
             $inputAnalyzer,
-            $inputPath,
-            $output
-        );
-    }
-
-    public function workflowComponentDescriptionModifyMethod(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Description {
-        return AggregateStateModifyMethod::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getFilterWithMethodName(),
-            $inputAnalyzer,
-            $inputFiles,
-            $output
-        );
-    }
-
-    public function workflowComponentDescriptionImmutableRecordOverride(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Description {
-        return AggregateStateImmutableRecordOverride::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $inputAnalyzer,
-            $inputFiles,
+            $inputEventPath,
             $output
         );
     }

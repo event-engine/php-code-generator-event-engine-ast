@@ -10,44 +10,53 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\AggregateState;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\AggregateStateClassName;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Command;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 
-final class AggregateStateFactory
+final class CommandFactory
 {
     /**
-     * @var AggregateState
+     * @var Command
      **/
     private $config;
 
-    public function __construct(AggregateState $config)
+    public function __construct(Command $config)
     {
         $this->config = $config;
     }
 
-    public function config(): AggregateState
+    public function config(): Command
     {
         return $this->config;
     }
 
+    /**
+     * @param callable $filterConstName
+     * @param callable $filterConstValue
+     * @param callable $filterDirectoryToNamespace
+     * @param bool $useAggregateFolder Indicates if the command folder with commands should be generated under the aggregate name
+     * @param bool $useCommandFolder Indicates if each command should be generated in it's own folder depending on command name
+     * @return CommandFactory
+     */
     public static function withDefaultConfig(
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
-        bool $useAggregateFolder = true
+        bool $useAggregateFolder = true,
+        bool $useCommandFolder = false
     ): self {
-        $self = new self(new AggregateState());
-
-        $self->config->setFilterConstName($filterConstName);
+        $self = new self(new Command());
         $self->config->setFilterConstValue($filterConstValue);
+        $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
-        $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
 
-        if (true === $useAggregateFolder) {
+        if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($filterConstValue);
+        }
+        if ($useCommandFolder) {
+            $self->config->setFilterCommandFolder($filterConstValue);
         }
         $autoloadFile = 'vendor/autoload.php';
 
@@ -70,46 +79,18 @@ final class AggregateStateFactory
 
     public function workflowComponentDescriptionFile(
         string $inputAnalyzer,
-        string $inputPath,
+        string $inputCommandPath,
         string $output
     ): Description {
-        return AggregateStateFile::workflowComponentDescription(
+        return CommandFile::workflowComponentDescription(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
+            $this->config->getFilterCommandFolder(),
             $inputAnalyzer,
-            $inputPath,
-            $output
-        );
-    }
-
-    public function workflowComponentDescriptionModifyMethod(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Description {
-        return AggregateStateModifyMethod::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getFilterWithMethodName(),
-            $inputAnalyzer,
-            $inputFiles,
-            $output
-        );
-    }
-
-    public function workflowComponentDescriptionImmutableRecordOverride(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Description {
-        return AggregateStateImmutableRecordOverride::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $inputAnalyzer,
-            $inputFiles,
+            $inputCommandPath,
             $output
         );
     }
