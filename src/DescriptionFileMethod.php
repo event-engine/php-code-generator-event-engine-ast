@@ -45,7 +45,8 @@ class DescriptionFileMethod
             new NamespaceUse(
                 'EventEngine\EventEngine',
                 'EventEngine\EventEngineDescription',
-                'EventEngine\JsonSchema\JsonSchema'
+                'EventEngine\JsonSchema\JsonSchema',
+                'EventEngine\JsonSchema\JsonSchemaArray'
             )
         );
         $traverser->addVisitor(

@@ -55,7 +55,9 @@ class AggregateBehaviourCommandMethod
 
         $params = [new ParameterGenerator($commandParameterName, 'Message')];
 
-        if (false === $command->initial()) {
+        $metadataInstance = $command->metadataInstance();
+
+        if ($metadataInstance === null || false === $metadataInstance->newAggregate()) {
             \array_unshift($params, new ParameterGenerator('state', 'State'));
         }
 

@@ -38,6 +38,7 @@ final class WorkflowConfigFactory
      * @param string $apiDescriptionPath Path to save Event Engine descriptions e.g. command, event, aggregate
      * @param callable $filterConstName
      * @param callable $filterConstValue
+     * @param callable $filterDirectoryToNamespace
      * @return Component
      */
     public static function prototypeConfig(
