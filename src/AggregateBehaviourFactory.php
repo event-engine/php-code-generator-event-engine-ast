@@ -49,7 +49,7 @@ final class AggregateBehaviourFactory
         bool $useAggregateFolder = true
     ): self {
         $self = new self(new AggregateBehaviour(), $stateConfig);
-        $self->config->setFilterDirectoryToNamespace($filterConstName);
+        $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
 
