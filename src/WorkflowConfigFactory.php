@@ -17,6 +17,7 @@ use OpenCodeModeling\CodeGenerator\Transformator;
 final class WorkflowConfigFactory
 {
     public const SLOT_COMMAND_PATH = 'event_engine-command_path';
+    public const SLOT_EVENT_PATH = 'event_engine-command_path';
     public const SLOT_AGGREGATE_PATH = 'event_engine-aggregate_path';
     public const SLOT_AGGREGATE_STATE_PATH = 'event_engine-aggregate_state_path';
 
@@ -32,6 +33,7 @@ final class WorkflowConfigFactory
     public const SLOT_AGGREGATE_BEHAVIOUR = 'event_engine-aggregate_behaviour';
 
     public const SLOT_COMMAND = 'event_engine-command';
+    public const SLOT_EVENT = 'event_engine-event';
 
     /**
      * Configures the workflow for event engine prototype flavour with common options.
@@ -195,6 +197,12 @@ final class WorkflowConfigFactory
             $filterDirectoryToNamespace
         );
 
+        $eeEventFactory = EventFactory::withDefaultConfig(
+            $filterConstName,
+            $filterConstValue,
+            $filterDirectoryToNamespace
+        );
+
         $workflowContext->put(self::SLOT_COMMAND_PATH, $commandPath);
 
         $componentDescription = [
@@ -203,6 +211,11 @@ final class WorkflowConfigFactory
                 $inputSlotEventSourcingAnalyzer,
                 self::SLOT_COMMAND_PATH,
                 self::SLOT_COMMAND
+            ),
+            $eeEventFactory->workflowComponentDescriptionFile(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_EVENT_PATH,
+                self::SLOT_EVENT
             ),
         ];
 
@@ -238,6 +251,7 @@ final class WorkflowConfigFactory
 
         return new CodeGenerator\Config\ArrayConfig(
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_COMMAND),
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_EVENT),
         );
     }
 }
