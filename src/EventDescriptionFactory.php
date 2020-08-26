@@ -46,6 +46,7 @@ final class EventDescriptionFactory
     public function workflowComponentDescription(
         string $inputAnalyzer,
         string $inputCode,
+        string $inputSchemaMetadata,
         string $output
     ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
         return EventDescription::workflowComponentDescription(
@@ -55,6 +56,20 @@ final class EventDescriptionFactory
             $this->classConstant(),
             $inputAnalyzer,
             $inputCode,
+            $inputSchemaMetadata,
+            $output
+        );
+    }
+
+    public function workflowComponentDescriptionMetadataSchema(
+        string $inputAnalyzer,
+        string $inputPathSchema,
+        string $output
+    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
+        return EventDescriptionMetadataSchema::workflowComponentDescription(
+            $this->config->getFilterConstName(),
+            $inputAnalyzer,
+            $inputPathSchema,
             $output
         );
     }

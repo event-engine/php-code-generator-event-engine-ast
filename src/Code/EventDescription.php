@@ -36,7 +36,8 @@ final class EventDescription
     }
 
     public function generate(
-        Event $event
+        Event $event,
+        ?string $jsonSchemaFilename = null
     ): IdentifierGenerator {
         $eventConstName = ($this->filterConstName)($event->label());
 
@@ -44,6 +45,19 @@ final class EventDescription
             '$eventEngine->registerEvent(self::%s, JsonSchema::object([], [], true));',
             $eventConstName
         );
+
+        if ($jsonSchemaFilename) {
+            $code = \sprintf(
+                '$eventEngine->registerEvent(
+                        self::%s, 
+                        new JsonSchemaArray(
+                            \json_decode(file_get_contents(\'%s\'), true, 512, \JSON_THROW_ON_ERROR)
+                        )
+                    );',
+                $eventConstName,
+                $jsonSchemaFilename
+            );
+        }
 
         return new IdentifierGenerator(
             $event->name(),

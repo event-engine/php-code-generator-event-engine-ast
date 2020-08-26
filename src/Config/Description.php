@@ -15,7 +15,6 @@ final class Description
     use FilterClassNameTrait;
     use FilterConstNameTrait;
     use FilterConstValueTrait;
-    use FilterCommandMethodNameTrait;
     use PhpParserTrait;
     use PhpPrinterTrait;
 }

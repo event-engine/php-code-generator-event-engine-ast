@@ -46,6 +46,7 @@ final class CommandDescriptionFactory
     public function workflowComponentDescription(
         string $inputAnalyzer,
         string $inputCode,
+        string $inputSchemaMetadata,
         string $output
     ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
         return CommandDescription::workflowComponentDescription(
@@ -55,6 +56,20 @@ final class CommandDescriptionFactory
             $this->classConstant(),
             $inputAnalyzer,
             $inputCode,
+            $inputSchemaMetadata,
+            $output
+        );
+    }
+
+    public function workflowComponentDescriptionMetadataSchema(
+        string $inputAnalyzer,
+        string $inputPathSchema,
+        string $output
+    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
+        return CommandDescriptionMetadataSchema::workflowComponentDescription(
+            $this->config->getFilterConstName(),
+            $inputAnalyzer,
+            $inputPathSchema,
             $output
         );
     }
@@ -63,8 +78,7 @@ final class CommandDescriptionFactory
     {
         return new CodeCommandDescription(
             $this->config->getParser(),
-            $this->config->getFilterConstName(),
-            $this->config->getFilterConstValue()
+            $this->config->getFilterConstName()
         );
     }
 

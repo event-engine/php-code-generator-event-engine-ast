@@ -15,6 +15,8 @@ use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\EventDescription as Cod
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeEvent;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot;
+use OpenCodeModeling\CodeGenerator\Workflow\Description;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -53,18 +55,23 @@ final class EventDescription
         $this->classConstant = $classConstant;
     }
 
-    public function __invoke(EventSourcingAnalyzer $analyzer, string $code): string
+    public function __invoke(EventSourcingAnalyzer $analyzer, string $code, ?array $inputSchemaMetadata = null): string
     {
         $ast = $this->parser->parse($code);
 
         $traverser = new NodeTraverser();
 
-        foreach ($analyzer->eventMap() as $eventVertex) {
+        foreach ($analyzer->eventMap() as $name => $eventVertex) {
             $traverser->addVisitor(
                 new ClassConstant($this->classConstant->generate($eventVertex))
             );
             $traverser->addVisitor(
-                new ClassMethodDescribeEvent($this->eventDescription->generate($eventVertex))
+                new ClassMethodDescribeEvent(
+                    $this->eventDescription->generate(
+                        $eventVertex,
+                        $inputSchemaMetadata[$name]['filename'] ?? null
+                    )
+                )
             );
         }
 
@@ -78,8 +85,9 @@ final class EventDescription
         CodeClassConstant $classConstant,
         string $inputAnalyzer,
         string $inputCode,
+        string $inputSchemaMetadata,
         string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
+    ): Description {
         $instance = new self(
             $parser,
             $printer,
@@ -87,11 +95,12 @@ final class EventDescription
             $classConstant
         );
 
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
+        return new ComponentDescriptionWithSlot(
             $instance,
             $output,
             $inputAnalyzer,
-            $inputCode
+            $inputCode,
+            $inputSchemaMetadata
         );
     }
 }
