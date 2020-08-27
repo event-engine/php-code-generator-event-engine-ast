@@ -35,6 +35,11 @@ final class WorkflowConfigFactory
     public const SLOT_COMMAND = 'event_engine-command';
     public const SLOT_EVENT = 'event_engine-event';
 
+    public const SLOT_COMMAND_METADATA_SCHEMA_PATH = 'event_engine-command_metadata_schema_path';
+    public const SLOT_COMMAND_METADATA_SCHEMA = 'event_engine-command_metadata_schema';
+    public const SLOT_EVENT_METADATA_SCHEMA_PATH = 'event_engine-event_metadata_schema_path';
+    public const SLOT_EVENT_METADATA_SCHEMA = 'event_engine-event_metadata_schema';
+
     /**
      * Configures the workflow for event engine prototype flavour with common options.
      *
@@ -88,6 +93,8 @@ final class WorkflowConfigFactory
         $workflowContext->put(self::SLOT_EE_API_COMMAND_FILENAME, $apiDescriptionPath . DIRECTORY_SEPARATOR . 'Command.php');
         $workflowContext->put(self::SLOT_EE_API_EVENT_FILENAME, $apiDescriptionPath . DIRECTORY_SEPARATOR . 'Event.php');
         $workflowContext->put(self::SLOT_EE_API_AGGREGATE_FILENAME, $apiDescriptionPath . DIRECTORY_SEPARATOR . 'Aggregate.php');
+        $workflowContext->put(self::SLOT_COMMAND_METADATA_SCHEMA_PATH, $apiDescriptionPath . DIRECTORY_SEPARATOR . '_schema');
+        $workflowContext->put(self::SLOT_EVENT_METADATA_SCHEMA_PATH, $apiDescriptionPath . DIRECTORY_SEPARATOR . '_schema');
 
         $componentDescription = [
             // Configure Event Engine description file generation
@@ -117,14 +124,26 @@ final class WorkflowConfigFactory
                 self::SLOT_EE_API_AGGREGATE_FILE
             ),
             // Configure Event Engine description generation
+            $eeCommandDescriptionFactory->workflowComponentDescriptionMetadataSchema(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_COMMAND_METADATA_SCHEMA_PATH,
+                self::SLOT_COMMAND_METADATA_SCHEMA
+            ),
             $eeCommandDescriptionFactory->workflowComponentDescription(
                 $inputSlotEventSourcingAnalyzer,
                 self::SLOT_EE_API_COMMAND_FILE,
+                self::SLOT_COMMAND_METADATA_SCHEMA,
                 self::SLOT_EE_API_COMMAND_FILE
+            ),
+            $eeEventDescriptionFactory->workflowComponentDescriptionMetadataSchema(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_EVENT_METADATA_SCHEMA_PATH,
+                self::SLOT_EVENT_METADATA_SCHEMA
             ),
             $eeEventDescriptionFactory->workflowComponentDescription(
                 $inputSlotEventSourcingAnalyzer,
                 self::SLOT_EE_API_EVENT_FILE,
+                self::SLOT_EVENT_METADATA_SCHEMA,
                 self::SLOT_EE_API_EVENT_FILE
             ),
             $eeAggregateDescriptionFactory->workflowComponentDescription(
@@ -237,6 +256,8 @@ final class WorkflowConfigFactory
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_AGGREGATE_FILE, self::SLOT_EE_API_AGGREGATE_FILENAME),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_BEHAVIOUR),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_AGGREGATE_STATE),
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_COMMAND_METADATA_SCHEMA),
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_EVENT_METADATA_SCHEMA),
         );
     }
 

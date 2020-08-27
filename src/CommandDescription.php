@@ -53,18 +53,23 @@ final class CommandDescription
         $this->classConstant = $classConstant;
     }
 
-    public function __invoke(EventSourcingAnalyzer $analyzer, string $code): string
+    public function __invoke(EventSourcingAnalyzer $analyzer, string $code, ?array $inputSchemaMetadata = null): string
     {
         $ast = $this->parser->parse($code);
 
         $traverser = new NodeTraverser();
 
-        foreach ($analyzer->commandMap() as $commandVertex) {
+        foreach ($analyzer->commandMap() as $name => $commandVertex) {
             $traverser->addVisitor(
                 new ClassConstant($this->classConstant->generate($commandVertex))
             );
             $traverser->addVisitor(
-                new ClassMethodDescribeCommand($this->commandDescription->generate($commandVertex))
+                new ClassMethodDescribeCommand(
+                    $this->commandDescription->generate(
+                        $commandVertex,
+                        $inputSchemaMetadata[$name]['filename'] ?? null
+                    )
+                )
             );
         }
 
@@ -78,6 +83,7 @@ final class CommandDescription
         CodeClassConstant $classConstant,
         string $inputAnalyzer,
         string $inputCode,
+        string $inputSchemaMetadata,
         string $output
     ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
         $instance = new self(
@@ -91,7 +97,8 @@ final class CommandDescription
             $instance,
             $output,
             $inputAnalyzer,
-            $inputCode
+            $inputCode,
+            $inputSchemaMetadata
         );
     }
 }

@@ -10,10 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Config;
 
-/**
- * @deprecated Use dedicated description config file
- */
-final class Description
+final class CommandDescription
 {
     use FilterClassNameTrait;
     use FilterConstNameTrait;

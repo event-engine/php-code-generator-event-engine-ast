@@ -12,21 +12,21 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\EventDescription as CodeEventDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Description;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\EventDescription as ConfigEventDescription;
 
 final class EventDescriptionFactory
 {
     /**
-     * @var Description
+     * @var ConfigEventDescription
      **/
     private $config;
 
-    public function __construct(Description $config)
+    public function __construct(ConfigEventDescription $config)
     {
         $this->config = $config;
     }
 
-    public function config(): Description
+    public function config(): ConfigEventDescription
     {
         return $this->config;
     }
@@ -35,7 +35,7 @@ final class EventDescriptionFactory
         callable $filterConstName,
         callable $filterConstValue
     ): self {
-        $self = new self(new Description());
+        $self = new self(new ConfigEventDescription());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
@@ -46,6 +46,7 @@ final class EventDescriptionFactory
     public function workflowComponentDescription(
         string $inputAnalyzer,
         string $inputCode,
+        string $inputSchemaMetadata,
         string $output
     ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
         return EventDescription::workflowComponentDescription(
@@ -55,6 +56,20 @@ final class EventDescriptionFactory
             $this->classConstant(),
             $inputAnalyzer,
             $inputCode,
+            $inputSchemaMetadata,
+            $output
+        );
+    }
+
+    public function workflowComponentDescriptionMetadataSchema(
+        string $inputAnalyzer,
+        string $inputPathSchema,
+        string $output
+    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
+        return EventDescriptionMetadataSchema::workflowComponentDescription(
+            $this->config->getFilterConstName(),
+            $inputAnalyzer,
+            $inputPathSchema,
             $output
         );
     }
