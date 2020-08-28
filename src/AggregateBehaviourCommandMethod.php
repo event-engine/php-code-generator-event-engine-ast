@@ -90,7 +90,7 @@ final class AggregateBehaviourCommandMethod
     public static function workflowComponentDescription(
         Parser $parser,
         PrettyPrinterAbstract $printer,
-        Code $eventMethod,
+        Code $commandMethod,
         string $inputAnalyzer,
         string $inputFiles,
         string $output
@@ -98,7 +98,7 @@ final class AggregateBehaviourCommandMethod
         $instance = new self(
             $parser,
             $printer,
-            $eventMethod
+            $commandMethod
         );
 
         return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
