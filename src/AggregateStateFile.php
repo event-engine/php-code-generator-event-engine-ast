@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
-use EventEngine\InspectioGraph\Vertex;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Code\ClassGenerator;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassImplements;
@@ -81,7 +81,7 @@ final class AggregateStateFile
             'EventEngine\Data\ImmutableRecordLogic'
         );
 
-        /** @var Vertex $vertex */
+        /** @var VertexType $vertex */
         foreach ($analyzer->aggregateMap()->aggregateVertexMap() as $name => $vertex) {
             $className = ($this->filterClassName)($vertex->label());
 

@@ -10,9 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\InspectioGraph\Aggregate;
-use EventEngine\InspectioGraph\Command;
-use EventEngine\InspectioGraph\Event;
+use EventEngine\InspectioGraph\AggregateType;
+use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\EventType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\MethodGenerator;
 use OpenCodeModeling\CodeAst\Code\ParameterGenerator;
@@ -46,9 +46,9 @@ final class AggregateBehaviourCommandMethod
     }
 
     public function generate(
-        Aggregate $aggregate,
-        Command $command,
-        Event ...$events
+        AggregateType $aggregate,
+        CommandType $command,
+        EventType ...$events
     ): MethodGenerator {
         $commandParameterName = ($this->filterParameterName)($command->label());
         $commandMethodName = ($this->filterCommandMethodName)($command->label());

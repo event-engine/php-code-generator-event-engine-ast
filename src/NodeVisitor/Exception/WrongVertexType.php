@@ -10,17 +10,17 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\Exception;
 
-use EventEngine\InspectioGraph\Vertex;
+use EventEngine\InspectioGraph\VertexType;
 use RuntimeException;
 
 class WrongVertexType extends RuntimeException
 {
     /**
-     * @var Vertex
+     * @var VertexType
      */
     private $vertex;
 
-    public static function withVertex(Vertex $vertex, string $expectedType): self
+    public static function withVertex(VertexType $vertex, string $expectedType): self
     {
         $self = new self(
             \sprintf('Provided vertex with type "%s" does not match expected type "%s"', $vertex->type(), $expectedType)
@@ -30,7 +30,7 @@ class WrongVertexType extends RuntimeException
         return $self;
     }
 
-    public function vertex(): Vertex
+    public function vertex(): VertexType
     {
         return $this->vertex;
     }

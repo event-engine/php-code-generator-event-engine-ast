@@ -66,7 +66,7 @@ final class AggregateBehaviourEventMethod
 
             $commandsToEventsMap = $aggregateDescription->commandsToEventsMap();
 
-            /** @var \EventEngine\InspectioGraph\Vertex $commandVertex */
+            /** @var \EventEngine\InspectioGraph\VertexType $commandVertex */
             foreach ($commandsToEventsMap as $commandVertex) {
                 foreach ($commandsToEventsMap[$commandVertex] as $eventVertex) {
                     $aggregateTraverser->addVisitor(

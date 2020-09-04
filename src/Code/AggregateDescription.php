@@ -10,9 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\InspectioGraph\Aggregate;
-use EventEngine\InspectioGraph\Command;
-use EventEngine\InspectioGraph\Event;
+use EventEngine\InspectioGraph\AggregateType;
+use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\EventType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use PhpParser\Parser;
@@ -62,9 +62,9 @@ final class AggregateDescription
         string $aggregateBehaviourCommandClassName,
         string $aggregateBehaviourEventClassName,
         ?string $storeStateIn,
-        Command $command,
-        Aggregate $aggregate,
-        Event ...$events
+        CommandType $command,
+        AggregateType $aggregate,
+        EventType ...$events
     ): IdentifierGenerator {
         $commandConstName = ($this->filterConstName)($command->label());
         $commandMethodName = ($this->filterCommandMethodName)($command->label());

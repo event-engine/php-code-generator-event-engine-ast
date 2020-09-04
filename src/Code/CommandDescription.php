@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\InspectioGraph\Command;
+use EventEngine\InspectioGraph\CommandType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use PhpParser\Parser;
@@ -36,7 +36,7 @@ final class CommandDescription
     }
 
     public function generate(
-        Command $command,
+        CommandType $command,
         ?string $jsonSchemaFilename = null
     ): IdentifierGenerator {
         $commandConstName = ($this->filterConstName)($command->label());

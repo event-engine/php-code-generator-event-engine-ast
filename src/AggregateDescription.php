@@ -14,7 +14,7 @@ use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateDescription as
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant as CodeClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeAggregate;
-use EventEngine\InspectioGraph\Command;
+use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\NodeVisitor\NamespaceUse;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
@@ -111,7 +111,7 @@ final class AggregateDescription
 
             $commandsToEventsMap = $aggregateDescription->commandsToEventsMap();
 
-            /** @var Command $commandVertex */
+            /** @var CommandType $commandVertex */
             foreach ($commandsToEventsMap as $commandVertex) {
                 $visitors[] = new ClassMethodDescribeAggregate(
                     $this->aggregateDescription->generate(

@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\InspectioGraph\Event;
+use EventEngine\InspectioGraph\EventType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use PhpParser\Parser;
@@ -36,7 +36,7 @@ final class EventDescription
     }
 
     public function generate(
-        Event $event,
+        EventType $event,
         ?string $jsonSchemaFilename = null
     ): IdentifierGenerator {
         $eventConstName = ($this->filterConstName)($event->label());

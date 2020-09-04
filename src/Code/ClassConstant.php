@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\InspectioGraph\Vertex;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 
@@ -33,7 +33,7 @@ final class ClassConstant
     }
 
     public function generate(
-        Vertex $vertex
+        VertexType $vertex
     ): IdentifierGenerator {
         $name = ($this->filterConstName)($vertex->label());
 
