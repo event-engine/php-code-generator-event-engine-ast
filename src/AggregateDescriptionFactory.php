@@ -10,13 +10,11 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateDescription as CodeAggregateDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\Id;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\StateName;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class AggregateDescriptionFactory
 {
@@ -78,26 +76,19 @@ final class AggregateDescriptionFactory
         string $inputCode,
         string $inputAggregatePath,
         string $output
-    ): Description {
-        return AggregateDescription::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getClassInfoList(),
-            $this->aggregateDescription(),
-            $this->classConstant(),
-            $this->config->getFilterClassName(),
-            $this->config->getFilterAggregateFolder(),
-            $this->config->getFilterAggregateStoreStateIn(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->component(),
+            $output,
             $inputAnalyzer,
             $inputCode,
-            $inputAggregatePath,
-            $output
+            $inputAggregatePath
         );
     }
 
-    public function aggregateDescription(): Code\AggregateDescription
+    public function codeAggregateDescription(): Code\AggregateDescription
     {
-        return new CodeAggregateDescription(
+        return new Code\AggregateDescription(
             $this->config->getParser(),
             $this->config->getFilterConstName(),
             $this->config->getFilterAggregateIdName(),
@@ -106,11 +97,25 @@ final class AggregateDescriptionFactory
         );
     }
 
-    public function classConstant(): ClassConstant
+    public function codeClassConstant(): Code\ClassConstant
     {
-        return new ClassConstant(
+        return new Code\ClassConstant(
             $this->config->getFilterConstName(),
             $this->config->getFilterConstValue()
+        );
+    }
+
+    public function component(): AggregateDescription
+    {
+        return new AggregateDescription(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->config->getClassInfoList(),
+            $this->codeAggregateDescription(),
+            $this->codeClassConstant(),
+            $this->config->getFilterClassName(),
+            $this->config->getFilterAggregateFolder(),
+            $this->config->getFilterAggregateStoreStateIn()
         );
     }
 }

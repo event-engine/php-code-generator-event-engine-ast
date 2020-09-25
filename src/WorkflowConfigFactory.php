@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use OpenCodeModeling\CodeGenerator;
-use OpenCodeModeling\CodeGenerator\Config\Component;
 use OpenCodeModeling\CodeGenerator\Transformator;
 
 final class WorkflowConfigFactory
@@ -50,7 +49,7 @@ final class WorkflowConfigFactory
      * @param callable $filterConstName
      * @param callable $filterConstValue
      * @param callable $filterDirectoryToNamespace
-     * @return Component
+     * @return CodeGenerator\Config\WorkflowConfig
      */
     public static function prototypeConfig(
         CodeGenerator\Workflow\WorkflowContext $workflowContext,
@@ -60,7 +59,7 @@ final class WorkflowConfigFactory
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace
-    ): Component {
+    ): CodeGenerator\Config\WorkflowConfig {
         $eeAggregateStateFactory = AggregateStateFactory::withDefaultConfig(
             $filterConstName,
             $filterConstValue,
@@ -188,7 +187,7 @@ final class WorkflowConfigFactory
             ),
         ];
 
-        return new CodeGenerator\Config\ArrayConfig(...$componentDescription);
+        return new CodeGenerator\Config\Workflow(...$componentDescription);
     }
 
     /**
@@ -200,7 +199,7 @@ final class WorkflowConfigFactory
      * @param callable $filterConstName
      * @param callable $filterConstValue
      * @param callable $filterDirectoryToNamespace
-     * @return Component
+     * @return CodeGenerator\Config\WorkflowConfig
      */
     public static function functionalConfig(
         CodeGenerator\Workflow\WorkflowContext $workflowContext,
@@ -209,7 +208,7 @@ final class WorkflowConfigFactory
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace
-    ): Component {
+    ): CodeGenerator\Config\WorkflowConfig {
         $eeCommandFactory = CommandFactory::withDefaultConfig(
             $filterConstName,
             $filterConstValue,
@@ -238,19 +237,19 @@ final class WorkflowConfigFactory
             ),
         ];
 
-        return new CodeGenerator\Config\ArrayConfig(...$componentDescription);
+        return new CodeGenerator\Config\Workflow(...$componentDescription);
     }
 
     /**
      * Configures a workflow to save the generated code of prototypeConfig() to files.
      *
-     * @return Component
+     * @return CodeGenerator\Config\WorkflowConfig
      */
-    public static function codeToFilesForPrototypeConfig(): Component
+    public static function codeToFilesForPrototypeConfig(): CodeGenerator\Config\WorkflowConfig
     {
         $stringToFile = new Transformator\StringToFile();
 
-        return new CodeGenerator\Config\ArrayConfig(
+        return new CodeGenerator\Config\Workflow(
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_COMMAND_FILE, self::SLOT_EE_API_COMMAND_FILENAME),
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_EVENT_FILE, self::SLOT_EE_API_EVENT_FILENAME),
             Transformator\StringToFile::workflowComponentDescription(self::SLOT_EE_API_AGGREGATE_FILE, self::SLOT_EE_API_AGGREGATE_FILENAME),
@@ -264,13 +263,13 @@ final class WorkflowConfigFactory
     /**
      * Configures a workflow to save the generated code of prototypeConfig() to files.
      *
-     * @return Component
+     * @return CodeGenerator\Config\WorkflowConfig
      */
-    public static function codeToFilesForFunctionalConfig(): Component
+    public static function codeToFilesForFunctionalConfig(): CodeGenerator\Config\WorkflowConfig
     {
         $stringToFile = new Transformator\StringToFile();
 
-        return new CodeGenerator\Config\ArrayConfig(
+        return new CodeGenerator\Config\Workflow(
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_COMMAND),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_EVENT),
         );

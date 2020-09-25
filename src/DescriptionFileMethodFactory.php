@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class DescriptionFileMethodFactory
 {
@@ -37,12 +37,19 @@ final class DescriptionFileMethodFactory
     public function workflowComponentDescription(
         string $inputCode,
         string $output
-    ): Description {
-        return DescriptionFileMethod::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->component(),
+            $output,
+            $inputCode
+        );
+    }
+
+    public function component(): DescriptionFileMethod
+    {
+        return new DescriptionFileMethod(
             $this->config->getParser(),
-            $this->config->getPrinter(),
-            $inputCode,
-            $output
+            $this->config->getPrinter()
         );
     }
 }

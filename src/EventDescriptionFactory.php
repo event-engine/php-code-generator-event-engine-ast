@@ -10,23 +10,21 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\EventDescription as CodeEventDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\EventDescription as ConfigEventDescription;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class EventDescriptionFactory
 {
     /**
-     * @var ConfigEventDescription
+     * @var Config\EventDescription
      **/
     private $config;
 
-    public function __construct(ConfigEventDescription $config)
+    public function __construct(Config\EventDescription $config)
     {
         $this->config = $config;
     }
 
-    public function config(): ConfigEventDescription
+    public function config(): Config\EventDescription
     {
         return $this->config;
     }
@@ -35,7 +33,7 @@ final class EventDescriptionFactory
         callable $filterConstName,
         callable $filterConstValue
     ): self {
-        $self = new self(new ConfigEventDescription());
+        $self = new self(new Config\EventDescription());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
@@ -48,16 +46,13 @@ final class EventDescriptionFactory
         string $inputCode,
         string $inputSchemaMetadata,
         string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return EventDescription::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->eventDescription(),
-            $this->classConstant(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->component(),
+            $output,
             $inputAnalyzer,
             $inputCode,
-            $inputSchemaMetadata,
-            $output
+            $inputSchemaMetadata
         );
     }
 
@@ -65,28 +60,45 @@ final class EventDescriptionFactory
         string $inputAnalyzer,
         string $inputPathSchema,
         string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return EventDescriptionMetadataSchema::workflowComponentDescription(
-            $this->config->getFilterConstName(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentMetadataSchema(),
+            $output,
             $inputAnalyzer,
-            $inputPathSchema,
-            $output
+            $inputPathSchema
         );
     }
 
-    public function eventDescription(): CodeEventDescription
+    public function codeEventDescription(): Code\EventDescription
     {
-        return new CodeEventDescription(
+        return new Code\EventDescription(
             $this->config->getParser(),
             $this->config->getFilterConstName()
         );
     }
 
-    public function classConstant(): ClassConstant
+    public function codeClassConstant(): Code\ClassConstant
     {
-        return new ClassConstant(
+        return new Code\ClassConstant(
             $this->config->getFilterConstName(),
             $this->config->getFilterConstValue()
+        );
+    }
+
+    public function component(): EventDescription
+    {
+        return new EventDescription(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->codeEventDescription(),
+            $this->codeClassConstant(),
+        );
+    }
+
+    public function componentMetadataSchema(): EventDescriptionMetadataSchema
+    {
+        return new EventDescriptionMetadataSchema(
+            $this->config->getFilterConstName()
         );
     }
 }

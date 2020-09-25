@@ -10,24 +10,23 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Event;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class EventFactory
 {
     /**
-     * @var Event
+     * @var Config\Event
      **/
     private $config;
 
-    public function __construct(Event $config)
+    public function __construct(Config\Event $config)
     {
         $this->config = $config;
     }
 
-    public function config(): Event
+    public function config(): Config\Event
     {
         return $this->config;
     }
@@ -47,7 +46,7 @@ final class EventFactory
         bool $useAggregateFolder = true,
         bool $useEventFolder = false
     ): self {
-        $self = new self(new Event());
+        $self = new self(new Config\Event());
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
@@ -65,10 +64,10 @@ final class EventFactory
         if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                    require $autoloadFile,
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
+                require $autoloadFile,
+                $self->config->getFilterDirectoryToNamespace(),
+                $self->config->getFilterNamespaceToDirectory()
+            )
             );
         }
 
@@ -81,17 +80,24 @@ final class EventFactory
         string $inputAnalyzer,
         string $inputEventPath,
         string $output
-    ): Description {
-        return EventFile::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentFile(),
+            $output,
+            $inputAnalyzer,
+            $inputEventPath
+        );
+    }
+
+    public function componentFile(): EventFile
+    {
+        return new EventFile(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
-            $this->config->getFilterEventFolder(),
-            $inputAnalyzer,
-            $inputEventPath,
-            $output
+            $this->config->getFilterEventFolder()
         );
     }
 }

@@ -10,33 +10,29 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateBehaviourCommandMethod  as CodeCommandMethod;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateBehaviourEventMethod as CodeEventMethod;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\AggregateBehaviour;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\AggregateState;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class AggregateBehaviourFactory
 {
     /**
-     * @var AggregateBehaviour
+     * @var Config\AggregateBehaviour
      **/
     private $config;
 
     /**
-     * @var AggregateState
+     * @var Config\AggregateState
      **/
     private $stateConfig;
 
-    public function __construct(AggregateBehaviour $config, AggregateState $stateConfig)
+    public function __construct(Config\AggregateBehaviour $config, Config\AggregateState $stateConfig)
     {
         $this->config = $config;
         $this->stateConfig = $stateConfig;
     }
 
-    public function config(): AggregateBehaviour
+    public function config(): Config\AggregateBehaviour
     {
         return $this->config;
     }
@@ -45,10 +41,10 @@ final class AggregateBehaviourFactory
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
-        AggregateState $stateConfig,
+        Config\AggregateState $stateConfig,
         bool $useAggregateFolder = true
     ): self {
-        $self = new self(new AggregateBehaviour(), $stateConfig);
+        $self = new self(new Config\AggregateBehaviour(), $stateConfig);
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
@@ -63,10 +59,10 @@ final class AggregateBehaviourFactory
         if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                    require $autoloadFile,
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
+                require $autoloadFile,
+                $self->config->getFilterDirectoryToNamespace(),
+                $self->config->getFilterNamespaceToDirectory()
+            )
             );
         }
 
@@ -75,18 +71,18 @@ final class AggregateBehaviourFactory
         return $self;
     }
 
-    public function commandMethod(): Code\AggregateBehaviourCommandMethod
+    public function codeCommandMethod(): Code\AggregateBehaviourCommandMethod
     {
-        return new CodeCommandMethod(
+        return new Code\AggregateBehaviourCommandMethod(
             $this->config->getParser(),
             $this->config->getFilterCommandMethodName(),
             $this->config->getFilterParameterName()
         );
     }
 
-    public function eventMethod(): Code\AggregateBehaviourEventMethod
+    public function codeEventMethod(): Code\AggregateBehaviourEventMethod
     {
-        return new CodeEventMethod(
+        return new Code\AggregateBehaviourEventMethod(
             $this->config->getParser(),
             $this->config->getFilterEventMethodName(),
             $this->config->getFilterParameterName()
@@ -99,20 +95,14 @@ final class AggregateBehaviourFactory
         string $inputAggregateStatePath,
         string $inputApiEventFilename,
         string $output
-    ): Description {
-        return AggregateBehaviourFile::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getClassInfoList(),
-            $this->config->getFilterClassName(),
-            $this->stateConfig->getFilterClassName(),
-            $this->config->getFilterAggregateFolder(),
-            $this->stateConfig->getFilterAggregateFolder(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentFile(),
+            $output,
             $inputAnalyzer,
             $inputAggregatePath,
             $inputAggregateStatePath,
-            $inputApiEventFilename,
-            $output
+            $inputApiEventFilename
         );
     }
 
@@ -120,14 +110,12 @@ final class AggregateBehaviourFactory
         string $inputAnalyzer,
         string $inputFiles,
         string $output
-    ): Description {
-        return AggregateBehaviourEventMethod::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->eventMethod(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentEventMethod(),
+            $output,
             $inputAnalyzer,
-            $inputFiles,
-            $output
+            $inputFiles
         );
     }
 
@@ -135,14 +123,43 @@ final class AggregateBehaviourFactory
         string $inputAnalyzer,
         string $inputFiles,
         string $output
-    ): Description {
-        return AggregateBehaviourCommandMethod::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentCommandMethod(),
+            $output,
+            $inputAnalyzer,
+            $inputFiles
+        );
+    }
+
+    public function componentFile(): AggregateBehaviourFile
+    {
+        return new AggregateBehaviourFile(
             $this->config->getParser(),
             $this->config->getPrinter(),
-            $this->commandMethod(),
-            $inputAnalyzer,
-            $inputFiles,
-            $output
+            $this->config->getClassInfoList(),
+            $this->config->getFilterClassName(),
+            $this->stateConfig->getFilterClassName(),
+            $this->config->getFilterAggregateFolder(),
+            $this->stateConfig->getFilterAggregateFolder()
+        );
+    }
+
+    public function componentEventMethod(): AggregateBehaviourEventMethod
+    {
+        return new AggregateBehaviourEventMethod(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->codeEventMethod()
+        );
+    }
+
+    public function componentCommandMethod(): AggregateBehaviourCommandMethod
+    {
+        return new AggregateBehaviourCommandMethod(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->codeCommandMethod()
         );
     }
 }

@@ -10,23 +10,21 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\CommandDescription as CodeCommandDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\CommandDescription as ConfigCommandDescription;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class CommandDescriptionFactory
 {
     /**
-     * @var ConfigCommandDescription
+     * @var Config\CommandDescription
      **/
     private $config;
 
-    public function __construct(ConfigCommandDescription $config)
+    public function __construct(Config\CommandDescription $config)
     {
         $this->config = $config;
     }
 
-    public function config(): ConfigCommandDescription
+    public function config(): Config\CommandDescription
     {
         return $this->config;
     }
@@ -35,7 +33,7 @@ final class CommandDescriptionFactory
         callable $filterConstName,
         callable $filterConstValue
     ): self {
-        $self = new self(new ConfigCommandDescription());
+        $self = new self(new Config\CommandDescription());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
@@ -48,16 +46,13 @@ final class CommandDescriptionFactory
         string $inputCode,
         string $inputSchemaMetadata,
         string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return CommandDescription::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->commandDescription(),
-            $this->classConstant(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->component(),
+            $output,
             $inputAnalyzer,
             $inputCode,
-            $inputSchemaMetadata,
-            $output
+            $inputSchemaMetadata
         );
     }
 
@@ -65,28 +60,45 @@ final class CommandDescriptionFactory
         string $inputAnalyzer,
         string $inputPathSchema,
         string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return CommandDescriptionMetadataSchema::workflowComponentDescription(
-            $this->config->getFilterConstName(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentMetadataSchema(),
+            $output,
             $inputAnalyzer,
-            $inputPathSchema,
-            $output
+            $inputPathSchema
         );
     }
 
-    public function commandDescription(): CodeCommandDescription
+    public function codeCommandDescription(): Code\CommandDescription
     {
-        return new CodeCommandDescription(
+        return new Code\CommandDescription(
             $this->config->getParser(),
             $this->config->getFilterConstName()
         );
     }
 
-    public function classConstant(): ClassConstant
+    public function codeClassConstant(): Code\ClassConstant
     {
-        return new ClassConstant(
+        return new Code\ClassConstant(
             $this->config->getFilterConstName(),
             $this->config->getFilterConstValue()
+        );
+    }
+
+    public function component(): CommandDescription
+    {
+        return new CommandDescription(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->codeCommandDescription(),
+            $this->codeClassConstant(),
+        );
+    }
+
+    public function componentMetadataSchema(): CommandDescriptionMetadataSchema
+    {
+        return new CommandDescriptionMetadataSchema(
+            $this->config->getFilterConstName()
         );
     }
 }

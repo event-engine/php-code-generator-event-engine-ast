@@ -10,25 +10,24 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\AggregateState;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\AggregateStateClassName;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class AggregateStateFactory
 {
     /**
-     * @var AggregateState
+     * @var Config\AggregateState
      **/
     private $config;
 
-    public function __construct(AggregateState $config)
+    public function __construct(Config\AggregateState $config)
     {
         $this->config = $config;
     }
 
-    public function config(): AggregateState
+    public function config(): Config\AggregateState
     {
         return $this->config;
     }
@@ -39,7 +38,7 @@ final class AggregateStateFactory
         callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true
     ): self {
-        $self = new self(new AggregateState());
+        $self = new self(new Config\AggregateState());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
@@ -56,10 +55,10 @@ final class AggregateStateFactory
         if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                    require $autoloadFile,
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
+                require $autoloadFile,
+                $self->config->getFilterDirectoryToNamespace(),
+                $self->config->getFilterNamespaceToDirectory()
+            )
             );
         }
 
@@ -72,16 +71,12 @@ final class AggregateStateFactory
         string $inputAnalyzer,
         string $inputPath,
         string $output
-    ): Description {
-        return AggregateStateFile::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getClassInfoList(),
-            $this->config->getFilterClassName(),
-            $this->config->getFilterAggregateFolder(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentFile(),
+            $output,
             $inputAnalyzer,
-            $inputPath,
-            $output
+            $inputPath
         );
     }
 
@@ -89,14 +84,12 @@ final class AggregateStateFactory
         string $inputAnalyzer,
         string $inputFiles,
         string $output
-    ): Description {
-        return AggregateStateModifyMethod::workflowComponentDescription(
-            $this->config->getParser(),
-            $this->config->getPrinter(),
-            $this->config->getFilterWithMethodName(),
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentModifyMethod(),
+            $output,
             $inputAnalyzer,
-            $inputFiles,
-            $output
+            $inputFiles
         );
     }
 
@@ -104,13 +97,40 @@ final class AggregateStateFactory
         string $inputAnalyzer,
         string $inputFiles,
         string $output
-    ): Description {
-        return AggregateStateImmutableRecordOverride::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentDescriptionImmutableRecordOverride(),
+            $output,
+            $inputAnalyzer,
+            $inputFiles
+        );
+    }
+
+    public function componentFile(): AggregateStateFile
+    {
+        return new AggregateStateFile(
             $this->config->getParser(),
             $this->config->getPrinter(),
-            $inputAnalyzer,
-            $inputFiles,
-            $output
+            $this->config->getClassInfoList(),
+            $this->config->getFilterClassName(),
+            $this->config->getFilterAggregateFolder()
+        );
+    }
+
+    public function componentModifyMethod(): AggregateStateModifyMethod
+    {
+        return new AggregateStateModifyMethod(
+            $this->config->getParser(),
+            $this->config->getPrinter(),
+            $this->config->getFilterWithMethodName()
+        );
+    }
+
+    public function componentDescriptionImmutableRecordOverride(): AggregateStateImmutableRecordOverride
+    {
+        return new AggregateStateImmutableRecordOverride(
+            $this->config->getParser(),
+            $this->config->getPrinter()
         );
     }
 }

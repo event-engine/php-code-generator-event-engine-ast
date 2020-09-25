@@ -12,9 +12,9 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
-class EmptyClassFactory
+final class EmptyClassFactory
 {
     /**
      * @var Config\EmptyClass
@@ -59,13 +59,20 @@ class EmptyClassFactory
     public function workflowComponentDescription(
         string $inputFilename,
         string $output
-    ): Description {
-        return EmptyClass::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->component(),
+            $output,
+            $inputFilename
+        );
+    }
+
+    public function component(): EmptyClass
+    {
+        return new EmptyClass(
             $this->config->getClassInfoList(),
             $this->config->getParser(),
-            $this->config->getPrinter(),
-            $inputFilename,
-            $output
+            $this->config->getPrinter()
         );
     }
 }

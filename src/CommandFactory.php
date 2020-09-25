@@ -10,24 +10,23 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Config\Command;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow\Description;
+use OpenCodeModeling\CodeGenerator\Workflow;
 
 final class CommandFactory
 {
     /**
-     * @var Command
+     * @var Config\Command
      **/
     private $config;
 
-    public function __construct(Command $config)
+    public function __construct(Config\Command $config)
     {
         $this->config = $config;
     }
 
-    public function config(): Command
+    public function config(): Config\Command
     {
         return $this->config;
     }
@@ -47,7 +46,7 @@ final class CommandFactory
         bool $useAggregateFolder = true,
         bool $useCommandFolder = false
     ): self {
-        $self = new self(new Command());
+        $self = new self(new Config\Command());
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
@@ -81,17 +80,24 @@ final class CommandFactory
         string $inputAnalyzer,
         string $inputCommandPath,
         string $output
-    ): Description {
-        return CommandFile::workflowComponentDescription(
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentFile(),
+            $output,
+            $inputAnalyzer,
+            $inputCommandPath
+        );
+    }
+
+    public function componentFile(): CommandFile
+    {
+        return new CommandFile(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
-            $this->config->getFilterCommandFolder(),
-            $inputAnalyzer,
-            $inputCommandPath,
-            $output
+            $this->config->getFilterCommandFolder()
         );
     }
 }
