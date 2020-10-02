@@ -108,6 +108,7 @@ final class AggregateStateImmutableRecordOverride
     {
         return new PropertyGenerator(
             'state',
+            'array',
             []
         );
     }

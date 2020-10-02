@@ -89,6 +89,19 @@ final class CommandFactory
         );
     }
 
+    public function workflowComponentDescriptionProperty(
+        string $inputAnalyzer,
+        string $inputFiles,
+        string $output
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentProperty(),
+            $output,
+            $inputAnalyzer,
+            $inputFiles
+        );
+    }
+
     public function componentFile(): CommandFile
     {
         return new CommandFile(
@@ -98,6 +111,14 @@ final class CommandFactory
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
             $this->config->getFilterCommandFolder()
+        );
+    }
+
+    public function componentProperty(): CommandProperty
+    {
+        return new CommandProperty(
+            $this->config->getParser(),
+            $this->config->getPrinter()
         );
     }
 }

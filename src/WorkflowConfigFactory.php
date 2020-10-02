@@ -230,9 +230,19 @@ final class WorkflowConfigFactory
                 self::SLOT_COMMAND_PATH,
                 self::SLOT_COMMAND
             ),
+            $eeCommandFactory->workflowComponentDescriptionProperty(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_COMMAND,
+                self::SLOT_COMMAND
+            ),
             $eeEventFactory->workflowComponentDescriptionFile(
                 $inputSlotEventSourcingAnalyzer,
                 self::SLOT_EVENT_PATH,
+                self::SLOT_EVENT
+            ),
+            $eeEventFactory->workflowComponentDescriptionProperty(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_EVENT,
                 self::SLOT_EVENT
             ),
         ];

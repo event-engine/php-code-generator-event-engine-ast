@@ -89,6 +89,19 @@ final class EventFactory
         );
     }
 
+    public function workflowComponentDescriptionProperty(
+        string $inputAnalyzer,
+        string $inputFiles,
+        string $output
+    ): Workflow\Description {
+        return new Workflow\ComponentDescriptionWithSlot(
+            $this->componentProperty(),
+            $output,
+            $inputAnalyzer,
+            $inputFiles
+        );
+    }
+
     public function componentFile(): EventFile
     {
         return new EventFile(
@@ -98,6 +111,14 @@ final class EventFactory
             $this->config->getFilterClassName(),
             $this->config->getFilterAggregateFolder(),
             $this->config->getFilterEventFolder()
+        );
+    }
+
+    public function componentProperty(): EventProperty
+    {
+        return new EventProperty(
+            $this->config->getParser(),
+            $this->config->getPrinter()
         );
     }
 }

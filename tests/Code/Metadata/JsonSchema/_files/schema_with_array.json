@@ -1,0 +1,28 @@
+{
+    "schema": {
+        "type": "array",
+        "items": [
+            {
+                "type": "number"
+            },
+            {
+                "type": "string"
+            },
+            {
+                "$ref": "#/definitions/name"
+            }
+        ],
+        "definitions": {
+            "name": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "minLength": 2
+            }
+        },
+        "additionalItems": {
+            "type": "string"
+        }
+    }
+}
