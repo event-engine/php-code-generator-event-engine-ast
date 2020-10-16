@@ -54,10 +54,6 @@ final class CommandProperty
 
             $type = $jsonSchema->type();
 
-            if ($type instanceof ReferenceType) {
-                $type = $type->getResolvedType();
-            }
-
             if ($type === null) {
                 continue;
             }
@@ -76,8 +72,11 @@ final class CommandProperty
 
             $commandTraverser = new NodeTraverser();
 
-            /** @var ObjectType $type */
             foreach ($properties as $typeName => $type) {
+                if ($type instanceof ReferenceType) {
+                    $type = $type->getResolvedType();
+                }
+
                 $commandTraverser->addVisitor(
                     new \OpenCodeModeling\CodeAst\NodeVisitor\Property(
                         new PropertyGenerator($typeName, $type->getType())

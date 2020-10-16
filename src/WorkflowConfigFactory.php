@@ -19,6 +19,7 @@ final class WorkflowConfigFactory
     public const SLOT_EVENT_PATH = 'event_engine-command_path';
     public const SLOT_AGGREGATE_PATH = 'event_engine-aggregate_path';
     public const SLOT_AGGREGATE_STATE_PATH = 'event_engine-aggregate_state_path';
+    public const SLOT_VALUE_OBJECT_PATH = 'event_engine-value_object_path';
 
     public const SLOT_EE_API_COMMAND_FILENAME = 'event_engine-ee_api_command_filename';
     public const SLOT_EE_API_EVENT_FILENAME = 'event_engine-ee_api_event_filename';
@@ -33,6 +34,7 @@ final class WorkflowConfigFactory
 
     public const SLOT_COMMAND = 'event_engine-command';
     public const SLOT_EVENT = 'event_engine-event';
+    public const SLOT_VALUE_OBJECT = 'event_engine-value_object';
 
     public const SLOT_COMMAND_METADATA_SCHEMA_PATH = 'event_engine-command_metadata_schema_path';
     public const SLOT_COMMAND_METADATA_SCHEMA = 'event_engine-command_metadata_schema';
@@ -196,6 +198,8 @@ final class WorkflowConfigFactory
      * @param CodeGenerator\Workflow\WorkflowContext $workflowContext
      * @param string $inputSlotEventSourcingAnalyzer
      * @param string $commandPath
+     * @param string $eventPath
+     * @param string $valueObjectPath
      * @param callable $filterConstName
      * @param callable $filterConstValue
      * @param callable $filterDirectoryToNamespace
@@ -205,6 +209,8 @@ final class WorkflowConfigFactory
         CodeGenerator\Workflow\WorkflowContext $workflowContext,
         string $inputSlotEventSourcingAnalyzer,
         string $commandPath,
+        string $eventPath,
+        string $valueObjectPath,
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace
@@ -221,9 +227,28 @@ final class WorkflowConfigFactory
             $filterDirectoryToNamespace
         );
 
+        $eeValueObjectFactory = ValueObjectFactory::withDefaultConfig(
+            $filterConstName,
+            $filterConstValue,
+            $filterDirectoryToNamespace
+        );
+
         $workflowContext->put(self::SLOT_COMMAND_PATH, $commandPath);
+        $workflowContext->put(self::SLOT_EVENT_PATH, $eventPath);
+        $workflowContext->put(self::SLOT_VALUE_OBJECT_PATH, $valueObjectPath);
 
         $componentDescription = [
+            $eeValueObjectFactory->workflowComponentDescriptionFile(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_VALUE_OBJECT_PATH,
+                self::SLOT_VALUE_OBJECT
+            ),
+            // Configure Event Engine command generation
+            $eeCommandFactory->workflowComponentDescriptionFile(
+                $inputSlotEventSourcingAnalyzer,
+                self::SLOT_COMMAND_PATH,
+                self::SLOT_COMMAND
+            ),
             // Configure Event Engine command generation
             $eeCommandFactory->workflowComponentDescriptionFile(
                 $inputSlotEventSourcingAnalyzer,
@@ -235,6 +260,7 @@ final class WorkflowConfigFactory
                 self::SLOT_COMMAND,
                 self::SLOT_COMMAND
             ),
+            // Configure Event Engine event generation
             $eeEventFactory->workflowComponentDescriptionFile(
                 $inputSlotEventSourcingAnalyzer,
                 self::SLOT_EVENT_PATH,
@@ -282,6 +308,7 @@ final class WorkflowConfigFactory
         return new CodeGenerator\Config\Workflow(
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_COMMAND),
             Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_EVENT),
+            Transformator\CodeListToFiles::workflowComponentDescription($stringToFile, self::SLOT_VALUE_OBJECT),
         );
     }
 }
