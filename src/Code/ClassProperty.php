@@ -10,21 +10,21 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\Type;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use OpenCodeModeling\CodeAst\Code\PropertyGenerator;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeDefinition;
 
 final class ClassProperty
 {
     public function generate(
         $name,
-        Type $type
+        TypeDefinition $type
     ): IdentifierGenerator {
         return new IdentifierGenerator(
             $name,
             new PropertyGenerator(
                 $name,
-                $type->getType()
+                $type->type()
             )
         );
     }

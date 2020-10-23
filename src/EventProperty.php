@@ -10,13 +10,14 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\JsonSchema;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\ObjectType;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\ReferenceType;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Exception\RuntimeException;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Code\PropertyGenerator;
 use OpenCodeModeling\CodeGenerator\Workflow;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ReferenceType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -59,6 +60,8 @@ final class EventProperty
                 continue;
             }
 
+            $type = $type->first();
+
             if (! $type instanceof ObjectType) {
                 throw new RuntimeException(
                     \sprintf(
@@ -73,14 +76,17 @@ final class EventProperty
 
             $eventTraverser = new NodeTraverser();
 
-            foreach ($properties as $typeName => $type) {
-                if ($type instanceof ReferenceType) {
-                    $type = $type->getResolvedType();
+            /** @var TypeSet $propertyTypeSet */
+            foreach ($properties as $typeName => $propertyTypeSet) {
+                $propertyType = $propertyTypeSet->first();
+
+                if ($propertyType instanceof ReferenceType) {
+                    $propertyType = $propertyType->resolvedType()->first();
                 }
 
                 $eventTraverser->addVisitor(
                     new \OpenCodeModeling\CodeAst\NodeVisitor\Property(
-                        new PropertyGenerator($typeName, $type->getType())
+                        new PropertyGenerator($typeName, $propertyType->type())
                     )
                 );
             }

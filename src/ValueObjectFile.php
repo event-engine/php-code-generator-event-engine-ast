@@ -10,9 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\JsonSchema;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\ObjectType;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\ReferenceType;
+use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Exception\RuntimeException;
 use EventEngine\InspectioGraph\AggregateConnection;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
@@ -21,6 +19,9 @@ use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ReferenceType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -94,6 +95,8 @@ final class ValueObjectFile
                     continue;
                 }
 
+                $type = $type->first();
+
                 if (! $type instanceof ObjectType) {
                     throw new RuntimeException(
                         \sprintf(
@@ -106,17 +109,21 @@ final class ValueObjectFile
 
                 $properties = $type->properties();
 
+                /** @var TypeSet $property */
                 foreach ($properties as $property) {
-                    if (! $property instanceof ReferenceType) {
+                    $propertyType = $property->first();
+
+                    if (! $propertyType instanceof ReferenceType) {
                         continue;
                     }
-                    $definitionType = $property->getResolvedType();
+                    $definitionType = $propertyType->resolvedType();
 
                     if ($definitionType === null) {
                         continue;
                     }
+                    $definitionType = $definitionType->first();
 
-                    $className = ($this->filterClassName)($definitionType->getName());
+                    $className = ($this->filterClassName)($definitionType->name());
 
                     $filename = $classInfo->getFilenameFromPathAndName($pathValueObject, $className);
 
@@ -135,7 +142,7 @@ final class ValueObjectFile
                     $ValueObjectTraverser->addVisitor(new ClassNamespace($classInfo->getClassNamespaceFromPath($pathValueObject)));
                     $ValueObjectTraverser->addVisitor(new ClassFile($valueObjectClass));
 
-                    $files[$definitionType->getName()] = [
+                    $files[$definitionType->name()] = [
                         'filename' => $filename,
                         'code' => $this->printer->prettyPrintFile($ValueObjectTraverser->traverse($ast)),
                     ];

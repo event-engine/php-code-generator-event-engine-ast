@@ -39,6 +39,7 @@
         "php": "^7.3 || ^8.0",
         "ext-json": "*",
         "event-engine/php-inspectio-graph": "dev-feature/cody as 0.2.0",
+        "open-code-modeling/json-schema-to-php": "dev-master",
         "open-code-modeling/php-code-ast": "dev-feature/typed-property as 0.1.0",
         "open-code-modeling/php-code-generator": "^0.2.0",
         "open-code-modeling/php-code-generator-transformator": "^0.1.0",

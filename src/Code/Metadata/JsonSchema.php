@@ -8,14 +8,14 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema;
+namespace EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\Type;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema\Type\TypeFactory;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\VertexType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\Type;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
 final class JsonSchema
 {
@@ -25,17 +25,16 @@ final class JsonSchema
     private $jsonSchema;
 
     /**
-     * @var Type
+     * @var TypeSet
      */
-    private $type;
+    private $typeSet;
 
     private function __construct(array $jsonSchema)
     {
         $this->jsonSchema = $jsonSchema;
 
         if (! empty($this->jsonSchema)) {
-            $this->type = TypeFactory::createType('', $this->jsonSchema);
-            $this->type->setRootSchema(true);
+            $this->typeSet = Type::fromDefinition($this->jsonSchema);
         }
     }
 
@@ -70,9 +69,9 @@ final class JsonSchema
         return new self($jsonSchema);
     }
 
-    public function type(): ?Type
+    public function type(): ?TypeSet
     {
-        return $this->type;
+        return $this->typeSet;
     }
 
     /**
