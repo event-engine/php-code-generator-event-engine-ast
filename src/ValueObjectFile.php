@@ -20,8 +20,8 @@ use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
-use OpenCodeModeling\JsonSchemaToPhp\Type\ReferenceType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
+use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -53,16 +53,23 @@ final class ValueObjectFile
      **/
     private $classInfoList;
 
+    /**
+     * @var AstValueObjectFactory
+     **/
+    private $valueObjectFactory;
+
     public function __construct(
         Parser $parser,
         PrettyPrinterAbstract $printer,
         ClassInfoList $classInfoList,
+        AstValueObjectFactory $valueObjectFactory,
         callable $filterClassName,
         ?callable $filterValueObjectPath
     ) {
         $this->parser = $parser;
         $this->printer = $printer;
         $this->classInfoList = $classInfoList;
+        $this->valueObjectFactory = $valueObjectFactory;
         $this->filterClassName = $filterClassName;
         $this->filterValueObjectPath = $filterValueObjectPath;
     }
@@ -107,21 +114,15 @@ final class ValueObjectFile
                     );
                 }
 
-                $properties = $type->properties();
+                $definitions = $type->definitions();
 
-                /** @var TypeSet $property */
-                foreach ($properties as $property) {
-                    $propertyType = $property->first();
-
-                    if (! $propertyType instanceof ReferenceType) {
-                        continue;
+                /** @var TypeSet $definitionTypeSet */
+                foreach ($definitions as $definitionTypeSet) {
+                    if (count($definitionTypeSet) !== 1) {
+                        throw new RuntimeException('Can only handle one type');
                     }
-                    $definitionType = $propertyType->resolvedType();
 
-                    if ($definitionType === null) {
-                        continue;
-                    }
-                    $definitionType = $definitionType->first();
+                    $definitionType = $definitionTypeSet->first();
 
                     $className = ($this->filterClassName)($definitionType->name());
 
@@ -141,6 +142,10 @@ final class ValueObjectFile
                     $ValueObjectTraverser->addVisitor(new StrictType());
                     $ValueObjectTraverser->addVisitor(new ClassNamespace($classInfo->getClassNamespaceFromPath($pathValueObject)));
                     $ValueObjectTraverser->addVisitor(new ClassFile($valueObjectClass));
+
+                    foreach ($this->valueObjectFactory->nodeVisitors($definitionType) as $nodeVisitor) {
+                        $ValueObjectTraverser->addVisitor($nodeVisitor);
+                    }
 
                     $files[$definitionType->name()] = [
                         'filename' => $filename,

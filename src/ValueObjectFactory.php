@@ -14,6 +14,7 @@ use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\ValueObjectClassName;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
 use OpenCodeModeling\CodeGenerator\Workflow;
+use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
 
 final class ValueObjectFactory
 {
@@ -82,10 +83,17 @@ final class ValueObjectFactory
 
     public function componentFile(): ValueObjectFile
     {
+        $typed = false;
+
+        if (version_compare(phpversion(), '7.4.0', '>=')) {
+            $typed = true;
+        }
+
         return new ValueObjectFile(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
+            new AstValueObjectFactory($this->config->getParser(), $typed),
             $this->config->getFilterClassName(),
             $this->config->getFilterValueObjectFolder()
         );
