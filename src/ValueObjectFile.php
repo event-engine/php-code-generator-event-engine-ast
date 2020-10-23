@@ -118,7 +118,7 @@ final class ValueObjectFile
 
                 /** @var TypeSet $definitionTypeSet */
                 foreach ($definitions as $definitionTypeSet) {
-                    if (count($definitionTypeSet) !== 1) {
+                    if (\count($definitionTypeSet) !== 1) {
                         throw new RuntimeException('Can only handle one type');
                     }
 
@@ -162,6 +162,7 @@ final class ValueObjectFile
         Parser $parser,
         PrettyPrinterAbstract $printer,
         ClassInfoList $classInfoList,
+        \OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory $valueObjectFactory,
         callable $filterClassName,
         ?callable $filterValueObjectPath,
         string $inputAnalyzer,
@@ -172,6 +173,7 @@ final class ValueObjectFile
             $parser,
             $printer,
             $classInfoList,
+            $valueObjectFactory,
             $filterClassName,
             $filterValueObjectPath
         );

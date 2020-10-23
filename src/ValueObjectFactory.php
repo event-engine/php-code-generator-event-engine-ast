@@ -85,7 +85,7 @@ final class ValueObjectFactory
     {
         $typed = false;
 
-        if (version_compare(phpversion(), '7.4.0', '>=')) {
+        if (\version_compare(\phpversion(), '7.4.0', '>=')) {
             $typed = true;
         }
 

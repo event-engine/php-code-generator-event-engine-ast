@@ -12,9 +12,9 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant as CodeClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\EventDescription as CodeEventDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeEvent;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use OpenCodeModeling\CodeAst\NodeVisitor\ClassConstant;
 use OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot;
 use OpenCodeModeling\CodeGenerator\Workflow\Description;
 use PhpParser\NodeTraverser;

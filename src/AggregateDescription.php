@@ -12,10 +12,10 @@ namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
 
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateDescription as CodeAggregateDescription;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant as CodeClassConstant;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassConstant;
 use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeAggregate;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use OpenCodeModeling\CodeAst\NodeVisitor\ClassConstant;
 use OpenCodeModeling\CodeAst\NodeVisitor\NamespaceUse;
 use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
 use PhpParser\NodeTraverser;
