@@ -41,7 +41,7 @@
         "event-engine/php-inspectio-graph": "dev-feature/cody as 0.2.0",
         "open-code-modeling/json-schema-to-php": "dev-master",
         "open-code-modeling/json-schema-to-php-ast": "dev-master",
-        "open-code-modeling/php-code-ast": "^0.2.1",
+        "open-code-modeling/php-code-ast": "dev-master",
         "open-code-modeling/php-code-generator": "^0.2.0",
         "open-code-modeling/php-code-generator-transformator": "^0.1.0",
         "symfony/console": "^4.4 || ^5.0"
