@@ -1,20 +1,20 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use OpenCodeModeling\CodeAst\Code\ClassGenerator;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -66,19 +66,5 @@ final class EmptyClass
         $ast = $this->parser->parse($code);
 
         return $this->printer->prettyPrintFile($traverser->traverse($ast));
-    }
-
-    public static function workflowComponentDescription(
-        ClassInfoList $classInfoList,
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        string $inputFilename,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            new self($classInfoList, $parser, $printer),
-            $output,
-            $inputFilename
-        );
     }
 }

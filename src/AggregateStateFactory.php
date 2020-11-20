@@ -1,19 +1,18 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\AggregateStateClassName;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
-use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow;
+use EventEngine\CodeGenerator\EventEngineAst\Filter\AggregateStateClassName;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\Psr4Info;
 
 final class AggregateStateFactory
 {
@@ -65,45 +64,6 @@ final class AggregateStateFactory
         $self->config->setClassInfoList($classInfoList);
 
         return $self;
-    }
-
-    public function workflowComponentDescriptionFile(
-        string $inputAnalyzer,
-        string $inputPath,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->componentFile(),
-            $output,
-            $inputAnalyzer,
-            $inputPath
-        );
-    }
-
-    public function workflowComponentDescriptionModifyMethod(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->componentModifyMethod(),
-            $output,
-            $inputAnalyzer,
-            $inputFiles
-        );
-    }
-
-    public function workflowComponentDescriptionImmutableRecordOverride(
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->componentDescriptionImmutableRecordOverride(),
-            $output,
-            $inputAnalyzer,
-            $inputFiles
-        );
     }
 
     public function componentFile(): AggregateStateFile

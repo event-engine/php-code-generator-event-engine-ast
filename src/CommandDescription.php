@@ -1,18 +1,18 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant as CodeClassConstant;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\CommandDescription as CodeCommandDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeCommand;
+use EventEngine\CodeGenerator\EventEngineAst\Code\ClassConstant as CodeClassConstant;
+use EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription as CodeCommandDescription;
+use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeCommand;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassConstant;
 use PhpParser\NodeTraverser;
@@ -74,31 +74,5 @@ final class CommandDescription
         }
 
         return $this->printer->prettyPrintFile($traverser->traverse($ast));
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        CodeCommandDescription $commandDescription,
-        CodeClassConstant $classConstant,
-        string $inputAnalyzer,
-        string $inputCode,
-        string $inputSchemaMetadata,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        $instance = new self(
-            $parser,
-            $printer,
-            $commandDescription,
-            $classConstant
-        );
-
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            $instance,
-            $output,
-            $inputAnalyzer,
-            $inputCode,
-            $inputSchemaMetadata
-        );
     }
 }

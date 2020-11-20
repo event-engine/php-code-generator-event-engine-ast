@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace EventEngineTest\CodeGenerator\Cartridge\EventEngine\Code\Metadata;
+namespace EventEngineTest\CodeGenerator\EventEngineAst\Code\Metadata;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema;
+use EventEngine\CodeGenerator\EventEngineAst\Code\Metadata\JsonSchema;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\GraphMl\Metadata\Command;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ArrayType;

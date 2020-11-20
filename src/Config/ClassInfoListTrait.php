@@ -10,20 +10,26 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-trait FilterValueObjectFolderTrait
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+
+trait ClassInfoListTrait
 {
     /**
-     * @var callable
+     * @var ClassInfoList
      **/
-    private $filterValueObjectFolder;
+    private $classInfoList;
 
-    public function getFilterValueObjectFolder(): ?callable
+    public function getClassInfoList(): ClassInfoList
     {
-        return $this->filterValueObjectFolder;
+        if (null === $this->classInfoList) {
+            $this->classInfoList = new ClassInfoList();
+        }
+
+        return $this->classInfoList;
     }
 
-    public function setFilterValueObjectFolder(?callable $filterValueObjectFolder): void
+    public function setClassInfoList(ClassInfoList $classInfoList): void
     {
-        $this->filterValueObjectFolder = $filterValueObjectFolder;
+        $this->classInfoList = $classInfoList;
     }
 }

@@ -1,24 +1,24 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\Metadata\JsonSchema;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Code\Metadata\JsonSchema;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
 use EventEngine\InspectioGraph\AggregateConnection;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Code\ClassGenerator;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
@@ -156,33 +156,5 @@ final class ValueObjectFile
         }
 
         return $files;
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        ClassInfoList $classInfoList,
-        \OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory $valueObjectFactory,
-        callable $filterClassName,
-        ?callable $filterValueObjectPath,
-        string $inputAnalyzer,
-        string $inputPath,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        $instance = new self(
-            $parser,
-            $printer,
-            $classInfoList,
-            $valueObjectFactory,
-            $filterClassName,
-            $filterValueObjectPath
-        );
-
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            $instance,
-            $output,
-            $inputAnalyzer,
-            $inputPath
-        );
     }
 }

@@ -1,16 +1,14 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
-
-use OpenCodeModeling\CodeGenerator\Workflow;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
 final class DescriptionFileMethodFactory
 {
@@ -32,17 +30,6 @@ final class DescriptionFileMethodFactory
     public static function withDefaultConfig(): self
     {
         return new self(new Config\DescriptionFileMethod());
-    }
-
-    public function workflowComponentDescription(
-        string $inputCode,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->component(),
-            $output,
-            $inputCode
-        );
     }
 
     public function component(): DescriptionFileMethod

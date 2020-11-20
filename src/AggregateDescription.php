@@ -1,23 +1,23 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateDescription as CodeAggregateDescription;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\ClassConstant as CodeClassConstant;
-use EventEngine\CodeGenerator\Cartridge\EventEngine\NodeVisitor\ClassMethodDescribeAggregate;
+use EventEngine\CodeGenerator\EventEngineAst\Code\AggregateDescription as CodeAggregateDescription;
+use EventEngine\CodeGenerator\EventEngineAst\Code\ClassConstant as CodeClassConstant;
+use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeAggregate;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassConstant;
 use OpenCodeModeling\CodeAst\NodeVisitor\NamespaceUse;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -140,39 +140,5 @@ final class AggregateDescription
         }
 
         return $this->printer->prettyPrintFile($traverser->traverse($ast));
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        ClassInfoList $classInfoList,
-        CodeAggregateDescription $aggregateDescription,
-        CodeClassConstant $classConstant,
-        callable $filterAggregateClassName,
-        ?callable $filterAggregatePath,
-        ?callable $filterStoreStateIn,
-        string $inputAnalyzer,
-        string $inputCode,
-        string $inputAggregatePath,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        $instance = new self(
-            $parser,
-            $printer,
-            $classInfoList,
-            $aggregateDescription,
-            $classConstant,
-            $filterAggregateClassName,
-            $filterAggregatePath,
-            $filterStoreStateIn
-        );
-
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            $instance,
-            $output,
-            $inputAnalyzer,
-            $inputCode,
-            $inputAggregatePath
-        );
     }
 }

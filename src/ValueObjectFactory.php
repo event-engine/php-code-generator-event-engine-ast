@@ -1,19 +1,18 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Filter\ValueObjectClassName;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
-use OpenCodeModeling\CodeGenerator\Code\Psr4Info;
-use OpenCodeModeling\CodeGenerator\Workflow;
+use EventEngine\CodeGenerator\EventEngineAst\Filter\ValueObjectClassName;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\Psr4Info;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
 
 final class ValueObjectFactory
@@ -68,19 +67,6 @@ final class ValueObjectFactory
         return $self;
     }
 
-    public function workflowComponentDescriptionFile(
-        string $inputAnalyzer,
-        string $inputPath,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->componentFile(),
-            $output,
-            $inputAnalyzer,
-            $inputPath
-        );
-    }
-
     public function componentFile(): ValueObjectFile
     {
         $typed = false;
@@ -93,7 +79,12 @@ final class ValueObjectFactory
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
-            new AstValueObjectFactory($this->config->getParser(), $typed),
+            new AstValueObjectFactory(
+                $this->config->getParser(),
+                $typed,
+                $this->config->getFilterConstName(),
+                $this->config->getFilterConstValue()
+            ),
             $this->config->getFilterClassName(),
             $this->config->getFilterValueObjectFolder()
         );

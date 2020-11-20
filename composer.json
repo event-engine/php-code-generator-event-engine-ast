@@ -1,6 +1,6 @@
 {
-    "name": "event-engine/php-code-generator-cartridge-event-engine",
-    "description": "PHP Code Generator Cartridge for Event Engine",
+    "name": "event-engine/php-code-generator-event-engine-ast",
+    "description": "PHP Code Generator for Event Engine based on PHP AST",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -16,17 +16,17 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/event-engine/php-code-generator-cartridge-event-engine/issues",
-        "source": "https://github.com/event-engine/php-code-generator-cartridge-event-engine"
+        "issues": "https://github.com/event-engine/php-code-generator-event-engine-ast/issues",
+        "source": "https://github.com/event-engine/php-code-generator-event-engine-ast"
     },
     "autoload": {
         "psr-4": {
-            "EventEngine\\CodeGenerator\\Cartridge\\EventEngine\\": "src/"
+            "EventEngine\\CodeGenerator\\EventEngineAst\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "EventEngineTest\\CodeGenerator\\Cartridge\\EventEngine\\": "tests/"
+            "EventEngineTest\\CodeGenerator\\EventEngineAst\\": "tests/"
         }
     },
     "repositories": [
@@ -39,11 +39,9 @@
         "php": "^7.3 || ^8.0",
         "ext-json": "*",
         "event-engine/php-inspectio-graph": "dev-feature/cody as 0.2.0",
-        "open-code-modeling/json-schema-to-php": "dev-master",
-        "open-code-modeling/json-schema-to-php-ast": "dev-master",
-        "open-code-modeling/php-code-ast": "dev-master",
-        "open-code-modeling/php-code-generator": "^0.2.0",
-        "open-code-modeling/php-code-generator-transformator": "^0.1.0",
+        "open-code-modeling/json-schema-to-php": "^0.1.0",
+        "open-code-modeling/json-schema-to-php-ast": "^0.2.1",
+        "open-code-modeling/php-code-ast": "^0.8.6",
         "symfony/console": "^4.4 || ^5.0"
     },
     "require-dev": {
@@ -62,8 +60,8 @@
     "scripts": {
         "check": [
             "@cs",
-            "@docheader",
-            "@test"
+            "@test",
+            "@analyse"
         ],
         "cs": "php-cs-fixer fix src -v --diff --dry-run",
         "cs-fix": "php-cs-fixer fix src -v --diff",

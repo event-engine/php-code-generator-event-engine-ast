@@ -1,16 +1,16 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Code\ClassGenerator;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
@@ -19,7 +19,7 @@ use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassUseTrait;
 use OpenCodeModeling\CodeAst\NodeVisitor\NamespaceUse;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -145,31 +145,5 @@ final class CommandFile
         }
 
         return $files;
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        ClassInfoList $classInfoList,
-        callable $filterCommandClassName,
-        ?callable $filterAggregatePath,
-        ?callable $filterCommandPath,
-        string $inputAnalyzer,
-        string $inputCommandPath,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            new self(
-                $parser,
-                $printer,
-                $classInfoList,
-                $filterCommandClassName,
-                $filterAggregatePath,
-                $filterCommandPath
-            ),
-            $output,
-            $inputAnalyzer,
-            $inputCommandPath
-        );
     }
 }

@@ -1,16 +1,16 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\Cartridge\EventEngine\Code\AggregateBehaviourCommandMethod as Code;
+use EventEngine\CodeGenerator\EventEngineAst\Code\AggregateBehaviourCommandMethod as Code;
 
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassMethod;
@@ -71,10 +71,9 @@ final class AggregateBehaviourCommandMethod
             foreach ($commandsToEventsMap as $commandVertex) {
                 $aggregateTraverser->addVisitor(
                         new ClassMethod(
-                            // @phpstan-ignore-next-line
                             $this->commandMethod->generate(
                                 $aggregateVertex,
-                                $commandVertex,
+                                $commandVertex, // @phpstan-ignore-line
                                 ...$commandsToEventsMap[$commandVertex]
                             )
                         )
@@ -85,27 +84,5 @@ final class AggregateBehaviourCommandMethod
         }
 
         return $files;
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        Code $commandMethod,
-        string $inputAnalyzer,
-        string $inputFiles,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        $instance = new self(
-            $parser,
-            $printer,
-            $commandMethod
-        );
-
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            $instance,
-            $output,
-            $inputAnalyzer,
-            $inputFiles
-        );
     }
 }

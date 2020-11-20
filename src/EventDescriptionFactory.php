@@ -1,16 +1,14 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
-
-use OpenCodeModeling\CodeGenerator\Workflow;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
 final class EventDescriptionFactory
 {
@@ -39,34 +37,6 @@ final class EventDescriptionFactory
         $self->config->setFilterConstValue($filterConstValue);
 
         return $self;
-    }
-
-    public function workflowComponentDescription(
-        string $inputAnalyzer,
-        string $inputCode,
-        string $inputSchemaMetadata,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->component(),
-            $output,
-            $inputAnalyzer,
-            $inputCode,
-            $inputSchemaMetadata
-        );
-    }
-
-    public function workflowComponentDescriptionMetadataSchema(
-        string $inputAnalyzer,
-        string $inputPathSchema,
-        string $output
-    ): Workflow\Description {
-        return new Workflow\ComponentDescriptionWithSlot(
-            $this->componentMetadataSchema(),
-            $output,
-            $inputAnalyzer,
-            $inputPathSchema
-        );
     }
 
     public function codeEventDescription(): Code\EventDescription

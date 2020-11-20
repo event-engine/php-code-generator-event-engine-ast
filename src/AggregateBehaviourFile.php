@@ -1,14 +1,14 @@
 <?php
 
 /**
- * @see       https://github.com/event-engine/php-code-generator-cartridge-event-engine for the canonical source repository
- * @copyright https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/COPYRIGHT.md
- * @license   https://github.com/event-engine/php-code-generator-cartridge-event-engine/blob/master/LICENSE.md MIT License
+ * @see       https://github.com/event-engine/php-code-generator-event-engine-ast for the canonical source repository
+ * @copyright https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/COPYRIGHT.md
+ * @license   https://github.com/event-engine/php-code-generator-event-engine-ast/blob/master/LICENSE.md MIT License
  */
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\Cartridge\EventEngine;
+namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Code\ClassGenerator;
@@ -16,7 +16,7 @@ use OpenCodeModeling\CodeAst\NodeVisitor\ClassFile;
 use OpenCodeModeling\CodeAst\NodeVisitor\ClassNamespace;
 use OpenCodeModeling\CodeAst\NodeVisitor\NamespaceUse;
 use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
-use OpenCodeModeling\CodeGenerator\Code\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use PhpParser\NodeTraverser;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
@@ -138,37 +138,5 @@ final class AggregateBehaviourFile
         }
 
         return $files;
-    }
-
-    public static function workflowComponentDescription(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
-        ClassInfoList $classInfoList,
-        callable $filterAggregateClassName,
-        callable $filterAggregateStateClassName,
-        ?callable $filterAggregatePath,
-        ?callable $filterAggregateStatePath,
-        string $inputAnalyzer,
-        string $inputAggregatePath,
-        string $inputAggregateStatePath,
-        string $inputApiEventFilename,
-        string $output
-    ): \OpenCodeModeling\CodeGenerator\Workflow\Description {
-        return new \OpenCodeModeling\CodeGenerator\Workflow\ComponentDescriptionWithSlot(
-            new self(
-                $parser,
-                $printer,
-                $classInfoList,
-                $filterAggregateClassName,
-                $filterAggregateStateClassName,
-                $filterAggregatePath,
-                $filterAggregateStatePath
-            ),
-            $output,
-            $inputAnalyzer,
-            $inputAggregatePath,
-            $inputAggregateStatePath,
-            $inputApiEventFilename
-        );
     }
 }

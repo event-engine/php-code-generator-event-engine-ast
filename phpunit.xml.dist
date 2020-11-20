@@ -11,7 +11,7 @@
         failOnRisky="true"
         failOnWarning="true"
 >
-    <testsuite name="Event Engine - PHP Code Generator Cartridge Test Suite">
+    <testsuite name="Event Engine - PHP AST Code Generator Test Suite">
         <directory suffix=".php">./tests</directory>
     </testsuite>
 
