@@ -12,6 +12,7 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 final class EmptyClass
 {
+    use BasePathTrait;
     use ClassInfoListTrait;
     use FilterDirectoryToNamespaceTrait;
     use FilterNamespaceToDirectoryTrait;

@@ -12,6 +12,7 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 final class AggregateDescription
 {
+    use BasePathTrait;
     use ClassInfoListTrait;
     use FilterAggregateFolderTrait;
     use FilterAggregateIdNameTrait;

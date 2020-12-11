@@ -43,7 +43,8 @@ final class EventFactory
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true,
-        bool $useEventFolder = false
+        bool $useEventFolder = false,
+        string $composerFile = 'service/composer.json'
     ): self {
         $self = new self(new Config\Event());
         $self->config->setFilterConstValue($filterConstValue);
@@ -56,17 +57,17 @@ final class EventFactory
         if ($useEventFolder) {
             $self->config->setFilterEventFolder($filterConstValue);
         }
-        $autoloadFile = 'vendor/autoload.php';
 
         $classInfoList = new ClassInfoList();
 
-        if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
+        if (\file_exists($composerFile) && \is_readable($composerFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                require $autoloadFile,
-                $self->config->getFilterDirectoryToNamespace(),
-                $self->config->getFilterNamespaceToDirectory()
-            )
+                    $self->config->getBasePath(),
+                    \file_get_contents($composerFile),
+                    $self->config->getFilterDirectoryToNamespace(),
+                    $self->config->getFilterNamespaceToDirectory()
+                )
             );
         }
 

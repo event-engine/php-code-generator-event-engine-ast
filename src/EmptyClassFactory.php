@@ -31,19 +31,19 @@ final class EmptyClassFactory
     }
 
     public static function withDefaultConfig(
-        callable $filterDirectoryToNamespace
+        callable $filterDirectoryToNamespace,
+        string $composerFile = 'service/composer.json'
     ): self {
         $self = new self(new Config\EmptyClass());
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
 
-        $autoloadFile = 'vendor/autoload.php';
-
         $classInfoList = new ClassInfoList();
 
-        if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
+        if (\file_exists($composerFile) && \is_readable($composerFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                    require $autoloadFile,
+                    $self->config->getBasePath(),
+                    \file_get_contents($composerFile),
                     $self->config->getFilterDirectoryToNamespace(),
                     $self->config->getFilterNamespaceToDirectory()
                 )

@@ -14,6 +14,6 @@ final class AggregateStateClassName extends AbstractFilter
 {
     public function __invoke(string $value): string
     {
-        return \ucfirst(($this->filter)($value . 'State'));
+        return \ucfirst(($this->filter)($value)) . 'State';
     }
 }

@@ -12,6 +12,7 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 final class Event
 {
+    use BasePathTrait;
     use ClassInfoListTrait;
     use FilterAggregateFolderTrait;
     use FilterClassNameTrait;

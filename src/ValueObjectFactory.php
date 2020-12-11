@@ -10,9 +10,12 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
 use EventEngine\CodeGenerator\EventEngineAst\Filter\ValueObjectClassName;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use OpenCodeModeling\CodeAst\Package\Psr4Info;
+use OpenCodeModeling\JsonSchemaToPhpAst\ClassGenerator;
+use OpenCodeModeling\JsonSchemaToPhpAst\FileGenerator;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
 
 final class ValueObjectFactory
@@ -48,17 +51,18 @@ final class ValueObjectFactory
         if (true === $useValueObjectFolder) {
             $self->config->setFilterValueObjectFolder($filterConstValue);
         }
-        $autoloadFile = 'vendor/autoload.php';
+        $autoloadFile = 'service/composer.json';
 
         $classInfoList = new ClassInfoList();
 
         if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                require $autoloadFile,
-                $self->config->getFilterDirectoryToNamespace(),
-                $self->config->getFilterNamespaceToDirectory()
-            )
+                    $self->config->getBasePath(),
+                    \file_get_contents($autoloadFile),
+                    $self->config->getFilterDirectoryToNamespace(),
+                    $self->config->getFilterNamespaceToDirectory()
+                )
             );
         }
 
@@ -76,17 +80,37 @@ final class ValueObjectFactory
         }
 
         return new ValueObjectFile(
+            $this->objectGenerator($typed),
+            $this->config->getFilterValueObjectFolder()
+        );
+    }
+
+    public function objectGenerator(bool $typed): ObjectGenerator
+    {
+        return new ObjectGenerator(
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
-            new AstValueObjectFactory(
-                $this->config->getParser(),
-                $typed,
-                $this->config->getFilterConstName(),
-                $this->config->getFilterConstValue()
+            new ClassGenerator(
+                $this->config->getClassInfoList(),
+                new AstValueObjectFactory(
+                    $this->config->getParser(),
+                    $typed,
+                    $this->config->getFilterClassName(),
+                    $this->config->getFilterPropertyName(),
+                    $this->config->getFilterMethodName(),
+                    $this->config->getFilterConstName(),
+                    $this->config->getFilterConstValue()
+                ),
+                $this->config->getFilterClassName(),
+                $this->config->getFilterPropertyName()
             ),
+            new FileGenerator($this->config->getClassInfoList()),
             $this->config->getFilterClassName(),
-            $this->config->getFilterValueObjectFolder()
+            $this->config->getFilterPropertyName(),
+            $this->config->getFilterMethodName(),
+            $this->config->getFilterConstName(),
+            $this->config->getFilterConstValue()
         );
     }
 }

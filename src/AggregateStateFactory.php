@@ -35,29 +35,31 @@ final class AggregateStateFactory
         callable $filterConstName,
         callable $filterConstValue,
         callable $filterDirectoryToNamespace,
-        bool $useAggregateFolder = true
+        bool $useAggregateFolder = true,
+        string $composerFile = 'service/composer.json'
     ): self {
         $self = new self(new Config\AggregateState());
 
         $self->config->setFilterConstName($filterConstName);
         $self->config->setFilterConstValue($filterConstValue);
         $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
-        $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
 
         if (true === $useAggregateFolder) {
-            $self->config->setFilterAggregateFolder($filterConstValue);
+            $self->config->setFilterAggregateFolder($self->config->getFilterClassName());
         }
-        $autoloadFile = 'vendor/autoload.php';
+
+        $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
 
         $classInfoList = new ClassInfoList();
 
-        if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
+        if (\file_exists($composerFile) && \is_readable($composerFile)) {
             $classInfoList->addClassInfo(
                 ...Psr4Info::fromComposer(
-                require $autoloadFile,
-                $self->config->getFilterDirectoryToNamespace(),
-                $self->config->getFilterNamespaceToDirectory()
-            )
+                    $self->config->getBasePath(),
+                    \file_get_contents($composerFile),
+                    $self->config->getFilterDirectoryToNamespace(),
+                    $self->config->getFilterNamespaceToDirectory()
+                )
             );
         }
 

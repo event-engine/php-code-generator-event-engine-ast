@@ -10,18 +10,24 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-final class ValueObject
+trait BasePathTrait
 {
-    use BasePathTrait;
-    use ClassInfoListTrait;
-    use FilterClassNameTrait;
-    use FilterConstNameTrait;
-    use FilterConstValueTrait;
-    use FilterDirectoryToNamespaceTrait;
-    use FilterMethodNameTrait;
-    use FilterNamespaceToDirectoryTrait;
-    use FilterPropertyNameTrait;
-    use FilterValueObjectFolderTrait;
-    use PhpParserTrait;
-    use PhpPrinterTrait;
+    /**
+     * @var string
+     **/
+    private $basePath;
+
+    public function getBasePath(): string
+    {
+        if (null === $this->basePath) {
+            $this->basePath = \getcwd();
+        }
+
+        return $this->basePath;
+    }
+
+    public function setBasePath(string $basePath): void
+    {
+        $this->basePath = $basePath;
+    }
 }
