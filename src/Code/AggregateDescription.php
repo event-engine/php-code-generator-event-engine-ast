@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventType;
@@ -70,10 +72,25 @@ final class AggregateDescription
         $commandMethodName = ($this->filterCommandMethodName)($command->label());
         $aggregateName = ($this->filterConstName)($aggregate->label());
         $identifiedBy = ($this->filterAggregateId)($aggregate->label());
+        $with = 'withExisting';
+        $storeStateInCode = '';
 
-        $metadataInstance = $command->metadataInstance();
+        $commandMetadataInstance = $command->metadataInstance();
+        $aggregateMetadataInstance = $aggregate->metadataInstance();
 
-        $with = $metadataInstance && true === $metadataInstance->newAggregate() ? 'withNew' : 'withExisting';
+        if ($aggregateMetadataInstance instanceof AggregateMetadata) {
+            $identifiedBy = $aggregateMetadataInstance->identifier();
+        }
+
+        if ($commandMetadataInstance instanceof CommandMetadata
+            && true === $commandMetadataInstance->newAggregate()
+        ) {
+            $with = 'withNew';
+
+            if ($storeStateIn) {
+                $storeStateInCode = \sprintf("->storeStateIn('%s');", $storeStateIn);
+            }
+        }
 
         $code = \sprintf('$eventEngine->process(Command::%s)->%s(self::%s)', $commandConstName, $with, $aggregateName);
         $code .= \sprintf("->identifiedBy('%s')->handle([%s::class, '%s'])", $identifiedBy, $aggregateBehaviourCommandClassName, $commandMethodName);
@@ -87,9 +104,8 @@ final class AggregateDescription
             $code .= \sprintf("->%s(Event::%s)->apply([%s::class, '%s'])", $recordThatName, $eventConstName, $aggregateBehaviourEventClassName, $eventMethodName);
             $recordThatName = 'orRecordThat';
         }
-        $metadataInstance = $command->metadataInstance();
 
-        $code .= $metadataInstance && true === $metadataInstance->newAggregate() && $storeStateIn ? \sprintf("->storeStateIn('%s');", $storeStateIn) : '';
+        $code .= $storeStateInCode;
 
         $code .= ';';
 

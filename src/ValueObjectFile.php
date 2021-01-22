@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Code\Metadata\JsonSchema;
 use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\AggregateConnection;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 
@@ -50,14 +50,19 @@ final class ValueObjectFile
             }
 
             foreach ($aggregateConnection->commandMap() as $command) {
-                $jsonSchema = JsonSchema::fromVertex($command);
+                $metadataInstance = $command->metadataInstance();
 
-                $type = $jsonSchema->type();
-
-                if ($type === null) {
+                if ($metadataInstance === null
+                    || ! $metadataInstance instanceof HasTypeSet
+                    || $metadataInstance->typeSet() === null
+                ) {
                     continue;
                 }
-                $fileCollection = $this->objectGenerator->generateValueObject($pathValueObject, 'PleaseRemoveMe', $type);
+                $fileCollection = $this->objectGenerator->generateValueObject(
+                    $pathValueObject,
+                    'PleaseRemoveMe',
+                    $metadataInstance->typeSet()
+                );
 
                 $files = \array_merge($files, $this->objectGenerator->generateFiles($fileCollection));
             }

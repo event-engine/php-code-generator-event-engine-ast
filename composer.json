@@ -32,7 +32,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
-        "event-engine/php-inspectio-graph": "^0.2.0",
+        "event-engine/php-inspectio-graph": "^0.3.0",
         "open-code-modeling/json-schema-to-php": "^0.2.1",
         "open-code-modeling/json-schema-to-php-ast": "^0.3",
         "open-code-modeling/php-code-ast": "^0.10.0",

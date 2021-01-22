@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Code\Metadata\JsonSchema;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Code\PropertyGenerator;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
@@ -51,15 +51,15 @@ final class EventProperty
             if (! isset($files[$name])) {
                 continue;
             }
-            $jsonSchema = JsonSchema::fromVertex($event);
+            $metadataInstance = $event->metadataInstance();
 
-            $type = $jsonSchema->type();
-
-            if ($type === null) {
+            if ($metadataInstance === null
+                || ! $metadataInstance instanceof HasTypeSet
+                || $metadataInstance->typeSet() === null
+            ) {
                 continue;
             }
-
-            $type = $type->first();
+            $type = $metadataInstance->typeSet()->first();
 
             if (! $type instanceof ObjectType) {
                 throw new RuntimeException(

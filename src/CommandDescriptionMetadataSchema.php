@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\CommandMetadata;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 
 final class CommandDescriptionMetadataSchema
@@ -33,7 +34,7 @@ final class CommandDescriptionMetadataSchema
         foreach ($analyzer->commandMap() as $name => $commandVertex) {
             $metadata = $commandVertex->metadataInstance();
 
-            if ($metadata === null) {
+            if ($metadata === null || ! $metadata instanceof CommandMetadata) {
                 continue;
             }
             $schema = $metadata->schema();

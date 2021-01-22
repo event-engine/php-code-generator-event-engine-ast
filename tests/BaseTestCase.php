@@ -19,7 +19,9 @@ use EventEngine\CodeGenerator\EventEngineAst\DescriptionFileMethodFactory;
 use EventEngine\CodeGenerator\EventEngineAst\EmptyClassFactory;
 use EventEngine\CodeGenerator\EventEngineAst\EventDescriptionFactory;
 use EventEngine\CodeGenerator\EventEngineAst\EventFactory;
-use EventEngine\InspectioGraphCody\Metadata\NodeJsonMetadataFactory;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\MetadataFactory;
+use EventEngine\CodeGenerator\EventEngineAst\ValueObjectFactory;
+use EventEngine\InspectioGraphCody\Node;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
@@ -40,7 +42,11 @@ abstract class BaseTestCase extends TestCase
     protected string $modelPath;
 
     protected Filesystem $fileSystem;
-    protected NodeJsonMetadataFactory $metadataFactory;
+    /**
+     * @var callable
+     */
+    protected $metadataFactory;
+
     protected ClassInfoList $classInfoList;
 
     protected AggregateStateFactory $aggregateStateFactory;
@@ -52,12 +58,13 @@ abstract class BaseTestCase extends TestCase
     protected EmptyClassFactory $emptyClassFactory;
     protected CommandFactory $commandFactory;
     protected EventFactory $eventFactory;
+    protected ValueObjectFactory $valueObjectFactory;
 
     public function setUp(): void
     {
         parent::setUp();
         $this->fileSystem = new Filesystem(new InMemoryFilesystemAdapter());
-        $this->metadataFactory = new NodeJsonMetadataFactory();
+        $this->metadataFactory = static fn (Node $node) => (new MetadataFactory())($node->metadata(), $node->type());
 
         $this->initComposerFile();
 
@@ -86,6 +93,7 @@ abstract class BaseTestCase extends TestCase
         $this->initEventDescriptionFactory();
         $this->initCommandFactory();
         $this->initEventFactory();
+        $this->initValueObjectFactory();
     }
 
     private function initAggregateStateFactory(): void
@@ -140,6 +148,12 @@ abstract class BaseTestCase extends TestCase
     {
         $this->eventFactory = EventFactory::withDefaultConfig();
         $this->eventFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initValueObjectFactory(): void
+    {
+        $this->valueObjectFactory = ValueObjectFactory::withDefaultConfig();
+        $this->valueObjectFactory->config()->setClassInfoList($this->classInfoList);
     }
 
     private function initComposerFile(): void
