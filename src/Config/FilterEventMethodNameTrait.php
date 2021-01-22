@@ -19,12 +19,15 @@ trait FilterEventMethodNameTrait
      **/
     private $filterEventMethodName;
 
-    abstract public function getFilterConstValue(): callable;
+    public function injectFilterEventMethodName(callable $filter): void
+    {
+        $this->filterEventMethodName = new AggregateBehaviourEventMethod($filter);
+    }
 
     public function getFilterEventMethodName(): callable
     {
         if (null === $this->filterEventMethodName) {
-            $this->filterEventMethodName = new AggregateBehaviourEventMethod($this->getFilterConstValue());
+            $this->filterEventMethodName = new AggregateBehaviourEventMethod();
         }
 
         return $this->filterEventMethodName;

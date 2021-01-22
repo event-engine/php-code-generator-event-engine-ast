@@ -24,7 +24,7 @@ abstract class AbstractClassMethodDescribe extends NodeVisitorAbstract
             if ($definitions = $this->definitions($node)) {
                 $node->stmts = \array_merge(
                     $definitions,
-                    $node->stmts
+                    $node->stmts ?? []
                 );
 
                 return $node;
@@ -41,6 +41,10 @@ abstract class AbstractClassMethodDescribe extends NodeVisitorAbstract
         string $identifier,
         Node\Stmt\ClassMethod $node
     ): bool {
+        if ($node->stmts === null) {
+            return false;
+        }
+
         foreach ($node->stmts as $stmt) {
             if ($stmt instanceof Node\Stmt\Expression
                 && $stmt->expr instanceof Node\Expr\MethodCall

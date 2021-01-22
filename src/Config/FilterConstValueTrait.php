@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use EventEngine\CodeGenerator\EventEngineAst\Filter\Noop;
+use OpenCodeModeling\Filter\Filter\Noop;
 
 trait FilterConstValueTrait
 {

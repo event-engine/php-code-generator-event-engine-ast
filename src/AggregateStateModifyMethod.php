@@ -59,7 +59,7 @@ final class AggregateStateModifyMethod
 
         foreach ($analyzer->aggregateMap() as $aggregateDescription) {
             $aggregateVertex = $aggregateDescription->aggregate();
-            $name = $aggregateVertex->name();
+            $name = $aggregateVertex->name() . AggregateStateFactory::STATE_SUFFIX;
 
             if (! isset($files[$name])) {
                 continue;

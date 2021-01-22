@@ -11,9 +11,6 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
-use EventEngine\CodeGenerator\EventEngineAst\Filter\ValueObjectClassName;
-use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\CodeAst\Package\Psr4Info;
 use OpenCodeModeling\JsonSchemaToPhpAst\ClassGenerator;
 use OpenCodeModeling\JsonSchemaToPhpAst\FileGenerator;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory as AstValueObjectFactory;
@@ -36,37 +33,23 @@ final class ValueObjectFactory
     }
 
     public static function withDefaultConfig(
-        callable $filterConstName,
-        callable $filterConstValue,
-        callable $filterDirectoryToNamespace,
-        bool $useValueObjectFolder = true
+        bool $useValueObjectFolder = true,
+        ?string $basePath = null,
+        ?string $composerFile = null
     ): self {
-        $self = new self(new Config\ValueObject());
-
-        $self->config->setFilterConstName($filterConstName);
-        $self->config->setFilterConstValue($filterConstValue);
-        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
-        $self->config->setFilterClassName(new ValueObjectClassName($self->config->getFilterClassName()));
+        $self = new self(Config\ValueObject::withDefaultConfig());
 
         if (true === $useValueObjectFolder) {
-            $self->config->setFilterValueObjectFolder($filterConstValue);
-        }
-        $autoloadFile = 'service/composer.json';
-
-        $classInfoList = new ClassInfoList();
-
-        if (\file_exists($autoloadFile) && \is_readable($autoloadFile)) {
-            $classInfoList->addClassInfo(
-                ...Psr4Info::fromComposer(
-                    $self->config->getBasePath(),
-                    \file_get_contents($autoloadFile),
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
-            );
+            $self->config->setFilterValueObjectFolder($self->config->getFilterClassName());
         }
 
-        $self->config->setClassInfoList($classInfoList);
+        if ($basePath !== null) {
+            $self->config->setBasePath($basePath);
+        }
+
+        if ($composerFile !== null) {
+            $self->config->addComposerInfo($composerFile);
+        }
 
         return $self;
     }

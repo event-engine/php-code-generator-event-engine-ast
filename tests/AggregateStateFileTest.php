@@ -14,21 +14,19 @@ use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\Filter\FilterFactory;
 
-final class AggregateBehaviourFileTest extends BaseTestCase
+final class AggregateStateFileTest extends BaseTestCase
 {
     /**
      * @test
      */
-    public function it_creates_aggregate_behaviour_file(): void
+    public function it_creates_aggregate_state_file(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
 
-        $codeList = $this->aggregateBehaviourFactory->componentFile()(
+        $codeList = $this->aggregateStateFactory->componentFile()(
             $analyzer,
-            $this->modelPath,
-            $this->modelPath,
-            $this->apiEventFilename
+            $this->modelPath
         );
 
         $this->assertCount(1, $codeList);
@@ -37,8 +35,8 @@ final class AggregateBehaviourFileTest extends BaseTestCase
 
     private function assertFile(array $codeList): void
     {
-        $this->assertArrayHasKey('BUILDING', $codeList);
-        $this->assertSame('/service/src/Domain/Model/Building/Building.php', $codeList['BUILDING']['filename']);
+        $this->assertArrayHasKey('BUILDING_STATE', $codeList);
+        $this->assertSame('/service/src/Domain/Model/Building/BuildingState.php', $codeList['BUILDING_STATE']['filename']);
 
         $expected = <<<'PHP'
 <?php
@@ -46,14 +44,13 @@ final class AggregateBehaviourFileTest extends BaseTestCase
 declare (strict_types=1);
 namespace MyService\Domain\Model\Building;
 
-use MyService\Domain\Model\Building\BuildingState as State;
-use Generator;
-use EventEngine\Messaging\Message;
-use MyService\Domain\Api\Event;
-final class Building
+use EventEngine\Data\ImmutableRecordLogic;
+use EventEngine\Data\ImmutableRecord;
+final class BuildingState implements ImmutableRecord
 {
+    use ImmutableRecordLogic;
 }
 PHP;
-        $this->assertSame($expected, $codeList['BUILDING']['code']);
+        $this->assertSame($expected, $codeList['BUILDING_STATE']['code']);
     }
 }

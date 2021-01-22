@@ -111,7 +111,7 @@ final class AggregateStateFile
             $aggregateTraverser->addVisitor(new ClassImplements('ImmutableRecord'));
             $aggregateTraverser->addVisitor(new ClassUseTrait('ImmutableRecordLogic'));
 
-            $files[$name] = [
+            $files[$name . AggregateStateFactory::STATE_SUFFIX] = [
                 'filename' => $filename,
                 'code' => $this->printer->prettyPrintFile($aggregateTraverser->traverse($ast)),
             ];

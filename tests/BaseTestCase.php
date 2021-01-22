@@ -10,9 +10,21 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\AggregateBehaviourFactory;
+use EventEngine\CodeGenerator\EventEngineAst\AggregateDescriptionFactory;
+use EventEngine\CodeGenerator\EventEngineAst\AggregateStateFactory;
+use EventEngine\CodeGenerator\EventEngineAst\CommandDescriptionFactory;
+use EventEngine\CodeGenerator\EventEngineAst\CommandFactory;
+use EventEngine\CodeGenerator\EventEngineAst\DescriptionFileMethodFactory;
+use EventEngine\CodeGenerator\EventEngineAst\EmptyClassFactory;
+use EventEngine\CodeGenerator\EventEngineAst\EventDescriptionFactory;
+use EventEngine\CodeGenerator\EventEngineAst\EventFactory;
 use EventEngine\InspectioGraphCody\Metadata\NodeJsonMetadataFactory;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\Psr4Info;
+use OpenCodeModeling\Filter\FilterFactory;
 use PHPUnit\Framework\TestCase;
 
 abstract class BaseTestCase extends TestCase
@@ -22,9 +34,24 @@ abstract class BaseTestCase extends TestCase
     protected string $basePath = '/service';
     protected string $srcFolder = '/service/src';
     protected string $appNamespace = 'MyService';
+    protected string $apiAggregateFilename;
+    protected string $apiEventFilename;
+    protected string $apiCommandFilename;
+    protected string $modelPath;
 
     protected Filesystem $fileSystem;
     protected NodeJsonMetadataFactory $metadataFactory;
+    protected ClassInfoList $classInfoList;
+
+    protected AggregateStateFactory $aggregateStateFactory;
+    protected AggregateBehaviourFactory $aggregateBehaviourFactory;
+    protected AggregateDescriptionFactory $aggregateDescriptionFactory;
+    protected CommandDescriptionFactory $commandDescriptionFactory;
+    protected EventDescriptionFactory $eventDescriptionFactory;
+    protected DescriptionFileMethodFactory $descriptionFileMethodFactory;
+    protected EmptyClassFactory $emptyClassFactory;
+    protected CommandFactory $commandFactory;
+    protected EventFactory $eventFactory;
 
     public function setUp(): void
     {
@@ -33,6 +60,86 @@ abstract class BaseTestCase extends TestCase
         $this->metadataFactory = new NodeJsonMetadataFactory();
 
         $this->initComposerFile();
+
+        $this->apiAggregateFilename = $this->srcFolder . '/Domain/Api/Aggregate.php';
+        $this->apiEventFilename = $this->srcFolder . '/Domain/Api/Event.php';
+        $this->apiCommandFilename = $this->srcFolder . '/Domain/Api/Command.php';
+        $this->modelPath = $this->srcFolder . '/Domain/Model';
+
+        $this->classInfoList = new ClassInfoList();
+
+        $this->classInfoList->addClassInfo(
+            ...Psr4Info::fromComposer(
+                '/service',
+                $this->fileSystem->read('service/composer.json'),
+                FilterFactory::directoryToNamespaceFilter(),
+                FilterFactory::namespaceToDirectoryFilter(),
+            )
+        );
+
+        $this->initAggregateStateFactory();
+        $this->initAggregateBehaviourFactory();
+        $this->initAggregateDescriptionFactory();
+        $this->initDescriptionFileMethodFactory();
+        $this->initEmptyClassFactory();
+        $this->initCommandDescriptionFactory();
+        $this->initEventDescriptionFactory();
+        $this->initCommandFactory();
+        $this->initEventFactory();
+    }
+
+    private function initAggregateStateFactory(): void
+    {
+        $this->aggregateStateFactory = AggregateStateFactory::withDefaultConfig();
+        $this->aggregateStateFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initAggregateBehaviourFactory(): void
+    {
+        $this->aggregateBehaviourFactory = AggregateBehaviourFactory::withDefaultConfig(
+            $this->aggregateStateFactory->config()
+        );
+
+        $this->aggregateBehaviourFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initAggregateDescriptionFactory(): void
+    {
+        $this->aggregateDescriptionFactory = AggregateDescriptionFactory::withDefaultConfig();
+        $this->aggregateDescriptionFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initCommandDescriptionFactory(): void
+    {
+        $this->commandDescriptionFactory = CommandDescriptionFactory::withDefaultConfig();
+    }
+
+    private function initEventDescriptionFactory(): void
+    {
+        $this->eventDescriptionFactory = EventDescriptionFactory::withDefaultConfig();
+    }
+
+    private function initDescriptionFileMethodFactory(): void
+    {
+        $this->descriptionFileMethodFactory = DescriptionFileMethodFactory::withDefaultConfig();
+    }
+
+    private function initEmptyClassFactory(): void
+    {
+        $this->emptyClassFactory = EmptyClassFactory::withDefaultConfig();
+        $this->emptyClassFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initCommandFactory(): void
+    {
+        $this->commandFactory = CommandFactory::withDefaultConfig();
+        $this->commandFactory->config()->setClassInfoList($this->classInfoList);
+    }
+
+    private function initEventFactory(): void
+    {
+        $this->eventFactory = EventFactory::withDefaultConfig();
+        $this->eventFactory->config()->setClassInfoList($this->classInfoList);
     }
 
     private function initComposerFile(): void

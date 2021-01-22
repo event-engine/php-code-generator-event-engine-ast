@@ -19,6 +19,11 @@ trait FilterAggregateIdNameTrait
      **/
     private $filterAggregateIdName;
 
+    public function injectFilterAggregateIdName(callable $filter): void
+    {
+        $this->filterAggregateIdName = new Id($filter);
+    }
+
     public function getFilterAggregateIdName(): callable
     {
         if (null === $this->filterAggregateIdName) {

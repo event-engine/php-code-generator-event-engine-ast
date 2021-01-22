@@ -10,9 +10,6 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\CodeAst\Package\Psr4Info;
-
 final class EmptyClassFactory
 {
     /**
@@ -31,26 +28,18 @@ final class EmptyClassFactory
     }
 
     public static function withDefaultConfig(
-        callable $filterDirectoryToNamespace,
-        string $composerFile = 'service/composer.json'
+        ?string $basePath = null,
+        ?string $composerFile = null
     ): self {
-        $self = new self(new Config\EmptyClass());
-        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
+        $self = new self(Config\EmptyClass::withDefaultConfig());
 
-        $classInfoList = new ClassInfoList();
-
-        if (\file_exists($composerFile) && \is_readable($composerFile)) {
-            $classInfoList->addClassInfo(
-                ...Psr4Info::fromComposer(
-                    $self->config->getBasePath(),
-                    \file_get_contents($composerFile),
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
-            );
+        if ($basePath !== null) {
+            $self->config->setBasePath($basePath);
         }
 
-        $self->config->setClassInfoList($classInfoList);
+        if ($composerFile !== null) {
+            $self->config->addComposerInfo($composerFile);
+        }
 
         return $self;
     }

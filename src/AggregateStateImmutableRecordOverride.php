@@ -62,6 +62,8 @@ final class AggregateStateImmutableRecordOverride
         $stateProperty = new Property($this->stateProperty());
 
         foreach ($analyzer->aggregateMap()->aggregateVertexMap() as $name => $vertex) {
+            $name .= AggregateStateFactory::STATE_SUFFIX;
+
             if (! isset($files[$name])) {
                 continue;
             }

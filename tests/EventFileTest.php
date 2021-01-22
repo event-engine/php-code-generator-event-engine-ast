@@ -14,21 +14,19 @@ use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\Filter\FilterFactory;
 
-final class AggregateBehaviourFileTest extends BaseTestCase
+final class EventFileTest extends BaseTestCase
 {
     /**
      * @test
      */
-    public function it_creates_aggregate_behaviour_file(): void
+    public function it_creates_event_file(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
 
-        $codeList = $this->aggregateBehaviourFactory->componentFile()(
+        $codeList = $this->eventFactory->componentFile()(
             $analyzer,
-            $this->modelPath,
-            $this->modelPath,
-            $this->apiEventFilename
+            $this->modelPath
         );
 
         $this->assertCount(1, $codeList);
@@ -37,23 +35,22 @@ final class AggregateBehaviourFileTest extends BaseTestCase
 
     private function assertFile(array $codeList): void
     {
-        $this->assertArrayHasKey('BUILDING', $codeList);
-        $this->assertSame('/service/src/Domain/Model/Building/Building.php', $codeList['BUILDING']['filename']);
+        $this->assertArrayHasKey('BUILDING_ADDED', $codeList);
+        $this->assertSame('/service/src/Domain/Model/Building/Event/BuildingAdded.php', $codeList['BUILDING_ADDED']['filename']);
 
         $expected = <<<'PHP'
 <?php
 
 declare (strict_types=1);
-namespace MyService\Domain\Model\Building;
+namespace MyService\Domain\Model\Building\Event;
 
-use MyService\Domain\Model\Building\BuildingState as State;
-use Generator;
-use EventEngine\Messaging\Message;
-use MyService\Domain\Api\Event;
-final class Building
+use EventEngine\Data\ImmutableRecordLogic;
+use EventEngine\Data\ImmutableRecord;
+final class BuildingAdded implements ImmutableRecord
 {
+    use ImmutableRecordLogic;
 }
 PHP;
-        $this->assertSame($expected, $codeList['BUILDING']['code']);
+        $this->assertSame($expected, $codeList['BUILDING_ADDED']['code']);
     }
 }

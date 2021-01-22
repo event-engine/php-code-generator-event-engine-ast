@@ -14,12 +14,12 @@ use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\Filter\FilterFactory;
 
-final class AggregateBehaviourFileTest extends BaseTestCase
+final class AggregateBehaviourCommandMethodTest extends BaseTestCase
 {
     /**
      * @test
      */
-    public function it_creates_aggregate_behaviour_file(): void
+    public function it_creates_aggregate_behaviour_command_method(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
@@ -29,6 +29,12 @@ final class AggregateBehaviourFileTest extends BaseTestCase
             $this->modelPath,
             $this->modelPath,
             $this->apiEventFilename
+        );
+        $this->assertCount(1, $codeList);
+
+        $codeList = $this->aggregateBehaviourFactory->componentCommandMethod()(
+            $analyzer,
+            $codeList
         );
 
         $this->assertCount(1, $codeList);
@@ -52,6 +58,10 @@ use EventEngine\Messaging\Message;
 use MyService\Domain\Api\Event;
 final class Building
 {
+    public static function addBuilding(Message $addBuilding) : Generator
+    {
+        (yield [Event::BUILDING_ADDED, $addBuilding->payload()]);
+    }
 }
 PHP;
         $this->assertSame($expected, $codeList['BUILDING']['code']);

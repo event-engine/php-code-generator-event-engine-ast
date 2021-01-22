@@ -10,12 +10,10 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Filter\AggregateStateClassName;
-use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\CodeAst\Package\Psr4Info;
-
 final class AggregateStateFactory
 {
+    public const STATE_SUFFIX = '_STATE';
+
     /**
      * @var Config\AggregateState
      **/
@@ -32,38 +30,23 @@ final class AggregateStateFactory
     }
 
     public static function withDefaultConfig(
-        callable $filterConstName,
-        callable $filterConstValue,
-        callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true,
-        string $composerFile = 'service/composer.json'
+        ?string $basePath = null,
+        ?string $composerFile = null
     ): self {
-        $self = new self(new Config\AggregateState());
-
-        $self->config->setFilterConstName($filterConstName);
-        $self->config->setFilterConstValue($filterConstValue);
-        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
+        $self = new self(Config\AggregateState::withDefaultConfig());
 
         if (true === $useAggregateFolder) {
             $self->config->setFilterAggregateFolder($self->config->getFilterClassName());
         }
 
-        $self->config->setFilterClassName(new AggregateStateClassName($self->config->getFilterClassName()));
-
-        $classInfoList = new ClassInfoList();
-
-        if (\file_exists($composerFile) && \is_readable($composerFile)) {
-            $classInfoList->addClassInfo(
-                ...Psr4Info::fromComposer(
-                    $self->config->getBasePath(),
-                    \file_get_contents($composerFile),
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
-            );
+        if ($basePath !== null) {
+            $self->config->setBasePath($basePath);
         }
 
-        $self->config->setClassInfoList($classInfoList);
+        if ($composerFile !== null) {
+            $self->config->addComposerInfo($composerFile);
+        }
 
         return $self;
     }
@@ -74,7 +57,7 @@ final class AggregateStateFactory
             $this->config->getParser(),
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
-            $this->config->getFilterClassName(),
+            $this->config->getFilterAggregateStateClassName(),
             $this->config->getFilterAggregateFolder()
         );
     }

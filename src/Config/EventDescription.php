@@ -10,8 +10,21 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
+use OpenCodeModeling\Filter\FilterFactory;
+
 final class EventDescription
 {
+    public static function withDefaultConfig(): self
+    {
+        $self = new self();
+
+        $self->filterClassName = FilterFactory::classNameFilter();
+        $self->filterConstName = FilterFactory::constantNameFilter();
+        $self->filterConstValue = FilterFactory::constantValueFilter();
+
+        return $self;
+    }
+
     use FilterClassNameTrait;
     use FilterConstNameTrait;
     use FilterConstValueTrait;

@@ -10,9 +10,6 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\CodeAst\Package\Psr4Info;
-
 final class CommandFactory
 {
     /**
@@ -31,47 +28,34 @@ final class CommandFactory
     }
 
     /**
-     * @param callable $filterConstName
-     * @param callable $filterConstValue
-     * @param callable $filterDirectoryToNamespace
      * @param bool $useAggregateFolder Indicates if the command folder with commands should be generated under the aggregate name
      * @param bool $useCommandFolder Indicates if each command should be generated in it's own folder depending on command name
+     * @param string|null $basePath
+     * @param string|null $composerFile
      * @return CommandFactory
      */
     public static function withDefaultConfig(
-        callable $filterConstName,
-        callable $filterConstValue,
-        callable $filterDirectoryToNamespace,
         bool $useAggregateFolder = true,
         bool $useCommandFolder = false,
-        string $composerFile = 'service/composer.json'
+        ?string $basePath = null,
+        ?string $composerFile = null
     ): self {
-        $self = new self(new Config\Command());
-        $self->config->setFilterConstValue($filterConstValue);
-        $self->config->setFilterConstName($filterConstName);
-        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
+        $self = new self(Config\Command::withDefaultConfig());
 
         if ($useAggregateFolder) {
-            $self->config->setFilterAggregateFolder($filterConstValue);
+            $self->config->setFilterAggregateFolder($self->config->getFilterClassName());
         }
         if ($useCommandFolder) {
-            $self->config->setFilterCommandFolder($filterConstValue);
+            $self->config->setFilterCommandFolder($self->config->getFilterClassName());
         }
 
-        $classInfoList = new ClassInfoList();
-
-        if (\file_exists($composerFile) && \is_readable($composerFile)) {
-            $classInfoList->addClassInfo(
-                ...Psr4Info::fromComposer(
-                    $self->config->getBasePath(),
-                    \file_get_contents($composerFile),
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
-            );
+        if ($basePath !== null) {
+            $self->config->setBasePath($basePath);
         }
 
-        $self->config->setClassInfoList($classInfoList);
+        if ($composerFile !== null) {
+            $self->config->addComposerInfo($composerFile);
+        }
 
         return $self;
     }

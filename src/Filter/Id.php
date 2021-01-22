@@ -14,6 +14,6 @@ final class Id extends AbstractFilter
 {
     public function __invoke(string $value): string
     {
-        return \lcfirst(($this->filter)($value)) . 'Id';
+        return ($this->filter)($value) . 'Id';
     }
 }

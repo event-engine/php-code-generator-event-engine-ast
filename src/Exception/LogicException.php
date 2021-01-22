@@ -8,12 +8,10 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Exception;
 
-final class LowerCaseFirst extends AbstractFilter
+use LogicException as BaseLogicException;
+
+class LogicException extends BaseLogicException implements EventEngineException
 {
-    public function __invoke(string $value): string
-    {
-        return \lcfirst(($this->filter)($value));
-    }
 }

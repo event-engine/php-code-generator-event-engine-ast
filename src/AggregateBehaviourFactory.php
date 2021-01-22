@@ -10,20 +10,10 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\CodeAst\Package\Psr4Info;
-
 final class AggregateBehaviourFactory
 {
-    /**
-     * @var Config\AggregateBehaviour
-     **/
-    private $config;
-
-    /**
-     * @var Config\AggregateState
-     **/
-    private $stateConfig;
+    private Config\AggregateBehaviour $config;
+    private Config\AggregateState $stateConfig;
 
     public function __construct(Config\AggregateBehaviour $config, Config\AggregateState $stateConfig)
     {
@@ -37,36 +27,24 @@ final class AggregateBehaviourFactory
     }
 
     public static function withDefaultConfig(
-        callable $filterConstName,
-        callable $filterConstValue,
-        callable $filterDirectoryToNamespace,
         Config\AggregateState $stateConfig,
         bool $useAggregateFolder = true,
-        string $composerFile = 'service/composer.json'
+        ?string $basePath = null,
+        ?string $composerFile = null
     ): self {
-        $self = new self(new Config\AggregateBehaviour(), $stateConfig);
-        $self->config->setFilterConstName($filterConstName);
-        $self->config->setFilterConstValue($filterConstValue);
-        $self->config->setFilterDirectoryToNamespace($filterDirectoryToNamespace);
+        $self = new self(Config\AggregateBehaviour::withDefaultConfig(), $stateConfig);
 
         if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($self->config->getFilterClassName());
         }
 
-        $classInfoList = new ClassInfoList();
-
-        if (\file_exists($composerFile) && \is_readable($composerFile)) {
-            $classInfoList->addClassInfo(
-                ...Psr4Info::fromComposer(
-                    $self->config->getBasePath(),
-                    \file_get_contents($composerFile),
-                    $self->config->getFilterDirectoryToNamespace(),
-                    $self->config->getFilterNamespaceToDirectory()
-                )
-            );
+        if ($basePath !== null) {
+            $self->config->setBasePath($basePath);
         }
 
-        $self->config->setClassInfoList($classInfoList);
+        if ($composerFile !== null) {
+            $self->config->addComposerInfo($composerFile);
+        }
 
         return $self;
     }
@@ -96,7 +74,7 @@ final class AggregateBehaviourFactory
             $this->config->getPrinter(),
             $this->config->getClassInfoList(),
             $this->config->getFilterClassName(),
-            $this->stateConfig->getFilterClassName(),
+            $this->stateConfig->getFilterAggregateStateClassName(),
             $this->config->getFilterAggregateFolder(),
             $this->stateConfig->getFilterAggregateFolder()
         );

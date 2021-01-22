@@ -14,6 +14,6 @@ final class StateName extends AbstractFilter
 {
     public function __invoke(string $value): string
     {
-        return \lcfirst(($this->filter)($value)) . 's';
+        return ($this->filter)($value) . 's';
     }
 }

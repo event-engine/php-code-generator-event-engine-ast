@@ -27,16 +27,9 @@ final class EventDescriptionFactory
         return $this->config;
     }
 
-    public static function withDefaultConfig(
-        callable $filterConstName,
-        callable $filterConstValue
-    ): self {
-        $self = new self(new Config\EventDescription());
-
-        $self->config->setFilterConstName($filterConstName);
-        $self->config->setFilterConstValue($filterConstValue);
-
-        return $self;
+    public static function withDefaultConfig(): self
+    {
+        return new self(Config\EventDescription::withDefaultConfig());
     }
 
     public function codeEventDescription(): Code\EventDescription

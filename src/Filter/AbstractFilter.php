@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
 
+use OpenCodeModeling\Filter\Filter\Noop;
+
 abstract class AbstractFilter implements Filter
 {
     /**

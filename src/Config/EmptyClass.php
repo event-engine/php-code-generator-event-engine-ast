@@ -10,8 +10,20 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
+use OpenCodeModeling\Filter\FilterFactory;
+
 final class EmptyClass
 {
+    public static function withDefaultConfig(): self
+    {
+        $self = new self();
+
+        $self->filterDirectoryToNamespace = FilterFactory::directoryToNamespaceFilter();
+        $self->filterNamespaceToDirectory = FilterFactory::namespaceToDirectoryFilter();
+
+        return $self;
+    }
+
     use BasePathTrait;
     use ClassInfoListTrait;
     use FilterDirectoryToNamespaceTrait;

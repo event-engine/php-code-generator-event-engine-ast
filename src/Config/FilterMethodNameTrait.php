@@ -19,8 +19,6 @@ trait FilterMethodNameTrait
      **/
     private $filterMethodName;
 
-    abstract public function getFilterConstValue(): callable;
-
     public function getFilterMethodName(): callable
     {
         if (null === $this->filterMethodName) {
