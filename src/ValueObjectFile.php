@@ -14,6 +14,9 @@ use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\AggregateConnection;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexType;
+use OpenCodeModeling\CodeAst\Builder\File;
+use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class ValueObjectFile
 {
@@ -50,18 +53,9 @@ final class ValueObjectFile
             }
 
             foreach ($aggregateConnection->commandMap() as $command) {
-                $metadataInstance = $command->metadataInstance();
-
-                if ($metadataInstance === null
-                    || ! $metadataInstance instanceof HasTypeSet
-                    || $metadataInstance->typeSet() === null
-                ) {
-                    continue;
-                }
-                $fileCollection = $this->objectGenerator->generateValueObject(
-                    $pathValueObject,
-                    'PleaseRemoveMe',
-                    $metadataInstance->typeSet()
+                $fileCollection = $this->generateValueObjectsFromMetadata(
+                    $command,
+                    $pathValueObject
                 );
 
                 $files = \array_merge($files, $this->objectGenerator->generateFiles($fileCollection));
@@ -69,5 +63,24 @@ final class ValueObjectFile
         }
 
         return $files;
+    }
+
+    public function generateValueObjectsFromMetadata(VertexType $vertex, string $pathValueObject): FileCollection
+    {
+        $metadataInstance = $vertex->metadataInstance();
+
+        if ($metadataInstance === null
+            || ! $metadataInstance instanceof HasTypeSet
+            || $metadataInstance->typeSet() === null
+        ) {
+            return  FileCollection::emptyList();
+        }
+        $fileCollection = $this->objectGenerator->generateValueObject(
+            $pathValueObject,
+            'PleaseRemoveMe',
+            $metadataInstance->typeSet()
+        );
+
+        return $fileCollection->filter(fn (File $file) => $file->getName() !== 'PleaseRemoveMe');
     }
 }

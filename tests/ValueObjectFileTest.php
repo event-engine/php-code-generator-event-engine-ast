@@ -29,6 +29,6 @@ final class ValueObjectFileTest extends BaseTestCase
             $this->modelPath
         );
 
-        $this->assertCount(3, $codeList);
+        $this->assertCount(2, $codeList);
     }
 }
