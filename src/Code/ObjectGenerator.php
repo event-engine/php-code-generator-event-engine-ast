@@ -14,83 +14,30 @@ use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
-use OpenCodeModeling\CodeAst\Package\ClassInfo;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
-use OpenCodeModeling\JsonSchemaToPhpAst\ClassGenerator;
-use OpenCodeModeling\JsonSchemaToPhpAst\FileGenerator;
-use PhpParser\Parser;
-use PhpParser\PrettyPrinterAbstract;
+use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
 
 final class ObjectGenerator
 {
-    /**
-     * @var Parser
-     **/
-    private $parser;
-
-    /**
-     * @var PrettyPrinterAbstract
-     */
-    private $printer;
-
     /**
      * @var callable
      */
     private $classNameFilter;
 
-    /**
-     * @var callable
-     */
-    private $propertyNameFilter;
+    private ClassInfoList $classInfoList;
 
-    /**
-     * @var callable
-     */
-    private $methodNameFilter;
-
-    /**
-     * @var callable
-     */
-    private $constNameFilter;
-
-    /**
-     * @var callable
-     */
-    private $constValueFilter;
-
-    /**
-     * @var ClassInfoList
-     **/
-    private $classInfoList;
-
-    private ClassGenerator $classGenerator;
-
-    private FileGenerator $fileGenerator;
+    private ValueObjectFactory $valueObjectFactory;
 
     public function __construct(
-        Parser $parser,
-        PrettyPrinterAbstract $printer,
         ClassInfoList $classInfoList,
-        ClassGenerator $classGenerator,
-        FileGenerator $fileGenerator,
-        callable $classNameFilter,
-        callable $propertyNameFilter,
-        callable $methodNameFilter,
-        callable $constNameFilter,
-        callable $constValueFilter
+        ValueObjectFactory $valueObjectFactory,
+        callable $classNameFilter
     ) {
-        $this->parser = $parser;
-        $this->printer = $printer;
         $this->classInfoList = $classInfoList;
-        $this->classGenerator = $classGenerator;
-        $this->fileGenerator = $fileGenerator;
+        $this->valueObjectFactory = $valueObjectFactory;
         $this->classNameFilter = $classNameFilter;
-        $this->propertyNameFilter = $propertyNameFilter;
-        $this->methodNameFilter = $methodNameFilter;
-        $this->constNameFilter = $constNameFilter;
-        $this->constValueFilter = $constValueFilter;
     }
 
     public function sortThings(FileCollection $fileCollection): void
@@ -112,52 +59,39 @@ final class ObjectGenerator
         return $this->generateFiles(FileCollection::fromItems($classBuilder))[0];
     }
 
-    public function generateFiles(FileCollection $fileCollection): array
+    public function generateFiles(FileCollection $fileCollection, callable $applyCodeStyle = null): array
     {
+        if ($applyCodeStyle === null) {
+            $applyCodeStyle = static fn (string $code) => $code;
+        }
+
         $files = [];
 
         $this->sortThings($fileCollection);
 
-        $currentFileAst = function (File $classBuilder, ClassInfo $classInfo) {
-            $path = $classInfo->getPath($classBuilder->getNamespace() . '\\' . $classBuilder->getName());
-            $filename = $classInfo->getFilenameFromPathAndName($path, $classBuilder->getName());
-
-            $code = '';
-
-            if (\file_exists($filename) && \is_readable($filename)) {
-                $code = \file_get_contents($filename);
-            }
-
-            return $this->parser->parse($code);
-        };
-
-        foreach ($this->fileGenerator->generateFiles($fileCollection, $this->parser, $this->printer,
-            $currentFileAst) as $filename => $code) {
+        foreach ($this->valueObjectFactory->generateFiles($fileCollection) as $filename => $code) {
             $files[$filename] = [
                 'filename' => $filename,
-                'code' => $code,
+                'code' => ($applyCodeStyle)($code),
             ];
         }
 
         return $files;
     }
 
-    public function addConstants(FileCollection $fileCollection, int $visibility): void
+    public function addClassConstantsForProperties(FileCollection $fileCollection, int $visibility): void
     {
-        $this->classGenerator->addClassConstantsForProperties(
+        $this->valueObjectFactory->addClassConstantsForProperties(
             $fileCollection,
-            $this->constNameFilter,
-            $this->constValueFilter,
             $visibility
         );
     }
 
-    public function addGetterMethods(FileCollection $fileCollection): void
+    public function addGetterMethodsForProperties(FileCollection $fileCollection): void
     {
-        $this->classGenerator->addGetterMethods(
+        $this->valueObjectFactory->addGetterMethodsForProperties(
             $fileCollection,
-            true,
-            $this->methodNameFilter,
+            true
         );
     }
 
@@ -169,12 +103,7 @@ final class ObjectGenerator
             ) {
                 continue;
             }
-            $file->addNamespaceImport(
-                'EventEngine\Data\ImmutableRecord',
-                'EventEngine\Data\ImmutableRecordLogic',
-            );
-            $file->addImplement('ImmutableRecord')
-                ->addTrait('ImmutableRecordLogic');
+            $this->codeImmutableRecordLogic($file);
         }
     }
 
@@ -202,7 +131,7 @@ final class ObjectGenerator
 
         $fileCollection = FileCollection::emptyList();
 
-        $this->classGenerator->generateClasses(
+        $this->valueObjectFactory->generateClasses(
             $classBuilder,
             $fileCollection,
             $jsonSchemaSet,
@@ -217,37 +146,63 @@ final class ObjectGenerator
         string $className,
         ObjectType $jsonSchema
     ): FileCollection {
-        $className = ($this->classNameFilter)($className);
-        $classInfo = $this->classInfoList->classInfoForPath($valueObjectDirectory);
+        $fileCollection = $this->generateValueObject($valueObjectDirectory, $className, new TypeSet($jsonSchema));
 
-        $classBuilder = ClassBuilder::fromScratch(
-            $className,
-            $classInfo->getClassNamespaceFromPath($valueObjectDirectory)
-        )->setFinal(true);
-
-        $fileCollection = FileCollection::emptyList();
-
-        $this->classGenerator->generateClasses(
-            $classBuilder,
-            $fileCollection,
-            new TypeSet($jsonSchema),
-            $valueObjectDirectory
-        );
-        $this->addGetterMethods($fileCollection);
+        $this->addGetterMethodsForProperties($fileCollection);
 
         return $fileCollection;
     }
 
+    /**
+     * Generates an immutable record class e. g. command, event or aggregate state and corresponding value objects
+     * from the JSON metadata
+     *
+     * @param string $immutableRecordClassName Immutable record class name
+     * @param string $immutableRecordDirectory Path to store the immutable record class
+     * @param string $valueObjectDirectory Path to store the corresponding value objects
+     * @param TypeSet|null $jsonSchemaSet JSON schema from which value objects will be generated
+     * @return FileCollection Contains all generated classes
+     */
     public function generateImmutableRecord(
+        string $immutableRecordClassName,
+        string $immutableRecordDirectory,
         string $valueObjectDirectory,
-        string $valueObjectName,
-        ObjectType $jsonSchema
+        TypeSet $jsonSchemaSet = null
     ): FileCollection {
-        $fileCollection = $this->generateObject($valueObjectDirectory, $valueObjectName, $jsonSchema);
+        $classInfo = $this->classInfoList->classInfoForPath($immutableRecordDirectory);
 
-        $this->addConstants($fileCollection, ClassConstGenerator::FLAG_PUBLIC);
-        $this->addImmutableRecordLogic($fileCollection);
+        $classBuilder = ClassBuilder::fromScratch(
+                ($this->classNameFilter)($immutableRecordClassName),
+                $classInfo->getClassNamespaceFromPath($immutableRecordDirectory)
+            )
+            ->setFinal(true);
+
+        $this->codeImmutableRecordLogic($classBuilder);
+
+        $fileCollection = FileCollection::fromItems($classBuilder);
+
+        if ($jsonSchemaSet !== null) {
+            $this->valueObjectFactory->generateClasses(
+                $classBuilder,
+                $fileCollection,
+                $jsonSchemaSet,
+                $valueObjectDirectory
+            );
+        }
+
+        $this->addClassConstantsForProperties($fileCollection, ClassConstGenerator::FLAG_PUBLIC);
+        $this->addGetterMethodsForProperties($fileCollection);
 
         return $fileCollection;
+    }
+
+    private function codeImmutableRecordLogic(ClassBuilder $file): void
+    {
+        $file->addNamespaceImport(
+            'EventEngine\Data\ImmutableRecord',
+            'EventEngine\Data\ImmutableRecordLogic',
+        );
+        $file->addImplement('ImmutableRecord')
+            ->addTrait('ImmutableRecordLogic');
     }
 }

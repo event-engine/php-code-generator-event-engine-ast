@@ -15,23 +15,33 @@ use PhpParser\NodeVisitorAbstract;
 
 abstract class AbstractClassMethodDescribe extends NodeVisitorAbstract
 {
-    public function enterNode(Node $node)
+    public function afterTraverse(array $nodes)
     {
-        if ($node instanceof Node\Stmt\ClassMethod
-            && $node->name instanceof Node\Identifier
-            && $node->name->name === 'describe'
-        ) {
-            if ($definitions = $this->definitions($node)) {
-                $node->stmts = \array_merge(
-                    $definitions,
-                    $node->stmts ?? []
-                );
+        $newNodes = [];
 
-                return $node;
+        foreach ($nodes as $node) {
+            $newNodes[] = $node;
+
+            if (! $node instanceof Node\Stmt\Class_) {
+                continue;
+            }
+
+            foreach ($node->stmts as $stmt) {
+                if ($stmt instanceof Node\Stmt\ClassMethod
+                    && $stmt->name instanceof Node\Identifier
+                    && $stmt->name->name === 'describe'
+                ) {
+                    if ($definitions = $this->definitions($stmt)) {
+                        $stmt->stmts = \array_merge(
+                            $definitions,
+                            $stmt->stmts ?? []
+                        );
+                    }
+                }
             }
         }
 
-        return null;
+        return $newNodes;
     }
 
     abstract protected function definitions(Node\Stmt\ClassMethod $node): ?array;

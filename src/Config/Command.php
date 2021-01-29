@@ -10,32 +10,45 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use OpenCodeModeling\Filter\FilterFactory;
+use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
+use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexType;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
+use PhpParser\Parser;
+use PhpParser\PrettyPrinterAbstract;
 
-final class Command
+interface Command
 {
-    public static function withDefaultConfig(): self
-    {
-        $self = new self();
+    public function getBasePath(): string;
 
-        $self->filterClassName = FilterFactory::classNameFilter();
-        $self->filterConstName = FilterFactory::constantNameFilter();
-        $self->filterConstValue = FilterFactory::constantValueFilter();
-        $self->filterDirectoryToNamespace = FilterFactory::directoryToNamespaceFilter();
-        $self->filterNamespaceToDirectory = FilterFactory::namespaceToDirectoryFilter();
+    public function getClassInfoList(): ClassInfoList;
 
-        return $self;
-    }
+    public function getFilterAggregateFolder(): ?callable;
 
-    use BasePathTrait;
-    use ClassInfoListTrait;
-    use FilterAggregateFolderTrait;
-    use FilterClassNameTrait;
-    use FilterCommandFolderTrait;
-    use FilterConstNameTrait;
-    use FilterConstValueTrait;
-    use FilterDirectoryToNamespaceTrait;
-    use FilterNamespaceToDirectoryTrait;
-    use PhpParserTrait;
-    use PhpPrinterTrait;
+    public function getFilterClassName(): callable;
+
+    public function getFilterConstName(): callable;
+
+    public function getFilterConstValue(): callable;
+
+    public function getFilterDirectoryToNamespace(): callable;
+
+    public function getFilterNamespaceToDirectory(): callable;
+
+    public function getFilterPropertyName(): callable;
+
+    public function getFilterMethodName(): callable;
+
+    public function getParser(): Parser;
+
+    public function getPrinter(): PrettyPrinterAbstract;
+
+    public function getObjectGenerator(): ObjectGenerator;
+
+    public function getValueObjectFactory(): ValueObjectFactory;
+
+    public function determineValueObjectPath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 }

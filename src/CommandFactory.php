@@ -13,16 +13,16 @@ namespace EventEngine\CodeGenerator\EventEngineAst;
 final class CommandFactory
 {
     /**
-     * @var Config\Command
+     * @var Config\PreConfiguredCommand
      **/
     private $config;
 
-    public function __construct(Config\Command $config)
+    public function __construct(Config\PreConfiguredCommand $config)
     {
         $this->config = $config;
     }
 
-    public function config(): Config\Command
+    public function config(): Config\PreConfiguredCommand
     {
         return $this->config;
     }
@@ -40,7 +40,7 @@ final class CommandFactory
         ?string $basePath = null,
         ?string $composerFile = null
     ): self {
-        $self = new self(Config\Command::withDefaultConfig());
+        $self = new self(new Config\PreConfiguredCommand());
 
         if ($useAggregateFolder) {
             $self->config->setFilterAggregateFolder($self->config->getFilterClassName());
