@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\NodeVisitor;
 
 use PhpParser\Node;
+use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\NodeVisitorAbstract;
 
 abstract class AbstractClassMethodDescribe extends NodeVisitorAbstract
@@ -22,26 +24,35 @@ abstract class AbstractClassMethodDescribe extends NodeVisitorAbstract
         foreach ($nodes as $node) {
             $newNodes[] = $node;
 
-            if (! $node instanceof Node\Stmt\Class_) {
-                continue;
-            }
-
-            foreach ($node->stmts as $stmt) {
-                if ($stmt instanceof Node\Stmt\ClassMethod
-                    && $stmt->name instanceof Node\Identifier
-                    && $stmt->name->name === 'describe'
-                ) {
-                    if ($definitions = $this->definitions($stmt)) {
-                        $stmt->stmts = \array_merge(
-                            $definitions,
-                            $stmt->stmts ?? []
-                        );
+            if ($node instanceof Namespace_) {
+                foreach ($node->stmts as $stmt) {
+                    if ($stmt instanceof Class_) {
+                        $this->addDefinitions($stmt);
                     }
                 }
+            } elseif ($node instanceof Class_) {
+                $this->addDefinitions($node);
             }
         }
 
         return $newNodes;
+    }
+
+    private function addDefinitions(Node\Stmt\Class_ $node): void
+    {
+        foreach ($node->stmts as $stmt) {
+            if ($stmt instanceof Node\Stmt\ClassMethod
+                && $stmt->name instanceof Node\Identifier
+                && $stmt->name->name === 'describe'
+            ) {
+                if ($definitions = $this->definitions($stmt)) {
+                    $stmt->stmts = \array_merge(
+                        $definitions,
+                        $stmt->stmts ?? []
+                    );
+                }
+            }
+        }
     }
 
     abstract protected function definitions(Node\Stmt\ClassMethod $node): ?array;
