@@ -106,6 +106,12 @@ final class Command
                     )
                 )
             );
+
+            $classBuilder->addNodeVisitor(
+                new ClassMethodDescribeCommand(
+                    $this->commandDescription->generate($command, $jsonSchemaFileName)
+                )
+            );
         }
 
         $files->add($classBuilder);
