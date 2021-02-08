@@ -15,8 +15,6 @@ use EventEngine\CodeGenerator\EventEngineAst\AggregateDescriptionFactory;
 use EventEngine\CodeGenerator\EventEngineAst\AggregateStateFactory;
 use EventEngine\CodeGenerator\EventEngineAst\DescriptionFileMethodFactory;
 use EventEngine\CodeGenerator\EventEngineAst\EmptyClassFactory;
-use EventEngine\CodeGenerator\EventEngineAst\EventDescriptionFactory;
-use EventEngine\CodeGenerator\EventEngineAst\EventFactory;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\MetadataFactory;
 use EventEngine\CodeGenerator\EventEngineAst\ValueObjectFactory;
 use EventEngine\InspectioGraphCody\Node;
@@ -50,10 +48,8 @@ abstract class BaseTestCase extends TestCase
     protected AggregateStateFactory $aggregateStateFactory;
     protected AggregateBehaviourFactory $aggregateBehaviourFactory;
     protected AggregateDescriptionFactory $aggregateDescriptionFactory;
-    protected EventDescriptionFactory $eventDescriptionFactory;
     protected DescriptionFileMethodFactory $descriptionFileMethodFactory;
     protected EmptyClassFactory $emptyClassFactory;
-    protected EventFactory $eventFactory;
     protected ValueObjectFactory $valueObjectFactory;
 
     public function setUp(): void
@@ -85,8 +81,6 @@ abstract class BaseTestCase extends TestCase
         $this->initAggregateDescriptionFactory();
         $this->initDescriptionFileMethodFactory();
         $this->initEmptyClassFactory();
-        $this->initEventDescriptionFactory();
-        $this->initEventFactory();
         $this->initValueObjectFactory();
     }
 
@@ -111,11 +105,6 @@ abstract class BaseTestCase extends TestCase
         $this->aggregateDescriptionFactory->config()->setClassInfoList($this->classInfoList);
     }
 
-    private function initEventDescriptionFactory(): void
-    {
-        $this->eventDescriptionFactory = EventDescriptionFactory::withDefaultConfig();
-    }
-
     private function initDescriptionFileMethodFactory(): void
     {
         $this->descriptionFileMethodFactory = DescriptionFileMethodFactory::withDefaultConfig();
@@ -125,12 +114,6 @@ abstract class BaseTestCase extends TestCase
     {
         $this->emptyClassFactory = EmptyClassFactory::withDefaultConfig();
         $this->emptyClassFactory->config()->setClassInfoList($this->classInfoList);
-    }
-
-    private function initEventFactory(): void
-    {
-        $this->eventFactory = EventFactory::withDefaultConfig();
-        $this->eventFactory->config()->setClassInfoList($this->classInfoList);
     }
 
     private function initValueObjectFactory(): void

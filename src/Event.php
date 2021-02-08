@@ -11,24 +11,24 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\CommandMetadata;
-use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeCommand;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\EventMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeEvent;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
-final class Command
+final class Event
 {
-    private Config\Command $config;
+    private Config\Event $config;
 
-    private \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription $commandDescription;
+    private \EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription $eventDescription;
 
-    public function __construct(Config\Command $config)
+    public function __construct(Config\Event $config)
     {
         $this->config = $config;
-        $this->commandDescription = new \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription(
+        $this->eventDescription = new \EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription(
             $this->config->getParser(),
             $this->config->getFilterConstName()
         );
@@ -40,10 +40,10 @@ final class Command
 
         $pathSchema = \rtrim(\rtrim($pathSchema), '\/\\') . DIRECTORY_SEPARATOR;
 
-        foreach ($analyzer->commandMap() as $name => $commandVertex) {
-            $metadata = $commandVertex->metadataInstance();
+        foreach ($analyzer->eventMap() as $name => $eventVertex) {
+            $metadata = $eventVertex->metadataInstance();
 
-            if ($metadata === null || ! $metadata instanceof CommandMetadata) {
+            if ($metadata === null || ! $metadata instanceof EventMetadata) {
                 continue;
             }
             $schema = $metadata->schema();
@@ -53,7 +53,7 @@ final class Command
             }
 
             $files[$name] = [
-                'filename' => $pathSchema . ($this->config->getFilterConstName())($commandVertex->label()) . '.json',
+                'filename' => $pathSchema . ($this->config->getFilterConstName())($eventVertex->label()) . '.json',
                 'code' => $schema,
             ];
         }
@@ -90,17 +90,17 @@ final class Command
             )
         );
 
-        foreach ($analyzer->commandMap() as $name => $command) {
+        foreach ($analyzer->eventMap() as $name => $event) {
             $classBuilder->addConstant(
                 ClassConstBuilder::fromScratch(
-                    ($this->config->getFilterConstName())($command->label()),
-                    ($this->config->getFilterConstValue())($command->label()),
+                    ($this->config->getFilterConstName())($event->label()),
+                    ($this->config->getFilterConstValue())($event->label()),
                 )
             );
 
             $classBuilder->addNodeVisitor(
-                new ClassMethodDescribeCommand(
-                    $this->commandDescription->generate($command, $jsonSchemaFileName)
+                new ClassMethodDescribeEvent(
+                    $this->eventDescription->generate($event, $jsonSchemaFileName)
                 )
             );
         }
@@ -109,17 +109,17 @@ final class Command
     }
 
     /**
-     * Generates command files with corresponding value objects depending on given JSON schema metadata.
+     * Generates event files with corresponding value objects depending on given JSON schema metadata.
      *
      * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
-    public function generateCommandFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
+    public function generateEventFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
     {
-        foreach ($analyzer->commandMap() as $name => $command) {
-            $pathCommand = $this->config->determinePath($command, $analyzer);
+        foreach ($analyzer->eventMap() as $name => $event) {
+            $pathEvent = $this->config->determinePath($event, $analyzer);
 
-            $metadataInstance = $command->metadataInstance();
+            $metadataInstance = $event->metadataInstance();
 
             $typeSet = null;
 
@@ -130,9 +130,9 @@ final class Command
             }
 
             $code = $this->config->getObjectGenerator()->generateImmutableRecord(
-                $command->label(),
-                $pathCommand,
-                $this->config->determineValueObjectPath($command, $analyzer),
+                $event->label(),
+                $pathEvent,
+                $this->config->determineValueObjectPath($event, $analyzer),
                 $typeSet
             );
 

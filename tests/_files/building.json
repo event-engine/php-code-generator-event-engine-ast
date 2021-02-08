@@ -97,7 +97,7 @@
                     "x": -193,
                     "y": 448
                 },
-                "metadata": "{  \"shorthand\": true,  \"schema\": {    \"buildingId\": \"uuid\",    \"name\": \"string\"  }}"
+                "metadata": "{  \"shorthand\": true,  \"schema\": {    \"buildingId\": \"string|format:uuid\",    \"name\": \"string\"  }}"
             }
         ],
         "geometry": {
