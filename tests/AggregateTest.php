@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Command;
-use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredCommand;
+use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredAggregate;
 use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
@@ -19,15 +19,15 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
-final class CommandTest extends BaseTestCase
+final class AggregateTest extends BaseTestCase
 {
-    private PreConfiguredCommand $config;
+    private PreConfiguredAggregate $config;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->config = new PreConfiguredCommand();
+        $this->config = new PreConfiguredAggregate();
         $this->config->setBasePath($this->basePath);
         $this->config->setClassInfoList($this->classInfoList);
     }
@@ -35,20 +35,19 @@ final class CommandTest extends BaseTestCase
     /**
      * @test
      */
-    public function it_creates_api_command_description(): void
+    public function it_creates_api_aggregate_description(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
 
-        $command = new Command($this->config);
+        $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $command->generateApiDescription(
+        $aggregate->generateApiDescription(
             $analyzer,
             $fileCollection,
-            $this->apiCommandFilename,
-            '/service/src/Domain/Api/_schema/ADD_BUILDING.json'
+            $this->apiAggregateFilename
         );
 
         $this->config->getObjectGenerator()->sortThings($fileCollection);
@@ -78,12 +77,13 @@ use EventEngine\EventEngine;
 use EventEngine\EventEngineDescription;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
-final class Command implements EventEngineDescription
+use MyService\Domain\Model\Building\Building;
+final class Aggregate implements EventEngineDescription
 {
-    public const ADD_BUILDING = 'add_building';
+    public const BUILDING = 'building';
     public static function describe(EventEngine $eventEngine) : void
     {
-        $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+        $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings');
     }
 }
 PHP;
@@ -93,58 +93,16 @@ PHP;
     /**
      * @test
      */
-    public function it_creates_api_command_json_schema_file(): void
+    public function it_creates_aggregate_file_with_value_objects(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
 
-        $command = new Command($this->config);
-
-        $files = $command->generateJsonSchemaFiles($analyzer, '/service/src/Domain/Api/_schema');
-
-        $this->assertCount(1, $files);
-
-        $this->assertArrayHasKey('ADD_BUILDING', $files);
-        $this->assertArrayHasKey('code', $files['ADD_BUILDING']);
-        $this->assertArrayHasKey('filename', $files['ADD_BUILDING']);
-
-        $json = <<<JSON
-        {
-            "type": "object",
-            "properties": {
-                "buildingId": {
-                    "format": "uuid",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "buildingId",
-                "name"
-            ],
-            "additionalProperties": false
-        }
-        JSON;
-
-        $this->assertSame('/service/src/Domain/Api/_schema/ADD_BUILDING.json', $files['ADD_BUILDING']['filename']);
-        $this->assertSame($json, $files['ADD_BUILDING']['code']);
-    }
-
-    /**
-     * @test
-     */
-    public function it_creates_command_file_with_value_objects(): void
-    {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
-
-        $command = new Command($this->config);
+        $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $command->generateCommandFile($analyzer, $fileCollection);
+        $aggregate->generateAggregateFile($analyzer, $fileCollection, $this->apiEventFilename);
 
         $this->config->getObjectGenerator()->sortThings($fileCollection);
 
@@ -152,8 +110,8 @@ PHP;
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
-                case 'AddBuilding':
-                    $this->assertCommandFile($file);
+                case 'Building':
+                    $this->assertAggregateFile($file);
                     break;
                 case 'BuildingId':
                 case 'Name':
@@ -165,7 +123,7 @@ PHP;
         }
     }
 
-    private function assertCommandFile(ClassBuilder $classBuilder): void
+    private function assertAggregateFile(ClassBuilder $classBuilder): void
     {
         $ast = $this->config->getParser()->parse('');
 
@@ -177,26 +135,21 @@ PHP;
 <?php
 
 declare (strict_types=1);
-namespace MyService\Domain\Model\Building\Command;
+namespace MyService\Domain\Model\Building;
 
-use EventEngine\Data\ImmutableRecord;
-use EventEngine\Data\ImmutableRecordLogic;
-use MyService\Domain\Model\ValueObject\BuildingId;
-use MyService\Domain\Model\ValueObject\Name;
-final class AddBuilding implements ImmutableRecord
+use EventEngine\Messaging\Message;
+use Generator;
+use MyService\Domain\Api\Event;
+use MyService\Domain\Model\Building\BuildingState;
+final class Building
 {
-    use ImmutableRecordLogic;
-    public const BUILDING_ID = 'building_id';
-    public const NAME = 'name';
-    private BuildingId $buildingId;
-    private Name $name;
-    public function buildingId() : BuildingId
+    public static function addBuilding(Message $addBuilding) : Generator
     {
-        return $this->buildingId;
+        (yield [Event::BUILDING_ADDED, $addBuilding->payload()]);
     }
-    public function name() : Name
+    public static function whenBuildingAdded(Message $buildingAdded) : BuildingState
     {
-        return $this->name;
+        return BuildingState::fromArray($buildingAdded->payload());
     }
 }
 PHP;

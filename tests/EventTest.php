@@ -78,7 +78,7 @@ use EventEngine\EventEngine;
 use EventEngine\EventEngineDescription;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
-class Event implements EventEngineDescription
+final class Event implements EventEngineDescription
 {
     public const BUILDING_ADDED = 'building_added';
     public static function describe(EventEngine $eventEngine) : void
@@ -113,8 +113,8 @@ PHP;
             "type": "object",
             "properties": {
                 "buildingId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

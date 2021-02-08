@@ -10,8 +10,6 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\AggregateBehaviourFactory;
-use EventEngine\CodeGenerator\EventEngineAst\AggregateDescriptionFactory;
 use EventEngine\CodeGenerator\EventEngineAst\AggregateStateFactory;
 use EventEngine\CodeGenerator\EventEngineAst\DescriptionFileMethodFactory;
 use EventEngine\CodeGenerator\EventEngineAst\EmptyClassFactory;
@@ -46,8 +44,6 @@ abstract class BaseTestCase extends TestCase
     protected ClassInfoList $classInfoList;
 
     protected AggregateStateFactory $aggregateStateFactory;
-    protected AggregateBehaviourFactory $aggregateBehaviourFactory;
-    protected AggregateDescriptionFactory $aggregateDescriptionFactory;
     protected DescriptionFileMethodFactory $descriptionFileMethodFactory;
     protected EmptyClassFactory $emptyClassFactory;
     protected ValueObjectFactory $valueObjectFactory;
@@ -77,8 +73,6 @@ abstract class BaseTestCase extends TestCase
         );
 
         $this->initAggregateStateFactory();
-        $this->initAggregateBehaviourFactory();
-        $this->initAggregateDescriptionFactory();
         $this->initDescriptionFileMethodFactory();
         $this->initEmptyClassFactory();
         $this->initValueObjectFactory();
@@ -88,21 +82,6 @@ abstract class BaseTestCase extends TestCase
     {
         $this->aggregateStateFactory = AggregateStateFactory::withDefaultConfig();
         $this->aggregateStateFactory->config()->setClassInfoList($this->classInfoList);
-    }
-
-    private function initAggregateBehaviourFactory(): void
-    {
-        $this->aggregateBehaviourFactory = AggregateBehaviourFactory::withDefaultConfig(
-            $this->aggregateStateFactory->config()
-        );
-
-        $this->aggregateBehaviourFactory->config()->setClassInfoList($this->classInfoList);
-    }
-
-    private function initAggregateDescriptionFactory(): void
-    {
-        $this->aggregateDescriptionFactory = AggregateDescriptionFactory::withDefaultConfig();
-        $this->aggregateDescriptionFactory->config()->setClassInfoList($this->classInfoList);
     }
 
     private function initDescriptionFileMethodFactory(): void

@@ -73,7 +73,7 @@ final class Event
         $classBuilder = ClassBuilder::fromScratch(
             $classInfo->getClassName($fqcn),
             $classInfo->getClassNamespace($fqcn)
-        );
+        )->setFinal(true);
 
         $classBuilder->addNamespaceImport(
             'EventEngine\EventEngine',

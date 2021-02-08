@@ -49,7 +49,8 @@ final class AggregateBehaviourEventMethod
     public function generate(
         AggregateType $aggregate,
         CommandType $command,
-        EventType $event
+        EventType $event,
+        string $aggregateStateClassName
     ): MethodGenerator {
         $eventParameterName = ($this->filterParameterName)($event->label());
         $eventMethodName = ($this->filterEventMethodName)($event->label());
@@ -57,7 +58,7 @@ final class AggregateBehaviourEventMethod
         $params = [
             new ParameterGenerator($eventParameterName, 'Message'),
         ];
-        $methodBody = \sprintf('return State::fromArray($%s->payload());', $eventParameterName);
+        $methodBody = \sprintf('return %s::fromArray($%s->payload());', $aggregateStateClassName, $eventParameterName);
 
         $metadataInstance = $command->metadataInstance();
 
@@ -65,7 +66,7 @@ final class AggregateBehaviourEventMethod
             || ! $metadataInstance instanceof CommandMetadata
             || false === $metadataInstance->newAggregate()
         ) {
-            \array_unshift($params, new ParameterGenerator('state', 'State'));
+            \array_unshift($params, new ParameterGenerator('state', $aggregateStateClassName));
             $methodBody = \sprintf('return $state->with($%s->payload());', $eventParameterName);
         }
 
@@ -75,7 +76,7 @@ final class AggregateBehaviourEventMethod
             MethodGenerator::FLAG_STATIC | MethodGenerator::FLAG_PUBLIC,
             new BodyGenerator($this->parser, $methodBody)
         );
-        $method->setReturnType('State');
+        $method->setReturnType($aggregateStateClassName);
 
         return $method;
     }

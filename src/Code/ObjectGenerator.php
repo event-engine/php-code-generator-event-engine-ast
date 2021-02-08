@@ -15,7 +15,6 @@ use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
-use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
 
@@ -141,16 +140,31 @@ final class ObjectGenerator
         return $fileCollection;
     }
 
-    public function generateObject(
+    /**
+     * Generates only value objects of given JSON schema. The object itself is not generated.
+     *
+     * @param string $valueObjectDirectory
+     * @param TypeSet $jsonSchemaSet
+     * @return FileCollection
+     */
+    public function generateValueObjectsFromObjectProperties(
         string $valueObjectDirectory,
-        string $className,
-        ObjectType $jsonSchema
+        TypeSet $jsonSchemaSet
     ): FileCollection {
-        $fileCollection = $this->generateValueObject($valueObjectDirectory, $className, new TypeSet($jsonSchema));
+        $classBuilder = ClassBuilder::fromScratch(
+            'Please_Remove_Me',
+        );
 
-        $this->addGetterMethodsForProperties($fileCollection);
+        $fileCollection = FileCollection::emptyList();
 
-        return $fileCollection;
+        $this->valueObjectFactory->generateClasses(
+            $classBuilder,
+            $fileCollection,
+            $jsonSchemaSet,
+            $valueObjectDirectory
+        );
+
+        return $fileCollection->remove($classBuilder);
     }
 
     /**
