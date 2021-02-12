@@ -31,6 +31,7 @@ final class AggregateMetadata implements \EventEngine\CodeGenerator\EventEngineA
     {
         $self = new self();
         $self->schema = null;
+        $self->typeSet = null;
 
         $data = MetadataFactory::decodeJson($json);
 

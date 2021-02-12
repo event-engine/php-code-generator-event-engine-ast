@@ -31,6 +31,7 @@ final class EventMetadata implements \EventEngine\CodeGenerator\EventEngineAst\M
     {
         $self = new self();
         $self->schema = null;
+        $self->typeSet = null;
 
         $data = MetadataFactory::decodeJson($json);
 

@@ -10,40 +10,69 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
+use EventEngine\CodeGenerator\EventEngineAst\AggregateStateImmutableRecordOverride;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredAggregate;
 use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
+use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
+use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\Filter\FilterFactory;
+use PhpParser\NodeTraverser;
 
 final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 {
+    private PreConfiguredAggregate $config;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->config = new PreConfiguredAggregate();
+        $this->config->setBasePath($this->basePath);
+        $this->config->setClassInfoList($this->classInfoList);
+    }
+
     /**
      * @test
      */
     public function it_creates_aggregate_state_immutable_record_override(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
+
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
 
-        $codeList = $this->aggregateStateFactory->componentFile()(
-            $analyzer,
-            $this->modelPath
-        );
+        $override = new AggregateStateImmutableRecordOverride($this->config->getParser());
+        $aggregate = new Aggregate($this->config);
 
-        $this->assertCount(1, $codeList);
+        $fileCollection = FileCollection::emptyList();
 
-        $codeList = $this->aggregateStateFactory->componentDescriptionImmutableRecordOverride()(
-            $analyzer,
-            $codeList
-        );
+        $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
+        $override->generateImmutableRecordOverride($fileCollection);
 
-        $this->assertCount(1, $codeList);
-        $this->assertFile($codeList);
+        $this->config->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            switch ($file->getName()) {
+                case 'BuildingState':
+                    $this->assertAggregateStateFile($file);
+                    break;
+                default:
+                    $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+                    break;
+            }
+        }
     }
 
-    private function assertFile(array $codeList): void
+    private function assertAggregateStateFile(ClassBuilder $classBuilder): void
     {
-        $this->assertArrayHasKey('BUILDING_STATE', $codeList);
-        $this->assertSame('/service/src/Domain/Model/Building/BuildingState.php', $codeList['BUILDING_STATE']['filename']);
+        $ast = $this->config->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -51,12 +80,17 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 declare (strict_types=1);
 namespace MyService\Domain\Model\Building;
 
-use EventEngine\Data\ImmutableRecordLogic;
 use EventEngine\Data\ImmutableRecord;
+use EventEngine\Data\ImmutableRecordLogic;
 final class BuildingState implements ImmutableRecord
 {
     use ImmutableRecordLogic;
     private array $state = [];
+    public function withBuildingAdded() : self
+    {
+        $instance = clone $this;
+        return $instance;
+    }
     public static function fromRecordData(array $recordData)
     {
         return new self($recordData);
@@ -94,6 +128,6 @@ final class BuildingState implements ImmutableRecord
     }
 }
 PHP;
-        $this->assertSame($expected, $codeList['BUILDING_STATE']['code']);
+        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

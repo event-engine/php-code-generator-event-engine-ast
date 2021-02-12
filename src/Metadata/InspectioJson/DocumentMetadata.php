@@ -31,6 +31,7 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
     {
         $self = new self();
         $self->schema = null;
+        $self->typeSet = null;
 
         $data = MetadataFactory::decodeJson($json);
 

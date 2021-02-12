@@ -15,10 +15,12 @@ use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeAggr
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
 final class Aggregate
 {
@@ -27,6 +29,7 @@ final class Aggregate
     private Code\AggregateDescription $aggregateDescription;
     private Code\AggregateBehaviourEventMethod $eventMethod;
     private Code\AggregateBehaviourCommandMethod $commandMethod;
+    private Code\AggregateStateMethod $aggregateStateMethod;
 
     public function __construct(Config\Aggregate $config)
     {
@@ -49,6 +52,12 @@ final class Aggregate
         $this->commandMethod = new Code\AggregateBehaviourCommandMethod(
             $this->config->getParser(),
             $this->config->getFilterCommandMethodName(),
+            $this->config->getFilterParameterName()
+        );
+
+        $this->aggregateStateMethod = new Code\AggregateStateMethod(
+            $this->config->getParser(),
+            $this->config->getFilterWithMethodName(),
             $this->config->getFilterParameterName()
         );
     }
@@ -128,7 +137,7 @@ final class Aggregate
     }
 
     /**
-     * Generates command files with corresponding value objects depending on given JSON schema metadata.
+     * Generates aggregate files with corresponding value objects depending on given JSON schema metadata.
      *
      * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
@@ -200,21 +209,68 @@ final class Aggregate
         }
     }
 
-    private function generateValueObjects(FileCollection $fileCollection, AggregateType $aggregate, EventSourcingAnalyzer $analyzer): void
-    {
-        $metadataInstance = $aggregate->metadataInstance();
+    /**
+     * Generates aggregate state file for each aggregate with corresponding value objects depending on given JSON
+     * schema metadata of the aggregate.
+     *
+     * @param EventSourcingAnalyzer $analyzer
+     * @param FileCollection $fileCollection
+     */
+    public function generateAggregateStateFile(
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        foreach ($analyzer->aggregateMap() as $name => $aggregateConnection) {
+            $aggregate = $aggregateConnection->aggregate();
 
-        if ($metadataInstance instanceof HasTypeSet
-            && $metadataInstance->typeSet() !== null
-        ) {
+            $aggregateStateClassName = ($this->config->getFilterAggregateStateClassName())($aggregate->label());
+            $pathAggregateState = $this->config->determinePath($aggregate, $analyzer);
+
+            $files = $this->config->getObjectGenerator()->generateImmutableRecord(
+                $aggregateStateClassName,
+                $pathAggregateState,
+                $this->config->determineValueObjectPath($aggregate, $analyzer),
+                $this->getMetadata($aggregate)
+            );
+
+            foreach ($aggregateConnection->eventMap() as $event) {
+                /** @var ClassBuilder $aggregateState */
+                foreach ($files->filter(fn (ClassBuilder $classBuilder) => $classBuilder->getName() === $aggregateStateClassName) as $aggregateState) {
+                    $aggregateState->addMethod(
+                        ClassMethodBuilder::fromNode(
+                            $this->aggregateStateMethod->generate($event)->generate()
+                        )
+                    );
+                }
+            }
+
+            foreach ($files as $file) {
+                $fileCollection->add($file);
+            }
+        }
+    }
+
+    private function generateValueObjects(
+        FileCollection $fileCollection,
+        AggregateType $aggregate,
+        EventSourcingAnalyzer $analyzer
+    ): void {
+        if ($typeSet = $this->getMetadata($aggregate)) {
             $valueObjects = $this->config->getObjectGenerator()->generateValueObjectsFromObjectProperties(
-                    $this->config->determineValueObjectPath($aggregate, $analyzer),
-                    $metadataInstance->typeSet()
-                );
+                $this->config->determineValueObjectPath($aggregate, $analyzer),
+                $typeSet
+            );
 
             foreach ($valueObjects as $file) {
                 $fileCollection->add($file);
             }
         }
+    }
+
+    private function getMetadata(VertexType $vertexType): ?TypeSet
+    {
+        $metadataInstance = $vertexType->metadataInstance();
+
+        return $metadataInstance instanceof HasTypeSet ? $metadataInstance->typeSet() : null;
     }
 }

@@ -31,6 +31,7 @@ final class CommandMetadata implements \EventEngine\CodeGenerator\EventEngineAst
     {
         $self = new self();
         $self->schema = null;
+        $self->typeSet = null;
 
         $data = MetadataFactory::decodeJson($json);
 

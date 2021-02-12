@@ -10,11 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\AggregateStateFactory;
-use EventEngine\CodeGenerator\EventEngineAst\DescriptionFileMethodFactory;
-use EventEngine\CodeGenerator\EventEngineAst\EmptyClassFactory;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\MetadataFactory;
-use EventEngine\CodeGenerator\EventEngineAst\ValueObjectFactory;
 use EventEngine\InspectioGraphCody\Node;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
@@ -43,16 +39,11 @@ abstract class BaseTestCase extends TestCase
 
     protected ClassInfoList $classInfoList;
 
-    protected AggregateStateFactory $aggregateStateFactory;
-    protected DescriptionFileMethodFactory $descriptionFileMethodFactory;
-    protected EmptyClassFactory $emptyClassFactory;
-    protected ValueObjectFactory $valueObjectFactory;
-
     public function setUp(): void
     {
         parent::setUp();
         $this->fileSystem = new Filesystem(new InMemoryFilesystemAdapter());
-        $this->metadataFactory = static fn (Node $node) => (new MetadataFactory())($node->metadata(), $node->type());
+        $this->metadataFactory = static fn (Node $node) => (new MetadataFactory())($node->metadata() ?? '', $node->type());
 
         $this->initComposerFile();
 
@@ -71,34 +62,6 @@ abstract class BaseTestCase extends TestCase
                 FilterFactory::namespaceToDirectoryFilter(),
             )
         );
-
-        $this->initAggregateStateFactory();
-        $this->initDescriptionFileMethodFactory();
-        $this->initEmptyClassFactory();
-        $this->initValueObjectFactory();
-    }
-
-    private function initAggregateStateFactory(): void
-    {
-        $this->aggregateStateFactory = AggregateStateFactory::withDefaultConfig();
-        $this->aggregateStateFactory->config()->setClassInfoList($this->classInfoList);
-    }
-
-    private function initDescriptionFileMethodFactory(): void
-    {
-        $this->descriptionFileMethodFactory = DescriptionFileMethodFactory::withDefaultConfig();
-    }
-
-    private function initEmptyClassFactory(): void
-    {
-        $this->emptyClassFactory = EmptyClassFactory::withDefaultConfig();
-        $this->emptyClassFactory->config()->setClassInfoList($this->classInfoList);
-    }
-
-    private function initValueObjectFactory(): void
-    {
-        $this->valueObjectFactory = ValueObjectFactory::withDefaultConfig();
-        $this->valueObjectFactory->config()->setClassInfoList($this->classInfoList);
     }
 
     private function initComposerFile(): void

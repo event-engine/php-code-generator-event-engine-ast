@@ -155,4 +155,80 @@ final class Building
 PHP;
         $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
+
+    /**
+     * @test
+     */
+    public function it_creates_aggregate_state_file(): void
+    {
+        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+
+        $aggregate = new Aggregate($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
+
+        $this->config->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(3, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            switch ($file->getName()) {
+                case 'BuildingState':
+                    $this->assertAggregateStateFile($file);
+                    break;
+                case 'BuildingId':
+                case 'Name':
+                    break;
+                default:
+                    $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+                    break;
+            }
+        }
+    }
+
+    private function assertAggregateStateFile(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+
+        $expected = <<<'PHP'
+<?php
+
+declare (strict_types=1);
+namespace MyService\Domain\Model\Building;
+
+use EventEngine\Data\ImmutableRecord;
+use EventEngine\Data\ImmutableRecordLogic;
+use MyService\Domain\Model\ValueObject\BuildingId;
+use MyService\Domain\Model\ValueObject\Name;
+final class BuildingState implements ImmutableRecord
+{
+    use ImmutableRecordLogic;
+    public const BUILDING_ID = 'building_id';
+    public const NAME = 'name';
+    private BuildingId $buildingId;
+    private Name $name;
+    public function buildingId() : BuildingId
+    {
+        return $this->buildingId;
+    }
+    public function name() : Name
+    {
+        return $this->name;
+    }
+    public function withBuildingAdded() : self
+    {
+        $instance = clone $this;
+        return $instance;
+    }
+}
+PHP;
+        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
 }
