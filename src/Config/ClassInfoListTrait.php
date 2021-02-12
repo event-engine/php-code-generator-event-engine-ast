@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
+use EventEngine\CodeGenerator\EventEngineAst\Exception\LogicException;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\CodeAst\Package\Psr4Info;
 
 trait ClassInfoListTrait
 {
@@ -32,4 +34,26 @@ trait ClassInfoListTrait
     {
         $this->classInfoList = $classInfoList;
     }
+
+    public function addComposerInfo(string $composerFile): void
+    {
+        if (! \file_exists($composerFile) || ! \is_readable($composerFile)) {
+            throw new LogicException(\sprintf('Composer file "%s" does not exists or is not readable.', $composerFile));
+        }
+
+        $this->getClassInfoList()->addClassInfo(
+            ...Psr4Info::fromComposer(
+                $this->getBasePath(),
+                \file_get_contents($composerFile),
+                $this->getFilterDirectoryToNamespace(),
+                $this->getFilterNamespaceToDirectory()
+            )
+        );
+    }
+
+    abstract public function getBasePath(): string;
+
+    abstract public function getFilterDirectoryToNamespace(): callable;
+
+    abstract public function getFilterNamespaceToDirectory(): callable;
 }

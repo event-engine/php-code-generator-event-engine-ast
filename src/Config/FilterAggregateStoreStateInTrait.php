@@ -19,10 +19,15 @@ trait FilterAggregateStoreStateInTrait
      **/
     private $filterAggregateStoreStateIn;
 
+    public function injectFilterAggregateStoreStateIn(callable $filter): void
+    {
+        $this->filterAggregateStoreStateIn = new StateName($filter);
+    }
+
     public function getFilterAggregateStoreStateIn(): ?callable
     {
-        if (null === $this->filterAggregateIdName) {
-            $this->filterAggregateIdName = new StateName();
+        if (null === $this->filterAggregateStoreStateIn) {
+            $this->filterAggregateStoreStateIn = new StateName();
         }
 
         return $this->filterAggregateStoreStateIn;

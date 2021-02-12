@@ -12,24 +12,24 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use OpenCodeModeling\Filter\Filter\Noop;
 
-trait FilterNamespaceToDirectoryTrait
+trait FilterPropertyNameTrait
 {
     /**
      * @var callable
      **/
-    private $filterNamespaceToDirectory;
+    private $filterPropertyName;
 
-    public function getFilterNamespaceToDirectory(): callable
+    public function getFilterPropertyName(): callable
     {
-        if (null === $this->filterNamespaceToDirectory) {
-            $this->filterNamespaceToDirectory = new Noop();
+        if (null === $this->filterPropertyName) {
+            $this->filterPropertyName = new Noop();
         }
 
-        return $this->filterNamespaceToDirectory;
+        return $this->filterPropertyName;
     }
 
-    public function setFilterNamespaceToDirectory(callable $filterDirectoryToNamespace): void
+    public function setFilterPropertyName(callable $filterPropertyName): void
     {
-        $this->filterNamespaceToDirectory = $filterDirectoryToNamespace;
+        $this->filterPropertyName = $filterPropertyName;
     }
 }

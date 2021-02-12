@@ -10,26 +10,24 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use OpenCodeModeling\Filter\Filter\Noop;
-
-trait FilterConstNameTrait
+trait BasePathTrait
 {
     /**
-     * @var callable
+     * @var string
      **/
-    private $filterConstName;
+    private $basePath;
 
-    public function getFilterConstName(): callable
+    public function getBasePath(): string
     {
-        if (null === $this->filterConstName) {
-            $this->filterConstName = new Noop();
+        if (null === $this->basePath) {
+            $this->basePath = \getcwd();
         }
 
-        return $this->filterConstName;
+        return $this->basePath;
     }
 
-    public function setFilterConstName(callable $filterConstName): void
+    public function setBasePath(string $basePath): void
     {
-        $this->filterConstName = $filterConstName;
+        $this->basePath = $basePath;
     }
 }

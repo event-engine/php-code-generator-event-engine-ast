@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use EventEngine\CodeGenerator\EventEngineAst\Filter\LowerCaseFirst;
+use OpenCodeModeling\Filter\Filter\Noop;
 
 trait FilterParameterNameTrait
 {
@@ -19,12 +19,10 @@ trait FilterParameterNameTrait
      **/
     private $filterParameterMethodName;
 
-    abstract public function getFilterConstValue(): callable;
-
     public function getFilterParameterName(): callable
     {
         if (null === $this->filterParameterMethodName) {
-            $this->filterParameterMethodName = new LowerCaseFirst($this->getFilterConstValue());
+            $this->filterParameterMethodName = new Noop();
         }
 
         return $this->filterParameterMethodName;

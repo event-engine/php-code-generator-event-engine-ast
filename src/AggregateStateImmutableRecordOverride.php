@@ -10,87 +10,60 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassPropertyBuilder;
+use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\MethodGenerator;
 use OpenCodeModeling\CodeAst\Code\ParameterGenerator;
 use OpenCodeModeling\CodeAst\Code\PropertyGenerator;
-use OpenCodeModeling\CodeAst\NodeVisitor\ClassMethod;
-use OpenCodeModeling\CodeAst\NodeVisitor\Property;
-use OpenCodeModeling\CodeAst\NodeVisitor\StrictType;
-use PhpParser\NodeTraverser;
 use PhpParser\Parser;
-use PhpParser\PrettyPrinterAbstract;
 
 final class AggregateStateImmutableRecordOverride
 {
-    /**
-     * @var Parser
-     **/
-    private $parser;
+    private Parser $parser;
 
-    /**
-     * @var PrettyPrinterAbstract
-     */
-    private $printer;
-
-    public function __construct(
-        Parser $parser,
-        PrettyPrinterAbstract $printer
-    ) {
+    public function __construct(Parser $parser)
+    {
         $this->parser = $parser;
-        $this->printer = $printer;
     }
 
     /**
-     * @param EventSourcingAnalyzer $analyzer
-     * @param array $files
-     * @return array Assoc array with aggregate name and file content
+     * Adds methods to override default ImmutableRecord behaviour to pass through arbitrary data
+     *
+     * @param FileCollection $fileCollection
      */
-    public function __invoke(EventSourcingAnalyzer $analyzer, array $files): array
+    public function generateImmutableRecordOverride(FileCollection $fileCollection): void
     {
-        $traverser = new NodeTraverser();
-        $traverser->addVisitor(new StrictType());
-
-        $fromRecordDataMethod = new ClassMethod($this->fromRecordDataMethod());
-        $fromArrayMethod = new ClassMethod($this->fromArrayMethod());
-        $withMethod = new ClassMethod($this->withMethod());
-        $toArrayMethod = new ClassMethod($this->toArrayMethod());
-        $equalsMethod = new ClassMethod($this->equalsMethod());
-        $constructorMethod = new ClassMethod($this->constructorMethod());
-        $setRecordDataMethod = new ClassMethod($this->setRecordDataMethod());
-        $stateProperty = new Property($this->stateProperty());
-
-        foreach ($analyzer->aggregateMap()->aggregateVertexMap() as $name => $vertex) {
-            if (! isset($files[$name])) {
+        foreach ($fileCollection as $classBuilder) {
+            if (! $classBuilder instanceof ClassBuilder
+                || ! $classBuilder->hasImplement('ImmutableRecord')
+            ) {
                 continue;
             }
-            $ast = $this->parser->parse($files[$name]['code']);
+            $classBuilder->addProperty(
+                ClassPropertyBuilder::fromNode($this->stateProperty()->generate()),
+            );
 
-            $aggregateTraverser = new NodeTraverser();
-
-            $aggregateTraverser->addVisitor($stateProperty);
-            $aggregateTraverser->addVisitor($fromRecordDataMethod);
-            $aggregateTraverser->addVisitor($fromArrayMethod);
-            $aggregateTraverser->addVisitor($withMethod);
-            $aggregateTraverser->addVisitor($toArrayMethod);
-            $aggregateTraverser->addVisitor($equalsMethod);
-            $aggregateTraverser->addVisitor($constructorMethod);
-            $aggregateTraverser->addVisitor($setRecordDataMethod);
-
-            $files[$name]['code'] = $this->printer->prettyPrintFile($aggregateTraverser->traverse($ast));
+            $classBuilder->addMethod(
+                ClassMethodBuilder::fromNode($this->fromRecordDataMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->fromArrayMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->withMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->toArrayMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->equalsMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->constructorMethod()->generate()),
+                ClassMethodBuilder::fromNode($this->setRecordDataMethod()->generate()),
+            );
         }
-
-        return $files;
     }
 
     private function stateProperty(): PropertyGenerator
     {
-        return new PropertyGenerator(
+        return (new PropertyGenerator(
             'state',
             'array',
-            []
-        );
+        ))->setDefaultValue([]);
     }
 
     private function fromRecordDataMethod(): MethodGenerator

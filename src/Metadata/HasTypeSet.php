@@ -8,12 +8,11 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-final class Id extends AbstractFilter
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
+
+interface HasTypeSet
 {
-    public function __invoke(string $value): string
-    {
-        return ($this->filter)($value) . 'Id';
-    }
+    public function typeSet(): ?TypeSet;
 }

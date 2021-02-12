@@ -8,12 +8,14 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\InspectioGraph\Metadata;
 
-final class Id extends AbstractFilter
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
+
+use EventEngine\InspectioGraph\Metadata\HasStreams;
+use EventEngine\InspectioGraph\Metadata\Metadata;
+
+interface PolicyMetadata extends Metadata, HasStreams
 {
-    public function __invoke(string $value): string
-    {
-        return ($this->filter)($value) . 'Id';
-    }
+    public function streams();
 }

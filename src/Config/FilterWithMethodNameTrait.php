@@ -19,12 +19,15 @@ trait FilterWithMethodNameTrait
      **/
     private $filterWithMethodName;
 
-    abstract public function getFilterConstValue(): callable;
+    public function injectFilterWithMethodName(callable $filter): void
+    {
+        $this->filterWithMethodName = new AggregateStateWithMethod($filter);
+    }
 
     public function getFilterWithMethodName(): callable
     {
         if (null === $this->filterWithMethodName) {
-            $this->filterWithMethodName = new AggregateStateWithMethod($this->getFilterConstValue());
+            $this->filterWithMethodName = new AggregateStateWithMethod();
         }
 
         return $this->filterWithMethodName;

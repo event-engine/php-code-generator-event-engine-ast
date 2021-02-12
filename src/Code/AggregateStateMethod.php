@@ -25,20 +25,27 @@ final class AggregateStateMethod
     /**
      * @var callable
      **/
-    private $filterMethodName;
+    private $filterStateMethod;
+
+    /**
+     * @var callable
+     **/
+    private $filterParameterName;
 
     public function __construct(
         Parser $parser,
-        callable $filterCommandMethodName
+        callable $filterStateMethod,
+        callable $filterParameterName
     ) {
         $this->parser = $parser;
-        $this->filterMethodName = $filterCommandMethodName;
+        $this->filterStateMethod = $filterStateMethod;
+        $this->filterParameterName = $filterParameterName;
     }
 
     public function generate(
         EventType $event
     ): MethodGenerator {
-        $methodName = ($this->filterMethodName)($event->label());
+        $methodName = ($this->filterStateMethod)($event->label());
 
         // TODO wrong name and missing parameterts, withUserCheckedIn should be withCheckedInUser
 

@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use EventEngine\CodeGenerator\EventEngineAst\Filter\ClassName;
+use OpenCodeModeling\Filter\Filter\Noop;
 
 trait FilterClassNameTrait
 {
@@ -19,12 +19,10 @@ trait FilterClassNameTrait
      **/
     private $filterClassName;
 
-    abstract public function getFilterConstValue(): callable;
-
     public function getFilterClassName(): callable
     {
         if (null === $this->filterClassName) {
-            $this->filterClassName = new ClassName($this->getFilterConstValue());
+            $this->filterClassName = new Noop();
         }
 
         return $this->filterClassName;

@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventType;
@@ -57,7 +58,10 @@ final class AggregateBehaviourCommandMethod
 
         $metadataInstance = $command->metadataInstance();
 
-        if ($metadataInstance === null || false === $metadataInstance->newAggregate()) {
+        if ($metadataInstance === null
+            || ! $metadataInstance instanceof CommandMetadata
+            || false === $metadataInstance->newAggregate()
+        ) {
             \array_unshift($params, new ParameterGenerator('state', 'State'));
         }
 

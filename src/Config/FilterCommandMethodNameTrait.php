@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-use EventEngine\CodeGenerator\EventEngineAst\Filter\AggregateBehaviourCommandMethod;
+use OpenCodeModeling\Filter\Filter\Noop;
 
 trait FilterCommandMethodNameTrait
 {
@@ -19,12 +19,10 @@ trait FilterCommandMethodNameTrait
      **/
     private $filterCommandMethodName;
 
-    abstract public function getFilterConstValue(): callable;
-
     public function getFilterCommandMethodName(): callable
     {
         if (null === $this->filterCommandMethodName) {
-            $this->filterCommandMethodName = new AggregateBehaviourCommandMethod($this->getFilterConstValue());
+            $this->filterCommandMethodName = new Noop();
         }
 
         return $this->filterCommandMethodName;

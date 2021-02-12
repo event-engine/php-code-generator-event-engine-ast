@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventType;
@@ -48,7 +49,8 @@ final class AggregateBehaviourEventMethod
     public function generate(
         AggregateType $aggregate,
         CommandType $command,
-        EventType $event
+        EventType $event,
+        string $aggregateStateClassName
     ): MethodGenerator {
         $eventParameterName = ($this->filterParameterName)($event->label());
         $eventMethodName = ($this->filterEventMethodName)($event->label());
@@ -56,12 +58,15 @@ final class AggregateBehaviourEventMethod
         $params = [
             new ParameterGenerator($eventParameterName, 'Message'),
         ];
-        $methodBody = \sprintf('return State::fromArray($%s->payload());', $eventParameterName);
+        $methodBody = \sprintf('return %s::fromArray($%s->payload());', $aggregateStateClassName, $eventParameterName);
 
         $metadataInstance = $command->metadataInstance();
 
-        if ($metadataInstance === null || false === $metadataInstance->newAggregate()) {
-            \array_unshift($params, new ParameterGenerator('state', 'State'));
+        if ($metadataInstance === null
+            || ! $metadataInstance instanceof CommandMetadata
+            || false === $metadataInstance->newAggregate()
+        ) {
+            \array_unshift($params, new ParameterGenerator('state', $aggregateStateClassName));
             $methodBody = \sprintf('return $state->with($%s->payload());', $eventParameterName);
         }
 
@@ -71,7 +76,7 @@ final class AggregateBehaviourEventMethod
             MethodGenerator::FLAG_STATIC | MethodGenerator::FLAG_PUBLIC,
             new BodyGenerator($this->parser, $methodBody)
         );
-        $method->setReturnType('State');
+        $method->setReturnType($aggregateStateClassName);
 
         return $method;
     }

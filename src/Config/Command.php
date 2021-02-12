@@ -10,16 +10,45 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-final class Command
+use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
+use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexType;
+use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
+use PhpParser\Parser;
+use PhpParser\PrettyPrinterAbstract;
+
+interface Command
 {
-    use ClassInfoListTrait;
-    use FilterAggregateFolderTrait;
-    use FilterClassNameTrait;
-    use FilterCommandFolderTrait;
-    use FilterConstNameTrait;
-    use FilterConstValueTrait;
-    use FilterDirectoryToNamespaceTrait;
-    use FilterNamespaceToDirectoryTrait;
-    use PhpParserTrait;
-    use PhpPrinterTrait;
+    public function getBasePath(): string;
+
+    public function getClassInfoList(): ClassInfoList;
+
+    public function getFilterAggregateFolder(): ?callable;
+
+    public function getFilterClassName(): callable;
+
+    public function getFilterConstName(): callable;
+
+    public function getFilterConstValue(): callable;
+
+    public function getFilterDirectoryToNamespace(): callable;
+
+    public function getFilterNamespaceToDirectory(): callable;
+
+    public function getFilterPropertyName(): callable;
+
+    public function getFilterMethodName(): callable;
+
+    public function getParser(): Parser;
+
+    public function getPrinter(): PrettyPrinterAbstract;
+
+    public function getObjectGenerator(): ObjectGenerator;
+
+    public function getValueObjectFactory(): ValueObjectFactory;
+
+    public function determineValueObjectPath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 }

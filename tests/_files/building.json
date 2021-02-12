@@ -1,0 +1,160 @@
+{
+    "node": {
+        "id": "buTwEKKNLBBo6WAERYN1Gn",
+        "name": "Building ",
+        "type": "aggregate",
+        "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=buTwEKKNLBBo6WAERYN1Gn&clicks=1",
+        "tags": [],
+        "layer": false,
+        "defaultLayer": false,
+        "parent": {
+            "id": "stW5qRRPsQbowcqux7M2QX",
+            "name": "Building",
+            "type": "feature",
+            "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
+            "tags": [],
+            "layer": false,
+            "defaultLayer": false,
+            "parent": {
+                "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                "name": "Board",
+                "type": "layer",
+                "link": null,
+                "tags": [],
+                "layer": true,
+                "defaultLayer": true,
+                "parent": null,
+                "childrenList": [],
+                "sourcesList": [],
+                "targetsList": [],
+                "geometry": {
+                    "x": 0,
+                    "y": 0
+                },
+                "metadata": null
+            },
+            "childrenList": [],
+            "sourcesList": [],
+            "targetsList": [],
+            "geometry": {
+                "x": -656,
+                "y": -320
+            },
+            "metadata": null
+        },
+        "childrenList": [],
+        "sourcesList": [
+            {
+                "id": "9bJ5Y7yuBcfWyei7i2ZSDC",
+                "name": "Add Building\n",
+                "type": "command",
+                "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=9bJ5Y7yuBcfWyei7i2ZSDC&clicks=1",
+                "tags": [],
+                "layer": false,
+                "defaultLayer": false,
+                "parent": {
+                    "id": "stW5qRRPsQbowcqux7M2QX",
+                    "name": "Building",
+                    "type": "feature",
+                    "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
+                    "tags": [],
+                    "layer": false,
+                    "defaultLayer": false,
+                    "parent": {
+                        "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                        "name": "Board",
+                        "type": "layer",
+                        "link": null,
+                        "tags": [],
+                        "layer": true,
+                        "defaultLayer": true,
+                        "parent": null,
+                        "childrenList": [],
+                        "sourcesList": [],
+                        "targetsList": [],
+                        "geometry": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "metadata": null
+                    },
+                    "childrenList": [],
+                    "sourcesList": [],
+                    "targetsList": [],
+                    "geometry": {
+                        "x": -656,
+                        "y": -320
+                    },
+                    "metadata": null
+                },
+                "childrenList": [],
+                "sourcesList": [],
+                "targetsList": [],
+                "geometry": {
+                    "x": 464,
+                    "y": 319
+                },
+                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  } \n}\n"
+            }
+        ],
+        "targetsList": [
+            {
+                "id": "tF2ZuZCXsdQMhRmRXydfuW",
+                "name": "Building Added",
+                "type": "event",
+                "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=tF2ZuZCXsdQMhRmRXydfuW&clicks=1",
+                "tags": [],
+                "layer": false,
+                "defaultLayer": false,
+                "parent": {
+                    "id": "stW5qRRPsQbowcqux7M2QX",
+                    "name": "Building",
+                    "type": "feature",
+                    "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
+                    "tags": [],
+                    "layer": false,
+                    "defaultLayer": false,
+                    "parent": {
+                        "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                        "name": "Board",
+                        "type": "layer",
+                        "link": null,
+                        "tags": [],
+                        "layer": true,
+                        "defaultLayer": true,
+                        "parent": null,
+                        "childrenList": [],
+                        "sourcesList": [],
+                        "targetsList": [],
+                        "geometry": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "metadata": null
+                    },
+                    "childrenList": [],
+                    "sourcesList": [],
+                    "targetsList": [],
+                    "geometry": {
+                        "x": -656,
+                        "y": -320
+                    },
+                    "metadata": null
+                },
+                "childrenList": [],
+                "sourcesList": [],
+                "targetsList": [],
+                "geometry": {
+                    "x": 463,
+                    "y": 768
+                },
+                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  }\n}"
+            }
+        ],
+        "geometry": {
+            "x": 464,
+            "y": 544
+        },
+        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  }\n}"
+    }
+}

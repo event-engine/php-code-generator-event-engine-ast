@@ -8,12 +8,15 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-final class Id extends AbstractFilter
+use EventEngine\InspectioGraph\Metadata\HasQuery;
+use EventEngine\InspectioGraph\Metadata\HasSchema;
+use EventEngine\InspectioGraph\Metadata\Metadata;
+
+interface DocumentMetadata extends Metadata, HasSchema, HasQuery
 {
-    public function __invoke(string $value): string
-    {
-        return ($this->filter)($value) . 'Id';
-    }
+    public function query(): ?array;
+
+    public function schema(): ?string;
 }

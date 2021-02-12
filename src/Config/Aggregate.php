@@ -18,7 +18,7 @@ use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinterAbstract;
 
-interface Event
+interface Aggregate
 {
     public function getBasePath(): string;
 
@@ -39,6 +39,20 @@ interface Event
     public function getFilterPropertyName(): callable;
 
     public function getFilterMethodName(): callable;
+
+    public function getFilterCommandMethodName(): callable;
+
+    public function getFilterEventMethodName(): callable;
+
+    public function getFilterWithMethodName(): callable;
+
+    public function getFilterAggregateIdName(): callable;
+
+    public function getFilterAggregateStoreStateIn(): ?callable;
+
+    public function getFilterAggregateStateClassName(): callable;
+
+    public function getFilterParameterName(): callable;
 
     public function getParser(): Parser;
 
