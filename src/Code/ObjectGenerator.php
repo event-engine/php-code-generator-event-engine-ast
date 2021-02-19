@@ -15,6 +15,8 @@ use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
+use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeDefinition;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 use OpenCodeModeling\JsonSchemaToPhpAst\ValueObjectFactory;
 
@@ -196,6 +198,12 @@ final class ObjectGenerator
         $fileCollection = FileCollection::fromItems($classBuilder);
 
         if ($jsonSchemaSet !== null) {
+            $classBuilder->setNamespace(
+                $this->extractNamespace(
+                    $classInfo->getClassNamespaceFromPath($immutableRecordDirectory), $jsonSchemaSet->first()
+                )
+            );
+
             $this->valueObjectFactory->generateClasses(
                 $classBuilder,
                 $fileCollection,
@@ -218,5 +226,19 @@ final class ObjectGenerator
         );
         $file->addImplement('ImmutableRecord')
             ->addTrait('ImmutableRecordLogic');
+    }
+
+    private function extractNamespace(string $classNamespacePath, TypeDefinition $typeDefinition): string
+    {
+        if (! $typeDefinition instanceof CustomSupport) {
+            return $classNamespacePath;
+        }
+        $namespace = $typeDefinition->custom()['namespace'] ?? '';
+
+        if ($namespace === '') {
+            $namespace = $typeDefinition->custom()['ns'] ?? '';
+        }
+
+        return \trim($classNamespacePath . '\\' . $namespace, '\\');
     }
 }
