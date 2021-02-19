@@ -116,7 +116,7 @@ final class PreConfiguredCommand implements Command
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
-                        \sprintf('Command "%s" has no aggregate connection. Can not use aggregate name for path.',
+                        \sprintf('Event "%s" has no aggregate connection. Can not use aggregate name for path.',
                             $type->label())
                     );
                 }
