@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredEvent;
+use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
 use EventEngine\CodeGenerator\EventEngineAst\Event;
 use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
@@ -21,15 +23,17 @@ use PhpParser\NodeTraverser;
 
 final class EventTest extends BaseTestCase
 {
-    private PreConfiguredEvent $config;
+    private Naming $config;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->config = new PreConfiguredEvent();
-        $this->config->setBasePath($this->basePath);
-        $this->config->setClassInfoList($this->classInfoList);
+        $config = new EventEngineConfig();
+        $config->setBasePath($this->basePath);
+        $config->setClassInfoList($this->classInfoList);
+
+        $this->config = new PreConfiguredNaming($config);
     }
 
     /**
@@ -51,7 +55,7 @@ final class EventTest extends BaseTestCase
             '/service/src/Domain/Api/_schema/BUILDING_ADDED.json'
         );
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
         $this->assertCount(1, $fileCollection);
 
@@ -62,11 +66,11 @@ final class EventTest extends BaseTestCase
 
     private function assertApiDescription(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -87,7 +91,7 @@ final class Event implements EventEngineDescription
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
     /**
@@ -114,6 +118,7 @@ PHP;
             "properties": {
                 "buildingId": {
                     "format": "uuid",
+                    "shared": true,
                     "type": "string"
                 },
                 "name": {
@@ -124,7 +129,8 @@ PHP;
                 "buildingId",
                 "name"
             ],
-            "additionalProperties": false
+            "additionalProperties": false,
+            "name": "Building Added"
         }
         JSON;
 
@@ -146,7 +152,7 @@ PHP;
 
         $event->generateEventFile($analyzer, $fileCollection);
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
         $this->assertCount(3, $fileCollection);
 
@@ -167,11 +173,11 @@ PHP;
 
     private function assertEventFile(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -181,8 +187,8 @@ namespace MyService\Domain\Model\Building\Event;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
+use MyService\Domain\Model\Building\ValueObject\Name;
 use MyService\Domain\Model\ValueObject\BuildingId;
-use MyService\Domain\Model\ValueObject\Name;
 final class BuildingAdded implements ImmutableRecord
 {
     use ImmutableRecordLogic;
@@ -200,6 +206,6 @@ final class BuildingAdded implements ImmutableRecord
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

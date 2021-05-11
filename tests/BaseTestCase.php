@@ -10,8 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\MetadataFactory;
-use EventEngine\InspectioGraphCody\Node;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
@@ -43,7 +42,7 @@ abstract class BaseTestCase extends TestCase
     {
         parent::setUp();
         $this->fileSystem = new Filesystem(new InMemoryFilesystemAdapter());
-        $this->metadataFactory = static fn (Node $node) => (new MetadataFactory())($node->metadata() ?? '', $node->type());
+        $this->metadataFactory = new Metadata\MetadataFactory(new Metadata\InspectioJson\MetadataFactory());
 
         $this->initComposerFile();
 

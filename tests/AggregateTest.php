@@ -11,7 +11,9 @@ declare(strict_types=1);
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
-use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredAggregate;
+use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
 use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
@@ -21,15 +23,17 @@ use PhpParser\NodeTraverser;
 
 final class AggregateTest extends BaseTestCase
 {
-    private PreConfiguredAggregate $config;
+    private Naming $config;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->config = new PreConfiguredAggregate();
-        $this->config->setBasePath($this->basePath);
-        $this->config->setClassInfoList($this->classInfoList);
+        $config = new EventEngineConfig();
+        $config->setBasePath($this->basePath);
+        $config->setClassInfoList($this->classInfoList);
+
+        $this->config = new PreConfiguredNaming($config);
     }
 
     /**
@@ -50,7 +54,7 @@ final class AggregateTest extends BaseTestCase
             $this->apiAggregateFilename
         );
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
         $this->assertCount(1, $fileCollection);
 
@@ -61,11 +65,11 @@ final class AggregateTest extends BaseTestCase
 
     private function assertApiDescription(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -87,13 +91,13 @@ final class Aggregate implements EventEngineDescription
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
     /**
      * @test
      */
-    public function it_creates_aggregate_file_with_value_objects(): void
+    public function it_creates_aggregate_file(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
@@ -104,9 +108,9 @@ PHP;
 
         $aggregate->generateAggregateFile($analyzer, $fileCollection, $this->apiEventFilename);
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(3, $fileCollection);
+        $this->assertCount(1, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
@@ -125,11 +129,11 @@ PHP;
 
     private function assertAggregateFile(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -153,13 +157,13 @@ final class Building
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
     /**
      * @test
      */
-    public function it_creates_aggregate_state_file(): void
+    public function it_creates_aggregate_state_file_with_value_objects(): void
     {
         $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
@@ -170,7 +174,7 @@ PHP;
 
         $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
         $this->assertCount(3, $fileCollection);
 
@@ -191,11 +195,11 @@ PHP;
 
     private function assertAggregateStateFile(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
@@ -205,8 +209,8 @@ namespace MyService\Domain\Model\Building;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
+use MyService\Domain\Model\Building\ValueObject\Name;
 use MyService\Domain\Model\ValueObject\BuildingId;
-use MyService\Domain\Model\ValueObject\Name;
 final class BuildingState implements ImmutableRecord
 {
     use ImmutableRecordLogic;
@@ -229,6 +233,6 @@ final class BuildingState implements ImmutableRecord
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

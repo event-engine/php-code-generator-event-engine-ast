@@ -18,5 +18,5 @@ interface DocumentMetadata extends Metadata, HasSchema, HasQuery
 {
     public function query(): ?array;
 
-    public function schema(): ?string;
+    public function schema(): ?array;
 }

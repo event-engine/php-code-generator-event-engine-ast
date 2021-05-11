@@ -46,7 +46,7 @@
         "sourcesList": [
             {
                 "id": "9bJ5Y7yuBcfWyei7i2ZSDC",
-                "name": "Add Building\n",
+                "name": "Add Building",
                 "type": "command",
                 "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=9bJ5Y7yuBcfWyei7i2ZSDC&clicks=1",
                 "tags": [],
@@ -148,13 +148,13 @@
                     "x": 463,
                     "y": 768
                 },
-                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  }\n}"
+                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid|shared:true\",\n    \"name\": \"string\"\n  }\n}"
             }
         ],
         "geometry": {
             "x": 464,
             "y": 544
         },
-        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  }\n}"
+        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid|shared:true\",\n    \"name\": \"string\"\n  }\n}"
     }
 }

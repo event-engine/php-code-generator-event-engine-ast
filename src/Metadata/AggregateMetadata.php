@@ -16,7 +16,7 @@ use EventEngine\InspectioGraph\Metadata\Metadata;
 
 interface AggregateMetadata extends Metadata, HasSchema, HasIdentifier
 {
-    public function schema(): ?string;
+    public function schema(): ?array;
 
-    public function identifier(): ?string;
+    public function identifier(): string;
 }

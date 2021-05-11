@@ -10,6 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
+use EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\EventMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeEvent;
@@ -21,16 +24,16 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Event
 {
-    private Config\Event $config;
+    private Naming $config;
 
-    private \EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription $eventDescription;
+    private EventDescription $eventDescription;
 
-    public function __construct(Config\Event $config)
+    public function __construct(Naming $config)
     {
         $this->config = $config;
-        $this->eventDescription = new \EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription(
-            $this->config->getParser(),
-            $this->config->getFilterConstName()
+        $this->eventDescription = new EventDescription(
+            $this->config->config()->getParser(),
+            $this->config->config()->getFilterConstName()
         );
     }
 
@@ -53,8 +56,8 @@ final class Event
             }
 
             $files[$name] = [
-                'filename' => $pathSchema . ($this->config->getFilterConstName())($eventVertex->label()) . '.json',
-                'code' => $schema,
+                'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($eventVertex->label()) . '.json',
+                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
             ];
         }
 
@@ -67,12 +70,11 @@ final class Event
         string $apiFileName,
         string $jsonSchemaFileName = null
     ): void {
-        $classInfo = $this->config->getClassInfoList()->classInfoForFilename($apiFileName);
-        $fqcn = $classInfo->getFullyQualifiedClassNameFromFilename($apiFileName);
+        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
 
         $classBuilder = ClassBuilder::fromScratch(
-            $classInfo->getClassName($fqcn),
-            $classInfo->getClassNamespace($fqcn)
+            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn)
         )->setFinal(true);
 
         $classBuilder->addNamespaceImport(
@@ -86,15 +88,15 @@ final class Event
 
         $classBuilder->addMethod(
             ClassMethodBuilder::fromNode(
-                \EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod::generate()->generate()
+                DescriptionFileMethod::generate()->generate()
             )
         );
 
         foreach ($analyzer->eventMap() as $name => $event) {
             $classBuilder->addConstant(
                 ClassConstBuilder::fromScratch(
-                    ($this->config->getFilterConstName())($event->label()),
-                    ($this->config->getFilterConstValue())($event->label()),
+                    ($this->config->config()->getFilterConstName())($event->label()),
+                    ($this->config->config()->getFilterConstValue())($event->label()),
                 )
             );
 
@@ -117,8 +119,6 @@ final class Event
     public function generateEventFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
     {
         foreach ($analyzer->eventMap() as $name => $event) {
-            $pathEvent = $this->config->determinePath($event, $analyzer);
-
             $metadataInstance = $event->metadataInstance();
 
             $typeSet = null;
@@ -129,10 +129,12 @@ final class Event
                 $typeSet = $metadataInstance->typeSet();
             }
 
-            $code = $this->config->getObjectGenerator()->generateImmutableRecord(
-                $event->label(),
-                $pathEvent,
-                $this->config->determineValueObjectPath($event, $analyzer),
+            $eventFqcn = $this->config->getFullyQualifiedClassName($event, $analyzer);
+
+            $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+                $eventFqcn,
+                $this->config->config()->determineValueObjectPath($event, $analyzer),
+                $this->config->config()->determineValueObjectSharedPath(),
                 $typeSet
             );
 

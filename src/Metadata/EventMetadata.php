@@ -18,5 +18,5 @@ interface EventMetadata extends Metadata, HasSchema, HasPublic
 {
     public function public(): bool;
 
-    public function schema(): ?string;
+    public function schema(): ?array;
 }

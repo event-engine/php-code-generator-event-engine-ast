@@ -17,5 +17,5 @@ use EventEngine\InspectioGraph\Metadata\Metadata;
 
 interface PolicyMetadata extends Metadata, HasStreams
 {
-    public function streams();
+    public function streams(): array;
 }

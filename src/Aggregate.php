@@ -10,69 +10,74 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeAggregate;
-use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\Connection\AggregateConnectionAnalyzer;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
-use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
 final class Aggregate
 {
-    private Config\Aggregate $config;
+    use MetadataTypeSetTrait;
+
+    private Naming $config;
 
     private Code\AggregateDescription $aggregateDescription;
     private Code\AggregateBehaviourEventMethod $eventMethod;
     private Code\AggregateBehaviourCommandMethod $commandMethod;
     private Code\AggregateStateMethod $aggregateStateMethod;
 
-    public function __construct(Config\Aggregate $config)
+    public function __construct(Naming $config)
     {
         $this->config = $config;
 
         $this->aggregateDescription = new Code\AggregateDescription(
-            $this->config->getParser(),
-            $this->config->getFilterConstName(),
+            $this->config->config()->getParser(),
+            $this->config->config()->getFilterConstName(),
             $this->config->getFilterAggregateIdName(),
             $this->config->getFilterCommandMethodName(),
             $this->config->getFilterEventMethodName()
         );
 
         $this->eventMethod = new Code\AggregateBehaviourEventMethod(
-            $this->config->getParser(),
+            $this->config->config()->getParser(),
             $this->config->getFilterEventMethodName(),
-            $this->config->getFilterParameterName()
+            $this->config->config()->getFilterParameterName()
         );
 
         $this->commandMethod = new Code\AggregateBehaviourCommandMethod(
-            $this->config->getParser(),
+            $this->config->config()->getParser(),
             $this->config->getFilterCommandMethodName(),
-            $this->config->getFilterParameterName()
+            $this->config->config()->getFilterParameterName()
         );
 
         $this->aggregateStateMethod = new Code\AggregateStateMethod(
-            $this->config->getParser(),
+            $this->config->config()->getParser(),
             $this->config->getFilterWithMethodName(),
-            $this->config->getFilterParameterName()
+            $this->config->config()->getFilterParameterName()
         );
     }
 
+    /**
+     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
+     * @param FileCollection $files
+     * @param string $apiFileName
+     */
     public function generateApiDescription(
-        EventSourcingAnalyzer $analyzer,
+        $analyzer,
         FileCollection $files,
         string $apiFileName
     ): void {
-        $classInfo = $this->config->getClassInfoList()->classInfoForFilename($apiFileName);
-        $fqcn = $classInfo->getFullyQualifiedClassNameFromFilename($apiFileName);
+        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
 
         $classBuilder = ClassBuilder::fromScratch(
-            $classInfo->getClassName($fqcn),
-            $classInfo->getClassNamespace($fqcn)
+            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn)
         )->setFinal(true);
 
         $classBuilder->addNamespaceImport(
@@ -92,27 +97,26 @@ final class Aggregate
 
         $filterStoreStateIn = $this->config->getFilterAggregateStoreStateIn();
 
-        foreach ($analyzer->aggregateMap() as $name => $aggregateConnection) {
+        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
             $aggregate = $aggregateConnection->aggregate();
 
-            $aggregateBehaviourClassName = ($this->config->getFilterClassName())($aggregate->label());
+            $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
+            $aggregateBehaviourClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn);
 
-            $pathAggregate = $this->config->determinePath($aggregate, $analyzer);
             $storeStateIn = null;
 
             if ($filterStoreStateIn !== null) {
                 $storeStateIn = ($filterStoreStateIn)($aggregate->label());
             }
 
-            $filename = $classInfo->getFilenameFromPathAndName($pathAggregate, $aggregateBehaviourClassName);
-            $classBuilder->addNamespaceImport($classInfo->getFullyQualifiedClassNameFromFilename($filename));
+            $classBuilder->addNamespaceImport($aggregateBehaviourFqcn);
 
             $commandsToEventsMap = $aggregateConnection->commandsToEventsMap();
 
             $classBuilder->addConstant(
                 ClassConstBuilder::fromScratch(
-                    ($this->config->getFilterConstName())($aggregate->label()),
-                    ($this->config->getFilterConstValue())($aggregate->label()),
+                    ($this->config->config()->getFilterConstName())($aggregate->label()),
+                    ($this->config->config()->getFilterConstValue())($aggregate->label()),
                 )
             );
 
@@ -139,40 +143,33 @@ final class Aggregate
     /**
      * Generates aggregate files with corresponding value objects depending on given JSON schema metadata.
      *
-     * @param EventSourcingAnalyzer $analyzer
+     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
      * @param FileCollection $fileCollection
      * @param string $apiEventFilename Filename for Event API
      */
     public function generateAggregateFile(
-        EventSourcingAnalyzer $analyzer,
+        $analyzer,
         FileCollection $fileCollection,
         string $apiEventFilename
     ): void {
-        foreach ($analyzer->aggregateMap() as $name => $aggregateConnection) {
+        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
             $aggregate = $aggregateConnection->aggregate();
 
-            $aggregateBehaviourClassName = ($this->config->getFilterClassName())($aggregate->label());
-            $pathAggregate = $this->config->determinePath($aggregate, $analyzer);
+            $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
 
-            $classInfo = $this->config->getClassInfoList()->classInfoForPath($pathAggregate);
-
-            $filename = $classInfo->getFilenameFromPathAndName($pathAggregate, $aggregateBehaviourClassName);
-            $fqcn = $classInfo->getFullyQualifiedClassNameFromFilename($filename);
-
-            $aggregateStateClassName = ($this->config->getFilterAggregateStateClassName())($aggregate->label());
+            $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
+            $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
 
             $classBuilder = ClassBuilder::fromScratch(
-                $classInfo->getClassName($fqcn),
-                $classInfo->getClassNamespace($fqcn)
+                $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn),
+                $this->config->getClassNamespaceFromFullyQualifiedClassName($aggregateBehaviourFqcn)
             )->setFinal(true);
 
             $classBuilder->addNamespaceImport(
                 'EventEngine\Messaging\Message',
                 'Generator',
-                $classInfo->getFullyQualifiedClassNameFromFilename(
-                    $classInfo->getFilenameFromPathAndName($pathAggregate, $aggregateStateClassName)
-                ),
-                $classInfo->getFullyQualifiedClassNameFromFilename($apiEventFilename)
+                $aggregateStateFqcn,
+                $this->config->getFullyQualifiedClassNameFromFilename($apiEventFilename)
             );
 
             $commandsToEventsMap = $aggregateConnection->commandsToEventsMap();
@@ -203,8 +200,6 @@ final class Aggregate
                 }
             }
 
-            $this->generateValueObjects($fileCollection, $aggregate, $analyzer);
-
             $fileCollection->add($classBuilder);
         }
     }
@@ -213,24 +208,24 @@ final class Aggregate
      * Generates aggregate state file for each aggregate with corresponding value objects depending on given JSON
      * schema metadata of the aggregate.
      *
-     * @param EventSourcingAnalyzer $analyzer
+     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
     public function generateAggregateStateFile(
-        EventSourcingAnalyzer $analyzer,
+        $analyzer,
         FileCollection $fileCollection
     ): void {
-        foreach ($analyzer->aggregateMap() as $name => $aggregateConnection) {
+        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
             $aggregate = $aggregateConnection->aggregate();
 
-            $aggregateStateClassName = ($this->config->getFilterAggregateStateClassName())($aggregate->label());
-            $pathAggregateState = $this->config->determinePath($aggregate, $analyzer);
+            $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
+            $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
 
-            $files = $this->config->getObjectGenerator()->generateImmutableRecord(
-                $aggregateStateClassName,
-                $pathAggregateState,
-                $this->config->determineValueObjectPath($aggregate, $analyzer),
-                $this->getMetadata($aggregate)
+            $files = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+                $aggregateStateFqcn,
+                $this->config->config()->determineValueObjectPath($aggregate, $analyzer),
+                $this->config->config()->determineValueObjectSharedPath(),
+                $this->getMetadataTypeSetFromVertex($aggregate)
             );
 
             foreach ($aggregateConnection->eventMap() as $event) {
@@ -248,29 +243,5 @@ final class Aggregate
                 $fileCollection->add($file);
             }
         }
-    }
-
-    private function generateValueObjects(
-        FileCollection $fileCollection,
-        AggregateType $aggregate,
-        EventSourcingAnalyzer $analyzer
-    ): void {
-        if ($typeSet = $this->getMetadata($aggregate)) {
-            $valueObjects = $this->config->getObjectGenerator()->generateValueObjectsFromObjectProperties(
-                $this->config->determineValueObjectPath($aggregate, $analyzer),
-                $typeSet
-            );
-
-            foreach ($valueObjects as $file) {
-                $fileCollection->add($file);
-            }
-        }
-    }
-
-    private function getMetadata(VertexType $vertexType): ?TypeSet
-    {
-        $metadataInstance = $vertexType->metadataInstance();
-
-        return $metadataInstance instanceof HasTypeSet ? $metadataInstance->typeSet() : null;
     }
 }

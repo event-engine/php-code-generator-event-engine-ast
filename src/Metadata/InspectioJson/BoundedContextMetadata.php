@@ -10,10 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
-use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\FeatureMetadata;
 
-final class CommandMetadata implements \EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata, HasTypeSet
+final class BoundedContextMetadata implements FeatureMetadata
 {
     use JsonMetadataTrait;
 
@@ -21,23 +20,8 @@ final class CommandMetadata implements \EventEngine\CodeGenerator\EventEngineAst
     {
     }
 
-    public function schema(): ?array
-    {
-        return $this->schema;
-    }
-
-    public function typeSet(): ?TypeSet
-    {
-        return $this->typeSet;
-    }
-
     public function customData(): array
     {
         return $this->customData;
-    }
-
-    public function newAggregate(): bool
-    {
-        return $this->customData['newAggregate'] ?? false;
     }
 }

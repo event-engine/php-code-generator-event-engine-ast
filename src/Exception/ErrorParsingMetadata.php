@@ -8,15 +8,12 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
+namespace EventEngine\CodeGenerator\EventEngineAst\Exception;
 
-use EventEngine\InspectioGraph\Metadata\HasNewAggregate;
-use EventEngine\InspectioGraph\Metadata\HasSchema;
-use EventEngine\InspectioGraph\Metadata\Metadata;
-
-interface CommandMetadata extends Metadata, HasSchema, HasNewAggregate
+final class ErrorParsingMetadata extends RuntimeException
 {
-    public function newAggregate(): bool;
-
-    public function schema(): ?array;
+    public static function withError(string $message, \Throwable $previousException): self
+    {
+        return new self($message, $previousException->getCode(), $previousException);
+    }
 }

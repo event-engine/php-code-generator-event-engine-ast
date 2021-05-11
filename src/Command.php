@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\CommandMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeCommand;
@@ -21,16 +23,16 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Command
 {
-    private Config\Command $config;
+    private Naming $config;
 
-    private \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription $commandDescription;
+    private CommandDescription $commandDescription;
 
-    public function __construct(Config\Command $config)
+    public function __construct(Naming $config)
     {
         $this->config = $config;
-        $this->commandDescription = new \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription(
-            $this->config->getParser(),
-            $this->config->getFilterConstName()
+        $this->commandDescription = new CommandDescription(
+            $this->config->config()->getParser(),
+            $this->config->config()->getFilterConstName()
         );
     }
 
@@ -53,8 +55,8 @@ final class Command
             }
 
             $files[$name] = [
-                'filename' => $pathSchema . ($this->config->getFilterConstName())($commandVertex->label()) . '.json',
-                'code' => $schema,
+                'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($commandVertex->label()) . '.json',
+                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
             ];
         }
 
@@ -67,12 +69,11 @@ final class Command
         string $apiFileName,
         string $jsonSchemaFileName = null
     ): void {
-        $classInfo = $this->config->getClassInfoList()->classInfoForFilename($apiFileName);
-        $fqcn = $classInfo->getFullyQualifiedClassNameFromFilename($apiFileName);
+        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
 
         $classBuilder = ClassBuilder::fromScratch(
-            $classInfo->getClassName($fqcn),
-            $classInfo->getClassNamespace($fqcn)
+            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn)
         )->setFinal(true);
 
         $classBuilder->addNamespaceImport(
@@ -93,8 +94,8 @@ final class Command
         foreach ($analyzer->commandMap() as $name => $command) {
             $classBuilder->addConstant(
                 ClassConstBuilder::fromScratch(
-                    ($this->config->getFilterConstName())($command->label()),
-                    ($this->config->getFilterConstValue())($command->label()),
+                    ($this->config->config()->getFilterConstName())($command->label()),
+                    ($this->config->config()->getFilterConstValue())($command->label()),
                 )
             );
 
@@ -117,8 +118,6 @@ final class Command
     public function generateCommandFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
     {
         foreach ($analyzer->commandMap() as $name => $command) {
-            $pathCommand = $this->config->determinePath($command, $analyzer);
-
             $metadataInstance = $command->metadataInstance();
 
             $typeSet = null;
@@ -129,10 +128,12 @@ final class Command
                 $typeSet = $metadataInstance->typeSet();
             }
 
-            $code = $this->config->getObjectGenerator()->generateImmutableRecord(
-                $command->label(),
-                $pathCommand,
-                $this->config->determineValueObjectPath($command, $analyzer),
+            $commandFqcn = $this->config->getFullyQualifiedClassName($command, $analyzer);
+
+            $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+                $commandFqcn,
+                $this->config->config()->determineValueObjectPath($command, $analyzer),
+                $this->config->config()->determineValueObjectSharedPath(),
                 $typeSet
             );
 

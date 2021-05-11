@@ -10,13 +10,23 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-use EventEngine\InspectioGraph\Metadata\HasNewAggregate;
-use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\Metadata\Metadata;
+use EventEngine\InspectioGraphCody\Node;
 
-interface CommandMetadata extends Metadata, HasSchema, HasNewAggregate
+final class MetadataFactory
 {
-    public function newAggregate(): bool;
+    /**
+     * @var callable
+     */
+    private $jsonFactory;
 
-    public function schema(): ?array;
+    public function __construct(callable $jsonFactory)
+    {
+        $this->jsonFactory = $jsonFactory;
+    }
+
+    public function __invoke(Node $node): Metadata
+    {
+        return ($this->jsonFactory)($node->metadata() ?? '{}', $node->type(), $node->name());
+    }
 }

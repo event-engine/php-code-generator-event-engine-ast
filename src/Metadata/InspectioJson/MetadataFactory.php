@@ -16,7 +16,7 @@ use EventEngine\InspectioGraph\VertexType;
 
 final class MetadataFactory
 {
-    public function __invoke(string $json, string $vertexType): Metadata
+    public function __invoke(string $json, string $vertexType, string $name): Metadata
     {
         if (empty($json)) {
             $json = '{}';
@@ -24,13 +24,21 @@ final class MetadataFactory
 
         switch ($vertexType) {
             case VertexType::TYPE_COMMAND:
-                return CommandMetadata::fromJsonMetadata($json);
+                return CommandMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_AGGREGATE:
-                return AggregateMetadata::fromJsonMetadata($json);
+                return AggregateMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_EVENT:
-                return EventMetadata::fromJsonMetadata($json);
+                return EventMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_DOCUMENT:
-                return DocumentMetadata::fromJsonMetadata($json);
+                return DocumentMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_UI:
+                return UiMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_POLICY:
+                return PolicyMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_FEATURE:
+                return FeatureMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_BOUNDED_CONTEXT:
+                return BoundedContextMetadata::fromJsonMetadata($json, $name);
             default:
                 throw new RuntimeException(
                     \sprintf(

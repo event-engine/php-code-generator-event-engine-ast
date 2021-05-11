@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassPropertyBuilder;
@@ -18,15 +20,16 @@ use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\MethodGenerator;
 use OpenCodeModeling\CodeAst\Code\ParameterGenerator;
 use OpenCodeModeling\CodeAst\Code\PropertyGenerator;
-use PhpParser\Parser;
 
 final class AggregateStateImmutableRecordOverride
 {
-    private Parser $parser;
+    use MetadataTypeSetTrait;
 
-    public function __construct(Parser $parser)
+    private Naming $config;
+
+    public function __construct(Naming $config)
     {
-        $this->parser = $parser;
+        $this->config = $config;
     }
 
     /**
@@ -73,7 +76,7 @@ final class AggregateStateImmutableRecordOverride
             [new ParameterGenerator('recordData', 'array')],
             MethodGenerator::FLAG_PUBLIC | MethodGenerator::FLAG_STATIC,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 'return new self($recordData);'
             )
         );
@@ -88,7 +91,7 @@ final class AggregateStateImmutableRecordOverride
             [new ParameterGenerator('nativeData', 'array')],
             MethodGenerator::FLAG_PUBLIC | MethodGenerator::FLAG_STATIC,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 'return new self(null, $nativeData);'
             )
         );
@@ -103,7 +106,7 @@ final class AggregateStateImmutableRecordOverride
             [new ParameterGenerator('recordData', 'array')],
             MethodGenerator::FLAG_PUBLIC,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 '$copy = clone $this; $copy->setRecordData($recordData); return $copy;'
             )
         );
@@ -118,7 +121,7 @@ final class AggregateStateImmutableRecordOverride
             [],
             MethodGenerator::FLAG_PUBLIC,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 'return $this->state;'
             )
         );
@@ -134,7 +137,7 @@ final class AggregateStateImmutableRecordOverride
             [new ParameterGenerator('other', 'ImmutableRecord')],
             MethodGenerator::FLAG_PUBLIC,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 'return $this->state === $other->toArray();'
             )
         );
@@ -153,7 +156,7 @@ final class AggregateStateImmutableRecordOverride
             ],
             MethodGenerator::FLAG_PRIVATE,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 <<<'CODE'
         if ($recordData) {
             $this->setRecordData($recordData);
@@ -175,7 +178,7 @@ CODE
             [new ParameterGenerator('recordData', 'array')],
             MethodGenerator::FLAG_PRIVATE,
             new BodyGenerator(
-                $this->parser,
+                $this->config->config()->getParser(),
                 '$this->state = array_merge($this->state, $recordData);'
             )
         );
