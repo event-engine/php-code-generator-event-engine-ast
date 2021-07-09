@@ -11,11 +11,12 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
-use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\DocumentMetadata;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class ValueObject
@@ -30,37 +31,28 @@ final class ValueObject
     }
 
     public function generate(
+        VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
         FileCollection $fileCollection
     ): void {
-        foreach ($analyzer->documentMap() as $name => $document) {
-            $documentMetadata = $document->metadataInstance();
+        if ($connection->identity()->type() !== VertexType::TYPE_DOCUMENT) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_DOCUMENT);
+        }
 
-            if (
-                ! $documentMetadata instanceof DocumentMetadata
-                && ! $documentMetadata instanceof HasTypeSet
-            ) {
-                throw new RuntimeException(
-                    \sprintf(
-                        'Cannot generate value object "%s". Need metadata of type "%s"',
-                        $document->name(),
-                        DocumentMetadata::class
-                    )
-                );
-            }
-            $documentFqcn = $this->config->getFullyQualifiedClassName($document, $analyzer);
-            $jsonSchemaTypeSet = $documentMetadata->typeSet();
+        /** @var DocumentType $document */
+        $document = $connection->identity();
 
-            $files = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
-                $documentFqcn,
-                $this->config->config()->determineValueObjectPath($document, $analyzer),
-                $this->config->config()->determineValueObjectSharedPath(),
-                $jsonSchemaTypeSet
-            );
+        $documentFqcn = $this->config->getFullyQualifiedClassName($document, $analyzer);
 
-            foreach ($files as $item) {
-                $fileCollection->add($item);
-            }
+        $files = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+            $documentFqcn,
+            $this->config->config()->determineValueObjectPath($document, $analyzer),
+            $this->config->config()->determineValueObjectSharedPath(),
+            $this->getMetadataTypeSetFromVertex($document)
+        );
+
+        foreach ($files as $item) {
+            $fileCollection->add($item);
         }
     }
 }

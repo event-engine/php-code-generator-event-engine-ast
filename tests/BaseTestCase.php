@@ -10,7 +10,12 @@ declare(strict_types=1);
 
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
+use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata;
+use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
+use EventEngine\InspectioGraphCody\EventSourcingGraph;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
@@ -31,6 +36,9 @@ abstract class BaseTestCase extends TestCase
     protected string $modelPath;
 
     protected Filesystem $fileSystem;
+    protected EventSourcingAnalyzer $analyzer;
+    protected Naming $config;
+
     /**
      * @var callable
      */
@@ -43,6 +51,9 @@ abstract class BaseTestCase extends TestCase
         parent::setUp();
         $this->fileSystem = new Filesystem(new InMemoryFilesystemAdapter());
         $this->metadataFactory = new Metadata\MetadataFactory(new Metadata\InspectioJson\MetadataFactory());
+        $this->analyzer = new EventSourcingAnalyzer(
+            new EventSourcingGraph(FilterFactory::constantNameFilter(), $this->metadataFactory)
+        );
 
         $this->initComposerFile();
 
@@ -61,6 +72,12 @@ abstract class BaseTestCase extends TestCase
                 FilterFactory::namespaceToDirectoryFilter(),
             )
         );
+
+        $config = new EventEngineConfig();
+        $config->setBasePath($this->basePath);
+        $config->setClassInfoList($this->classInfoList);
+
+        $this->config = new PreConfiguredNaming($config);
     }
 
     private function initComposerFile(): void

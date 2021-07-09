@@ -13,19 +13,14 @@ namespace EventEngineTest\CodeGenerator\EventEngineAst;
 use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
 use EventEngine\CodeGenerator\EventEngineAst\AggregateStateImmutableRecordOverride;
 use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
-use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
-use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
 final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 {
-    private Naming $config;
-
     public function setUp(): void
     {
         parent::setUp();
@@ -42,16 +37,17 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
      */
     public function it_creates_aggregate_state_immutable_record_override(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
-
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
+        $connection = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $this->analyzer->analyse($node);
 
         $override = new AggregateStateImmutableRecordOverride($this->config);
         $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
+        $aggregate->generateAggregateStateFile($connection, $this->analyzer, $fileCollection);
         $override->generateImmutableRecordOverride($fileCollection);
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);

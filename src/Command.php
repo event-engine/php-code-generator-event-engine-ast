@@ -11,11 +11,16 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription;
+use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\CommandMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeCommand;
+use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
@@ -23,6 +28,8 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Command
 {
+    use MetadataTypeSetTrait;
+
     private Naming $config;
 
     private CommandDescription $commandDescription;
@@ -36,40 +43,52 @@ final class Command
         );
     }
 
-    public function generateJsonSchemaFiles(EventSourcingAnalyzer $analyzer, string $pathSchema): array
-    {
+    public function generateJsonSchemaFiles(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        string $pathSchema
+    ): array {
+        if ($connection->identity()->type() !== VertexType::TYPE_COMMAND) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_COMMAND);
+        }
+
         $files = [];
 
         $pathSchema = \rtrim(\rtrim($pathSchema), '\/\\') . DIRECTORY_SEPARATOR;
 
-        foreach ($analyzer->commandMap() as $name => $commandVertex) {
-            $metadata = $commandVertex->metadataInstance();
+        /** @var CommandType $command */
+        $command = $connection->identity();
 
-            if ($metadata === null || ! $metadata instanceof CommandMetadata) {
-                continue;
-            }
-            $schema = $metadata->schema();
+        $metadata = $command->metadataInstance();
 
-            if ($schema === null) {
-                continue;
-            }
-
-            $files[$name] = [
-                'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($commandVertex->label()) . '.json',
-                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
-            ];
+        if ($metadata === null || ! $metadata instanceof CommandMetadata) {
+            return $files;
         }
+        $schema = $metadata->schema();
+
+        if ($schema === null) {
+            return $files;
+        }
+
+        $files[$command->name()] = [
+            'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($command->label()) . '.json',
+            'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+        ];
 
         return $files;
     }
 
     public function generateApiDescription(
+        VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
         FileCollection $files,
-        string $apiFileName,
         string $jsonSchemaFileName = null
     ): void {
-        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
+        if ($connection->identity()->type() !== VertexType::TYPE_COMMAND) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_COMMAND);
+        }
+
+        $fqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
 
         $classBuilder = ClassBuilder::fromScratch(
             $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
@@ -87,24 +106,24 @@ final class Command
 
         $classBuilder->addMethod(
             ClassMethodBuilder::fromNode(
-                \EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod::generate()->generate()
+                DescriptionFileMethod::generate()->generate()
+            )
+        );
+        /** @var CommandType $command */
+        $command = $connection->identity();
+
+        $classBuilder->addConstant(
+            ClassConstBuilder::fromScratch(
+                ($this->config->config()->getFilterConstName())($command->label()),
+                ($this->config->config()->getFilterConstValue())($command->label()),
             )
         );
 
-        foreach ($analyzer->commandMap() as $name => $command) {
-            $classBuilder->addConstant(
-                ClassConstBuilder::fromScratch(
-                    ($this->config->config()->getFilterConstName())($command->label()),
-                    ($this->config->config()->getFilterConstValue())($command->label()),
-                )
-            );
-
-            $classBuilder->addNodeVisitor(
-                new ClassMethodDescribeCommand(
-                    $this->commandDescription->generate($command, $jsonSchemaFileName)
-                )
-            );
-        }
+        $classBuilder->addNodeVisitor(
+            new ClassMethodDescribeCommand(
+                $this->commandDescription->generate($command, $jsonSchemaFileName)
+            )
+        );
 
         $files->add($classBuilder);
     }
@@ -112,34 +131,33 @@ final class Command
     /**
      * Generates command files with corresponding value objects depending on given JSON schema metadata.
      *
+     * @param VertexConnection $connection
      * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
-    public function generateCommandFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
-    {
-        foreach ($analyzer->commandMap() as $name => $command) {
-            $metadataInstance = $command->metadataInstance();
+    public function generateCommandFile(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        if ($connection->identity()->type() !== VertexType::TYPE_COMMAND) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_COMMAND);
+        }
+        /** @var CommandType $command */
+        $command = $connection->identity();
+        $typeSet = $this->getMetadataTypeSetFromVertex($command);
 
-            $typeSet = null;
+        $commandFqcn = $this->config->getFullyQualifiedClassName($command, $analyzer);
 
-            if ($metadataInstance instanceof HasTypeSet
-                && $metadataInstance->typeSet() !== null
-            ) {
-                $typeSet = $metadataInstance->typeSet();
-            }
+        $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+            $commandFqcn,
+            $this->config->config()->determineValueObjectPath($command, $analyzer),
+            $this->config->config()->determineValueObjectSharedPath(),
+            $typeSet
+        );
 
-            $commandFqcn = $this->config->getFullyQualifiedClassName($command, $analyzer);
-
-            $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
-                $commandFqcn,
-                $this->config->config()->determineValueObjectPath($command, $analyzer),
-                $this->config->config()->determineValueObjectSharedPath(),
-                $typeSet
-            );
-
-            foreach ($code as $file) {
-                $fileCollection->add($file);
-            }
+        foreach ($code as $file) {
+            $fileCollection->add($file);
         }
     }
 }

@@ -14,6 +14,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Config\Base;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
+use OpenCodeModeling\CodeAst\Builder\PhpFile;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
 use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
 use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
@@ -38,7 +39,9 @@ final class ObjectGenerator
             if ($classBuilder instanceof ClassBuilder) {
                 $classBuilder->sortTraits($sort);
             }
-            $classBuilder->sortNamespaceImports($sort);
+            if ($classBuilder instanceof PhpFile) {
+                $classBuilder->sortNamespaceImports($sort);
+            }
         }
     }
 
@@ -168,10 +171,11 @@ final class ObjectGenerator
                         $currentNamespace = \trim($valueObjectNamespace . '\\' . $namespace, '\\');
                         $className = ($this->config->getFilterClassName())($propertyJsonSchemaType->name());
 
-                        $filtered = $fileCollection->filter(fn (File $file) => $file->getNamespace() === $currentNamespace && $file->getName() === $className);
+                        $filtered = $fileCollection->filter(fn (PhpFile $file) => $file->getNamespace() === $currentNamespace && $file->getName() === $className);
 
                         if (\count($filtered) === 1) {
                             $filtered->rewind();
+                            /** @var PhpFile $classBuilder */
                             $classBuilder = $filtered->current();
                             $oldFqcn = $classBuilder->getNamespace() . '\\' . $classBuilder->getName();
 
@@ -186,7 +190,7 @@ final class ObjectGenerator
                             }
                         } else {
                             $filtered = $fileCollection->filter(
-                                fn (File $file) => $file->getNamespace() === $fqcnClassNamespace
+                                fn (PhpFile $file) => $file->getNamespace() === $fqcnClassNamespace
                                     && $file->getName() === $fqcnClassName
                             );
                             $filtered->rewind();

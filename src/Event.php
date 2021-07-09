@@ -13,10 +13,14 @@ namespace EventEngine\CodeGenerator\EventEngineAst;
 use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
 use EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\EventMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeEvent;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\EventType;
+use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
@@ -24,6 +28,8 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Event
 {
+    use MetadataTypeSetTrait;
+
     private Naming $config;
 
     private EventDescription $eventDescription;
@@ -37,40 +43,55 @@ final class Event
         );
     }
 
-    public function generateJsonSchemaFiles(EventSourcingAnalyzer $analyzer, string $pathSchema): array
-    {
+    public function generateJsonSchemaFiles(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        string $pathSchema
+    ): array {
+        if ($connection->identity()->type() !== VertexType::TYPE_EVENT) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_EVENT);
+        }
+
+        /** @var EventType $event */
+        $event = $connection->identity();
+
         $files = [];
 
         $pathSchema = \rtrim(\rtrim($pathSchema), '\/\\') . DIRECTORY_SEPARATOR;
 
-        foreach ($analyzer->eventMap() as $name => $eventVertex) {
-            $metadata = $eventVertex->metadataInstance();
+        $metadata = $event->metadataInstance();
 
-            if ($metadata === null || ! $metadata instanceof EventMetadata) {
-                continue;
-            }
-            $schema = $metadata->schema();
-
-            if ($schema === null) {
-                continue;
-            }
-
-            $files[$name] = [
-                'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($eventVertex->label()) . '.json',
-                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
-            ];
+        if ($metadata === null || ! $metadata instanceof EventMetadata) {
+            return $files;
         }
+        $schema = $metadata->schema();
+
+        if ($schema === null) {
+            return $files;
+        }
+
+        $files[$event->name()] = [
+            'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($event->label()) . '.json',
+            'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+        ];
 
         return $files;
     }
 
     public function generateApiDescription(
+        VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
         FileCollection $files,
-        string $apiFileName,
         string $jsonSchemaFileName = null
     ): void {
-        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
+        if ($connection->identity()->type() !== VertexType::TYPE_EVENT) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_EVENT);
+        }
+
+        /** @var EventType $event */
+        $event = $connection->identity();
+
+        $fqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
 
         $classBuilder = ClassBuilder::fromScratch(
             $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
@@ -92,20 +113,18 @@ final class Event
             )
         );
 
-        foreach ($analyzer->eventMap() as $name => $event) {
-            $classBuilder->addConstant(
-                ClassConstBuilder::fromScratch(
-                    ($this->config->config()->getFilterConstName())($event->label()),
-                    ($this->config->config()->getFilterConstValue())($event->label()),
-                )
-            );
+        $classBuilder->addConstant(
+            ClassConstBuilder::fromScratch(
+                ($this->config->config()->getFilterConstName())($event->label()),
+                ($this->config->config()->getFilterConstValue())($event->label()),
+            )
+        );
 
-            $classBuilder->addNodeVisitor(
-                new ClassMethodDescribeEvent(
-                    $this->eventDescription->generate($event, $jsonSchemaFileName)
-                )
-            );
-        }
+        $classBuilder->addNodeVisitor(
+            new ClassMethodDescribeEvent(
+                $this->eventDescription->generate($event, $jsonSchemaFileName)
+            )
+        );
 
         $files->add($classBuilder);
     }
@@ -113,34 +132,34 @@ final class Event
     /**
      * Generates event files with corresponding value objects depending on given JSON schema metadata.
      *
+     * @param VertexConnection $connection
      * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
-    public function generateEventFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
-    {
-        foreach ($analyzer->eventMap() as $name => $event) {
-            $metadataInstance = $event->metadataInstance();
+    public function generateEventFile(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        if ($connection->identity()->type() !== VertexType::TYPE_EVENT) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_EVENT);
+        }
 
-            $typeSet = null;
+        /** @var EventType $event */
+        $event = $connection->identity();
+        $typeSet = $this->getMetadataTypeSetFromVertex($event);
 
-            if ($metadataInstance instanceof HasTypeSet
-                && $metadataInstance->typeSet() !== null
-            ) {
-                $typeSet = $metadataInstance->typeSet();
-            }
+        $eventFqcn = $this->config->getFullyQualifiedClassName($event, $analyzer);
 
-            $eventFqcn = $this->config->getFullyQualifiedClassName($event, $analyzer);
+        $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+            $eventFqcn,
+            $this->config->config()->determineValueObjectPath($event, $analyzer),
+            $this->config->config()->determineValueObjectSharedPath(),
+            $typeSet
+        );
 
-            $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
-                $eventFqcn,
-                $this->config->config()->determineValueObjectPath($event, $analyzer),
-                $this->config->config()->determineValueObjectSharedPath(),
-                $typeSet
-            );
-
-            foreach ($code as $file) {
-                $fileCollection->add($file);
-            }
+        foreach ($code as $file) {
+            $fileCollection->add($file);
         }
     }
 }

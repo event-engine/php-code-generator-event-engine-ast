@@ -40,4 +40,9 @@ final class AggregateMetadata implements \EventEngine\CodeGenerator\EventEngineA
     {
         return $this->customData['identifier'] ?? 'id';
     }
+
+    public function streamCollection(): ?string
+    {
+        return $this->customData['stream_collection'] ?? null;
+    }
 }

@@ -11,11 +11,20 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\MissingMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\DocumentMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeAggregate;
+use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
-use EventEngine\InspectioGraph\Connection\AggregateConnectionAnalyzer;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexConnectionMap;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
@@ -24,6 +33,7 @@ use OpenCodeModeling\CodeAst\Builder\FileCollection;
 final class Aggregate
 {
     use MetadataTypeSetTrait;
+    use FindAggregateStateTrait;
 
     private Naming $config;
 
@@ -63,17 +73,16 @@ final class Aggregate
         );
     }
 
-    /**
-     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
-     * @param FileCollection $files
-     * @param string $apiFileName
-     */
     public function generateApiDescription(
-        $analyzer,
-        FileCollection $files,
-        string $apiFileName
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
     ): void {
-        $fqcn = $this->config->getFullyQualifiedClassNameFromFilename($apiFileName);
+        if ($connection->identity()->type() !== VertexType::TYPE_AGGREGATE) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_AGGREGATE);
+        }
+
+        $fqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
 
         $classBuilder = ClassBuilder::fromScratch(
             $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
@@ -95,46 +104,61 @@ final class Aggregate
             )
         );
 
-        $filterStoreStateIn = $this->config->getFilterAggregateStoreStateIn();
+        /** @var AggregateType $aggregate */
+        $aggregate = $connection->identity();
 
-        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
-            $aggregate = $aggregateConnection->aggregate();
+        $aggregateMetadata = $aggregate->metadataInstance();
 
-            $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
-            $aggregateBehaviourClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn);
+        if (! $aggregateMetadata instanceof AggregateMetadata) {
+            throw MissingMetadata::forVertex($aggregate, AggregateMetadata::class);
+        }
+
+        $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
+        $aggregateBehaviourClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn);
+
+        $classBuilder->addNamespaceImport($aggregateBehaviourFqcn);
+
+        $commands = $connection->from()->filterByType(VertexType::TYPE_COMMAND);
+        $events = $connection->to()->filterByType(VertexType::TYPE_EVENT);
+
+        $classBuilder->addConstant(
+            ClassConstBuilder::fromScratch(
+                ($this->config->config()->getFilterConstName())($aggregate->label()),
+                ($this->config->config()->getFilterConstValue())($aggregate->label()),
+            )
+        );
+
+        /** @var CommandType $command */
+        foreach ($commands as $command) {
+            $commandMetadataInstance = $command->metadataInstance();
 
             $storeStateIn = null;
 
-            if ($filterStoreStateIn !== null) {
-                $storeStateIn = ($filterStoreStateIn)($aggregate->label());
+            if ($commandMetadataInstance instanceof CommandMetadata
+                && true === $commandMetadataInstance->newAggregate()
+                && ($aggregateState = $this->findAggregateState($command->id(), VertexConnectionMap::WALK_FORWARD, $analyzer))
+            ) {
+                $aggregateStateMetadata = $aggregateState->identity()->metadataInstance();
+
+                if ($aggregateStateMetadata instanceof DocumentMetadata) {
+                    $storeStateIn = $aggregateStateMetadata->customData()['collection'] ?? null;
+                }
             }
 
-            $classBuilder->addNamespaceImport($aggregateBehaviourFqcn);
-
-            $commandsToEventsMap = $aggregateConnection->commandsToEventsMap();
-
-            $classBuilder->addConstant(
-                ClassConstBuilder::fromScratch(
-                    ($this->config->config()->getFilterConstName())($aggregate->label()),
-                    ($this->config->config()->getFilterConstValue())($aggregate->label()),
+            $classBuilder->addNodeVisitor(
+                new ClassMethodDescribeAggregate(
+                    $this->aggregateDescription->generate(
+                        $aggregateBehaviourClassName,
+                        $aggregateBehaviourClassName,
+                        $storeStateIn,
+                        $aggregateMetadata->streamCollection(),
+                        $command,
+                        $aggregate,
+                        // @phpstan-ignore-next-line
+                        ...$events->vertices()
+                    )
                 )
             );
-
-            /** @var CommandType $commandVertex */
-            foreach ($commandsToEventsMap as $commandVertex) {
-                $classBuilder->addNodeVisitor(
-                    new ClassMethodDescribeAggregate(
-                        $this->aggregateDescription->generate(
-                            $aggregateBehaviourClassName,
-                            $aggregateBehaviourClassName,
-                            $storeStateIn,
-                            $commandVertex,
-                            $aggregate,
-                            ...$commandsToEventsMap[$commandVertex]
-                        )
-                    )
-                );
-            }
         }
 
         $files->add($classBuilder);
@@ -143,105 +167,115 @@ final class Aggregate
     /**
      * Generates aggregate files with corresponding value objects depending on given JSON schema metadata.
      *
-     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
+     * @param VertexConnection $connection
+     * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
-     * @param string $apiEventFilename Filename for Event API
      */
     public function generateAggregateFile(
-        $analyzer,
-        FileCollection $fileCollection,
-        string $apiEventFilename
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
     ): void {
-        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
-            $aggregate = $aggregateConnection->aggregate();
+        if ($connection->identity()->type() !== VertexType::TYPE_AGGREGATE) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_AGGREGATE);
+        }
+        /** @var AggregateType $aggregate */
+        $aggregate = $connection->identity();
 
-            $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
+        $aggregateBehaviourFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($aggregate, $analyzer);
 
-            $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
-            $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
+        $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
+        $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
 
-            $classBuilder = ClassBuilder::fromScratch(
-                $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn),
-                $this->config->getClassNamespaceFromFullyQualifiedClassName($aggregateBehaviourFqcn)
-            )->setFinal(true);
+        $classBuilder = ClassBuilder::fromScratch(
+            $this->config->getClassNameFromFullyQualifiedClassName($aggregateBehaviourFqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($aggregateBehaviourFqcn)
+        )->setFinal(true);
 
-            $classBuilder->addNamespaceImport(
-                'EventEngine\Messaging\Message',
-                'Generator',
-                $aggregateStateFqcn,
-                $this->config->getFullyQualifiedClassNameFromFilename($apiEventFilename)
+        $classBuilder->addNamespaceImport(
+            'EventEngine\Messaging\Message',
+            'Generator',
+            $aggregateStateFqcn
+        );
+
+        $commands = $connection->from()->filterByType(VertexType::TYPE_COMMAND);
+        $events = $connection->to()->filterByType(VertexType::TYPE_EVENT);
+
+        /** @var \EventEngine\InspectioGraph\CommandType $command */
+        foreach ($commands as $command) {
+            $classBuilder->addNamespaceImport($this->config->getApiDescriptionFullyQualifiedClassName($command, $analyzer));
+            $classBuilder->addMethod(
+                ClassMethodBuilder::fromNode(
+                    $this->commandMethod->generate(
+                        $aggregate,
+                        $command,
+                        // @phpstan-ignore-next-line
+                        ...$events->vertices()
+                    )->generate()
+                )
             );
-
-            $commandsToEventsMap = $aggregateConnection->commandsToEventsMap();
-
-            /** @var \EventEngine\InspectioGraph\CommandType $commandVertex */
-            foreach ($commandsToEventsMap as $commandVertex) {
+            /** @var \EventEngine\InspectioGraph\EventType $event */
+            foreach ($events as $event) {
+                $classBuilder->addNamespaceImport($this->config->getApiDescriptionFullyQualifiedClassName($event, $analyzer));
                 $classBuilder->addMethod(
                     ClassMethodBuilder::fromNode(
-                        $this->commandMethod->generate(
+                        $this->eventMethod->generate(
                             $aggregate,
-                            $commandVertex,
-                            ...$commandsToEventsMap[$commandVertex]
+                            $command,
+                            $event,
+                            $aggregateStateClassName
                         )->generate()
                     )
                 );
-                /** @var \EventEngine\InspectioGraph\EventType $eventVertex */
-                foreach ($commandsToEventsMap[$commandVertex] as $eventVertex) {
-                    $classBuilder->addMethod(
-                        ClassMethodBuilder::fromNode(
-                            $this->eventMethod->generate(
-                                $aggregate,
-                                $commandVertex,
-                                $eventVertex,
-                                $aggregateStateClassName
-                            )->generate()
-                        )
-                    );
-                }
             }
-
-            $fileCollection->add($classBuilder);
         }
+
+        $fileCollection->add($classBuilder);
     }
 
     /**
      * Generates aggregate state file for each aggregate with corresponding value objects depending on given JSON
      * schema metadata of the aggregate.
      *
-     * @param EventSourcingAnalyzer & AggregateConnectionAnalyzer $analyzer
+     * @param VertexConnection $connection
+     * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
     public function generateAggregateStateFile(
-        $analyzer,
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
         FileCollection $fileCollection
     ): void {
-        foreach ($analyzer->aggregateConnectionMap() as $name => $aggregateConnection) {
-            $aggregate = $aggregateConnection->aggregate();
+        if ($connection->identity()->type() !== VertexType::TYPE_AGGREGATE) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_AGGREGATE);
+        }
+        /** @var AggregateType $aggregate */
+        $aggregate = $connection->identity();
+        $events = $connection->to()->filterByType(VertexType::TYPE_EVENT);
 
-            $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
-            $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
+        $aggregateStateFqcn = $this->config->getAggregateStateFullyQualifiedClassName($aggregate, $analyzer);
+        $aggregateStateClassName = $this->config->getClassNameFromFullyQualifiedClassName($aggregateStateFqcn);
 
-            $files = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
-                $aggregateStateFqcn,
-                $this->config->config()->determineValueObjectPath($aggregate, $analyzer),
-                $this->config->config()->determineValueObjectSharedPath(),
-                $this->getMetadataTypeSetFromVertex($aggregate)
-            );
+        $files = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+            $aggregateStateFqcn,
+            $this->config->config()->determineValueObjectPath($aggregate, $analyzer),
+            $this->config->config()->determineValueObjectSharedPath(),
+            $this->getMetadataTypeSetFromVertex($aggregate)
+        );
 
-            foreach ($aggregateConnection->eventMap() as $event) {
-                /** @var ClassBuilder $aggregateState */
-                foreach ($files->filter(fn (ClassBuilder $classBuilder) => $classBuilder->getName() === $aggregateStateClassName) as $aggregateState) {
-                    $aggregateState->addMethod(
-                        ClassMethodBuilder::fromNode(
-                            $this->aggregateStateMethod->generate($event)->generate()
-                        )
-                    );
-                }
+        foreach ($events as $event) {
+            /** @var ClassBuilder $aggregateState */
+            foreach ($files->filter(fn (ClassBuilder $classBuilder) => $classBuilder->getName() === $aggregateStateClassName) as $aggregateState) {
+                $aggregateState->addMethod(
+                    ClassMethodBuilder::fromNode(
+                        $this->aggregateStateMethod->generate($event)->generate()
+                    )
+                );
             }
+        }
 
-            foreach ($files as $file) {
-                $fileCollection->add($file);
-            }
+        foreach ($files as $file) {
+            $fileCollection->add($file);
         }
     }
 }

@@ -42,4 +42,9 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
     {
         return $this->customData['query'] ?? null;
     }
+
+    public function isAggregateState(): bool
+    {
+        return $this->customData['aggregate_state'] ?? false;
+    }
 }
