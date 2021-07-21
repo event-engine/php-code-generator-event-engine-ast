@@ -8,12 +8,11 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-final class AggregateStateClassName extends AbstractFilter
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
+use EventEngine\InspectioGraph\Metadata\Metadata;
+
+interface RoleMetadata extends Metadata, HasCustomData
 {
-    public function __invoke(string $value): string
-    {
-        return ($this->filter)($value) . 'State';
-    }
 }

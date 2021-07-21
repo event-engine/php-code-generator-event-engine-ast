@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-interface HasCustomData
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
+use EventEngine\InspectioGraph\Metadata\Metadata;
+
+interface HotSpotMetadata extends Metadata, HasCustomData
 {
-    public function customData(): array;
 }

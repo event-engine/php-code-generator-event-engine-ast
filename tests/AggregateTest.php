@@ -11,47 +11,31 @@ declare(strict_types=1);
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
-use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
-use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
-use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
-use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
 final class AggregateTest extends BaseTestCase
 {
-    private Naming $config;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $config = new EventEngineConfig();
-        $config->setBasePath($this->basePath);
-        $config->setClassInfoList($this->classInfoList);
-
-        $this->config = new PreConfiguredNaming($config);
-    }
-
     /**
      * @test
      */
     public function it_creates_api_aggregate_description(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
         $aggregate->generateApiDescription(
-            $analyzer,
-            $fileCollection,
-            $this->apiAggregateFilename
+            $connection,
+            $this->analyzer,
+            $fileCollection
         );
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
@@ -87,7 +71,7 @@ final class Aggregate implements EventEngineDescription
     public const BUILDING = 'building';
     public static function describe(EventEngine $eventEngine) : void
     {
-        $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings');
+        $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
     }
 }
 PHP;
@@ -99,14 +83,16 @@ PHP;
      */
     public function it_creates_aggregate_file(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $aggregate->generateAggregateFile($analyzer, $fileCollection, $this->apiEventFilename);
+        $aggregate->generateAggregateFile($connection, $this->analyzer, $fileCollection, $this->apiEventFilename);
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
@@ -143,6 +129,7 @@ namespace MyService\Domain\Model\Building;
 
 use EventEngine\Messaging\Message;
 use Generator;
+use MyService\Domain\Api\Command;
 use MyService\Domain\Api\Event;
 use MyService\Domain\Model\Building\BuildingState;
 final class Building
@@ -165,18 +152,20 @@ PHP;
      */
     public function it_creates_aggregate_state_file_with_value_objects(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
+        $aggregate->generateAggregateStateFile($connection, $this->analyzer, $fileCollection);
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(3, $fileCollection);
+        $this->assertCount(2, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {

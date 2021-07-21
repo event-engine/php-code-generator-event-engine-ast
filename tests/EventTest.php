@@ -11,20 +11,15 @@ declare(strict_types=1);
 namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
-use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
 use EventEngine\CodeGenerator\EventEngineAst\Event;
-use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
 final class EventTest extends BaseTestCase
 {
-    private Naming $config;
-
     public function setUp(): void
     {
         parent::setUp();
@@ -41,17 +36,17 @@ final class EventTest extends BaseTestCase
      */
     public function it_creates_api_event_description(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
 
         $event = new Event($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
         $event->generateApiDescription(
-            $analyzer,
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
             $fileCollection,
-            $this->apiEventFilename,
             '/service/src/Domain/Api/_schema/BUILDING_ADDED.json'
         );
 
@@ -99,12 +94,16 @@ PHP;
      */
     public function it_creates_api_event_json_schema_file(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
 
         $event = new Event($this->config);
 
-        $files = $event->generateJsonSchemaFiles($analyzer, '/service/src/Domain/Api/_schema');
+        $files = $event->generateJsonSchemaFiles(
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
+            '/service/src/Domain/Api/_schema'
+        );
 
         $this->assertCount(1, $files);
 
@@ -117,9 +116,8 @@ PHP;
             "type": "object",
             "properties": {
                 "buildingId": {
-                    "format": "uuid",
                     "shared": true,
-                    "type": "string"
+                    "\$ref": "#\/definitions\/BuildingId"
                 },
                 "name": {
                     "type": "string"
@@ -143,18 +141,22 @@ PHP;
      */
     public function it_creates_event_file_with_value_objects(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
 
         $event = new Event($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $event->generateEventFile($analyzer, $fileCollection);
+        $event->generateEventFile(
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(3, $fileCollection);
+        $this->assertCount(2, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {

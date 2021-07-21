@@ -5,5 +5,3 @@ parameters:
   excludes_analyse:
     - src/Metadata/InspectioJson/JsonMetadataTrait.php
   ignoreErrors:
-    - '#EventEngine\\InspectioGraph\\EventSourcingAnalyzer given#'
-    - '#returns EventEngine\\InspectioGraph\\VertexType\|null#'

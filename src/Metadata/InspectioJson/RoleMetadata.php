@@ -8,12 +8,18 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 
-final class StateName extends AbstractFilter
+final class RoleMetadata implements \EventEngine\CodeGenerator\EventEngineAst\Metadata\RoleMetadata
 {
-    public function __invoke(string $value): string
+    use JsonMetadataTrait;
+
+    private function __construct()
     {
-        return ($this->filter)($value) . 's';
+    }
+
+    public function customData(): array
+    {
+        return $this->customData;
     }
 }

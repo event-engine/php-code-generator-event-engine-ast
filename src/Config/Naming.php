@@ -18,6 +18,10 @@ use EventEngine\InspectioGraph\VertexType;
 
 interface Naming
 {
+    public function getContextName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getApiDescriptionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
     public function getAggregateStateFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function getAggregateBehaviourFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string;
@@ -51,6 +55,4 @@ interface Naming
     public function getFilterEventMethodName(): callable;
 
     public function getFilterWithMethodName(): callable;
-
-    public function getFilterAggregateStoreStateIn(): ?callable;
 }

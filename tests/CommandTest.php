@@ -12,19 +12,14 @@ namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Command;
 use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
-use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
-use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
 final class CommandTest extends BaseTestCase
 {
-    private Naming $config;
-
     public function setUp(): void
     {
         parent::setUp();
@@ -41,17 +36,19 @@ final class CommandTest extends BaseTestCase
      */
     public function it_creates_api_command_description(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+//        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+//        $this->analyzer->analyse($node);
 
         $command = new Command($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
         $command->generateApiDescription(
-            $analyzer,
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
             $fileCollection,
-            $this->apiCommandFilename,
             '/service/src/Domain/Api/_schema/ADD_BUILDING.json'
         );
 
@@ -99,12 +96,16 @@ PHP;
      */
     public function it_creates_api_command_json_schema_file(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
 
         $command = new Command($this->config);
 
-        $files = $command->generateJsonSchemaFiles($analyzer, '/service/src/Domain/Api/_schema');
+        $files = $command->generateJsonSchemaFiles(
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
+            '/service/src/Domain/Api/_schema'
+        );
 
         $this->assertCount(1, $files);
 
@@ -118,8 +119,8 @@ PHP;
             "type": "object",
             "properties": {
                 "buildingId": {
-                    "format": "uuid",
-                    "type": "string"
+                    "shared": true,
+                    "\$ref": "#\/definitions\/BuildingId"
                 },
                 "name": {
                     "type": "string"
@@ -143,18 +144,22 @@ PHP;
      */
     public function it_creates_command_file_with_value_objects(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
 
         $command = new Command($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $command->generateCommandFile($analyzer, $fileCollection);
+        $command->generateCommandFile(
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(3, $fileCollection);
+        $this->assertCount(2, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
@@ -187,8 +192,8 @@ namespace MyService\Domain\Model\Building\Command;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
-use MyService\Domain\Model\Building\ValueObject\BuildingId;
 use MyService\Domain\Model\Building\ValueObject\Name;
+use MyService\Domain\Model\ValueObject\BuildingId;
 final class AddBuilding implements ImmutableRecord
 {
     use ImmutableRecordLogic;

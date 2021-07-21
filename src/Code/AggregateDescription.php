@@ -64,6 +64,7 @@ final class AggregateDescription
         string $aggregateBehaviourCommandClassName,
         string $aggregateBehaviourEventClassName,
         ?string $storeStateIn,
+        ?string $storeEventsIn,
         CommandType $command,
         AggregateType $aggregate,
         EventType ...$events
@@ -88,8 +89,16 @@ final class AggregateDescription
             $with = 'withNew';
 
             if ($storeStateIn) {
-                $storeStateInCode = \sprintf("->storeStateIn('%s');", $storeStateIn);
+                $storeStateInCode = \sprintf("->storeStateIn('%s')", $storeStateIn);
             }
+        }
+
+        if ($storeEventsIn) {
+            $storeStateInCode .= \sprintf("->storeEventsIn('%s');", $storeEventsIn);
+        }
+
+        if ($storeStateInCode !== '') {
+            $storeStateInCode .= ';';
         }
 
         $code = \sprintf('$eventEngine->process(Command::%s)->%s(self::%s)', $commandConstName, $with, $aggregateName);

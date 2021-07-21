@@ -14,8 +14,6 @@ use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
-use EventEngine\InspectioGraph\Connection\AggregateConnectionAnalyzer;
-use EventEngine\InspectioGraph\Connection\FeatureConnectionAnalyzer;
 use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
@@ -164,13 +162,41 @@ trait DeterminePathTrait
         return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.php';
     }
 
-    private function determineAggregate(VertexType $type, AggregateConnectionAnalyzer $analyzer): ?AggregateType
+    private function findAggregate(VertexType $type, EventSourcingAnalyzer $analyzer): ?AggregateType
+    {
+        $connection = $analyzer->connection($type->id());
+
+        foreach ($connection->to()->filterByType(VertexType::TYPE_AGGREGATE) as $vertex) {
+            return $vertex;
+        }
+        foreach ($connection->from()->filterByType(VertexType::TYPE_AGGREGATE) as $vertex) {
+            return $vertex;
+        }
+
+        return null;
+    }
+
+    private function findFeature(VertexType $type, EventSourcingAnalyzer $analyzer): ?FeatureType
+    {
+        $connection = $analyzer->connection($type->id());
+
+        if (($parent = $connection->parent())
+            && $parent->type() === VertexType::TYPE_FEATURE
+        ) {
+            // @phpstan-ignore-next-line
+            return $parent;
+        }
+
+        return null;
+    }
+
+    private function determineAggregate(VertexType $type, EventSourcingAnalyzer $analyzer): ?AggregateType
     {
         $aggregate = null;
 
         switch (true) {
             case $type instanceof CommandType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByCommand($type);
+                $aggregate = $this->findAggregate($type, $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -182,7 +208,7 @@ trait DeterminePathTrait
                 }
                 break;
             case $type instanceof EventType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByEvent($type);
+                $aggregate = $this->findAggregate($type, $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -194,7 +220,7 @@ trait DeterminePathTrait
                 }
                 break;
             case $type instanceof AggregateType:
-                if ($analyzer->aggregateConnectionMap()->has($type->id()) === false) {
+                if ($analyzer->has($type->id()) === false) {
                     throw new RuntimeException(
                         \sprintf(
                             'Aggregate "%s" not found in aggregate map. Can not use aggregate name for path.',
@@ -202,21 +228,19 @@ trait DeterminePathTrait
                         )
                     );
                 }
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateConnection($type->id())->aggregate();
+                $aggregate = $analyzer->connection($type->id())->identity();
                 break;
             case $type instanceof DocumentType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByDocument($type);
+                $aggregate = $this->findAggregate($type, $analyzer);
 
                 if ($aggregate === null) {
                     $metadataInstance = $type->metadataInstance();
                     if ($metadataInstance instanceof HasCustomData) {
-                        $aggregateName = ($this->getFilterClassName())($metadataInstance->customData()['aggregate'] ?? '');
+                        $aggregateName = ($this->getFilterConstName())($metadataInstance->customData()['aggregate'] ?? '');
 
-                        $aggregateMap = $analyzer->aggregateConnectionMap()->aggregateVertexMap();
+                        $aggregate = $analyzer->aggregateMap()->filterByName($aggregateName)->current() ?: null;
 
-                        if ($aggregateMap->has($aggregateName)) {
-                            $aggregate = $aggregateMap->vertex($aggregateName);
-                        }
+                        // TODO check from / to connections with depth
                     }
                 }
                 break;
@@ -227,13 +251,13 @@ trait DeterminePathTrait
         return $aggregate;
     }
 
-    private function determineFeature(VertexType $type, FeatureConnectionAnalyzer $analyzer): ?FeatureType
+    private function determineFeature(VertexType $type, EventSourcingAnalyzer $analyzer): ?FeatureType
     {
         $feature = null;
 
         switch (true) {
             case $type instanceof CommandType:
-                $feature = $analyzer->featureConnectionMap()->featureByCommand($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -245,7 +269,7 @@ trait DeterminePathTrait
                 }
                 break;
             case $type instanceof EventType:
-                $feature = $analyzer->featureConnectionMap()->featureByEvent($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -257,7 +281,7 @@ trait DeterminePathTrait
                 }
                 break;
             case $type instanceof AggregateType:
-                $feature = $analyzer->featureConnectionMap()->featureByAggregate($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -269,7 +293,7 @@ trait DeterminePathTrait
                 }
                 break;
             case $type instanceof DocumentType:
-                $feature = $analyzer->featureConnectionMap()->featureByDocument($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(

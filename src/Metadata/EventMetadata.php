@@ -10,11 +10,12 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\HasPublic;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
-interface EventMetadata extends Metadata, HasSchema, HasPublic
+interface EventMetadata extends Metadata, HasSchema, HasPublic, HasCustomData
 {
     public function public(): bool;
 

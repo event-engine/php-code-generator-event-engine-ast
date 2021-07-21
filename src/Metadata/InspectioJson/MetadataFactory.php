@@ -35,6 +35,10 @@ final class MetadataFactory
                 return UiMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_POLICY:
                 return PolicyMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_HOT_SPOT:
+                return HotSpotMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_ROLE:
+                return RoleMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_FEATURE:
                 return FeatureMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_BOUNDED_CONTEXT:

@@ -10,20 +10,26 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
-trait FilterValueObjectFolderTrait
+use OpenCodeModeling\Filter\Filter\Noop;
+
+trait FilterContextNameTrait
 {
     /**
      * @var callable
      **/
-    private $filterValueObjectFolder;
+    private $filterContextName;
 
-    public function getFilterValueObjectFolder(): ?callable
+    public function getFilterContextName(): callable
     {
-        return $this->filterValueObjectFolder;
+        if (null === $this->filterContextName) {
+            $this->filterContextName = new Noop();
+        }
+
+        return $this->filterContextName;
     }
 
-    public function setFilterValueObjectFolder(?callable $filterValueObjectFolder): void
+    public function setFilterContextName(callable $filterClassName): void
     {
-        $this->filterValueObjectFolder = $filterValueObjectFolder;
+        $this->filterContextName = $filterClassName;
     }
 }
