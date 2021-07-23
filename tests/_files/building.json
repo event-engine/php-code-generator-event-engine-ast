@@ -206,6 +206,6 @@
             "x": 528,
             "y": 409.5
         },
-        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"stream_collection\": \"building_stream\",\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"stream\": \"building_stream\",\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  }\n}"
     }
 }

@@ -21,5 +21,5 @@ interface AggregateMetadata extends Metadata, HasSchema, HasIdentifier, HasCusto
 
     public function identifier(): string;
 
-    public function streamCollection(): ?string;
+    public function stream(): ?string;
 }

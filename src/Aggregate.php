@@ -151,7 +151,7 @@ final class Aggregate
                         $aggregateBehaviourClassName,
                         $aggregateBehaviourClassName,
                         $storeStateIn,
-                        $aggregateMetadata->streamCollection(),
+                        $aggregateMetadata->stream(),
                         $command,
                         $aggregate,
                         // @phpstan-ignore-next-line
