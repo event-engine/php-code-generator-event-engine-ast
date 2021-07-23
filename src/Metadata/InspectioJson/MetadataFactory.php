@@ -37,6 +37,8 @@ final class MetadataFactory
                 return PolicyMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_HOT_SPOT:
                 return HotSpotMetadata::fromJsonMetadata($json, $name);
+            case VertexType::TYPE_EXTERNAL_SYSTEM:
+                return ExternalSystemMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_ROLE:
                 return RoleMetadata::fromJsonMetadata($json, $name);
             case VertexType::TYPE_FEATURE:
