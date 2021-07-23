@@ -45,6 +45,6 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
 
     public function isAggregateState(): bool
     {
-        return $this->customData['aggregate_state'] ?? false;
+        return $this->customData['aggregateState'] ?? false;
     }
 }
