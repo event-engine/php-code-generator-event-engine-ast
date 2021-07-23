@@ -13,6 +13,7 @@ namespace EventEngine\CodeGenerator\EventEngineAst;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\MissingMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
@@ -26,7 +27,6 @@ use EventEngine\InspectioGraph\VertexConnection;
 use EventEngine\InspectioGraph\VertexConnectionMap;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
-use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
@@ -34,6 +34,7 @@ final class Aggregate
 {
     use MetadataTypeSetTrait;
     use FindAggregateStateTrait;
+    use ApiDescriptionClassMapTrait;
 
     private Naming $config;
 
@@ -78,31 +79,7 @@ final class Aggregate
         EventSourcingAnalyzer $analyzer,
         FileCollection $files
     ): void {
-        if ($connection->identity()->type() !== VertexType::TYPE_AGGREGATE) {
-            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_AGGREGATE);
-        }
-
-        $fqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
-
-        $classBuilder = ClassBuilder::fromScratch(
-            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
-            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn)
-        )->setFinal(true);
-
-        $classBuilder->addNamespaceImport(
-            'EventEngine\EventEngine',
-            'EventEngine\EventEngineDescription',
-            'EventEngine\JsonSchema\JsonSchema',
-            'EventEngine\JsonSchema\JsonSchemaArray'
-        );
-
-        $classBuilder->addImplement('EventEngineDescription');
-
-        $classBuilder->addMethod(
-            ClassMethodBuilder::fromNode(
-                Code\DescriptionFileMethod::generate()->generate()
-            )
-        );
+        $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_AGGREGATE);
 
         /** @var AggregateType $aggregate */
         $aggregate = $connection->identity();
@@ -120,13 +97,6 @@ final class Aggregate
 
         $commands = $connection->from()->filterByType(VertexType::TYPE_COMMAND);
         $events = $connection->to()->filterByType(VertexType::TYPE_EVENT);
-
-        $classBuilder->addConstant(
-            ClassConstBuilder::fromScratch(
-                ($this->config->config()->getFilterConstName())($aggregate->label()),
-                ($this->config->config()->getFilterConstValue())($aggregate->label()),
-            )
-        );
 
         /** @var CommandType $command */
         foreach ($commands as $command) {
@@ -160,6 +130,16 @@ final class Aggregate
                 )
             );
         }
+
+        $files->add($classBuilder);
+    }
+
+    public function generateApiDescriptionClassMap(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): void {
+        $classBuilder = $this->generateApiDescriptionClassMapFor($connection, $analyzer, $files, VertexType::TYPE_AGGREGATE);
 
         $files->add($classBuilder);
     }

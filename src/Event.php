@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
 use EventEngine\CodeGenerator\EventEngineAst\Code\EventDescription;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\EventMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeEvent;
@@ -21,14 +21,12 @@ use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\VertexConnection;
 use EventEngine\InspectioGraph\VertexType;
-use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
-use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
-use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Event
 {
     use MetadataTypeSetTrait;
+    use ApiDescriptionClassMapTrait;
 
     private Naming $config;
 
@@ -84,47 +82,26 @@ final class Event
         FileCollection $files,
         string $jsonSchemaFileName = null
     ): void {
-        if ($connection->identity()->type() !== VertexType::TYPE_EVENT) {
-            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_EVENT);
-        }
+        $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_EVENT);
 
         /** @var EventType $event */
         $event = $connection->identity();
-
-        $fqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
-
-        $classBuilder = ClassBuilder::fromScratch(
-            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
-            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn)
-        )->setFinal(true);
-
-        $classBuilder->addNamespaceImport(
-            'EventEngine\EventEngine',
-            'EventEngine\EventEngineDescription',
-            'EventEngine\JsonSchema\JsonSchema',
-            'EventEngine\JsonSchema\JsonSchemaArray'
-        );
-
-        $classBuilder->addImplement('EventEngineDescription');
-
-        $classBuilder->addMethod(
-            ClassMethodBuilder::fromNode(
-                DescriptionFileMethod::generate()->generate()
-            )
-        );
-
-        $classBuilder->addConstant(
-            ClassConstBuilder::fromScratch(
-                ($this->config->config()->getFilterConstName())($event->label()),
-                ($this->config->config()->getFilterConstValue())($event->label()),
-            )
-        );
 
         $classBuilder->addNodeVisitor(
             new ClassMethodDescribeEvent(
                 $this->eventDescription->generate($event, $jsonSchemaFileName)
             )
         );
+
+        $files->add($classBuilder);
+    }
+
+    public function generateApiDescriptionClassMap(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): void {
+        $classBuilder = $this->generateApiDescriptionClassMapFor($connection, $analyzer, $files, VertexType::TYPE_EVENT);
 
         $files->add($classBuilder);
     }

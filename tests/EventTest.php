@@ -67,25 +67,145 @@ final class EventTest extends BaseTestCase
 
         $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
-        $expected = <<<'PHP'
-<?php
-
-declare (strict_types=1);
-namespace MyService\Domain\Api;
-
-use EventEngine\EventEngine;
-use EventEngine\EventEngineDescription;
-use EventEngine\JsonSchema\JsonSchema;
-use EventEngine\JsonSchema\JsonSchemaArray;
-final class Event implements EventEngineDescription
-{
-    public const BUILDING_ADDED = 'building_added';
-    public static function describe(EventEngine $eventEngine) : void
-    {
-        $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        final class Event implements EventEngineDescription
+        {
+            public const BUILDING_ADDED = 'building_added';
+            public static function describe(EventEngine $eventEngine) : void
+            {
+                $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
+            }
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
-}
-PHP;
+
+    /**
+     * @test
+     */
+    public function it_creates_api_event_class_map(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $event = new Event($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $event->generateApiDescriptionClassMap(
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            $this->assertApiDescriptionClassMap($file);
+        }
+    }
+
+    private function assertApiDescriptionClassMap(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        use MyService\Domain\Model\Building\Event\BuildingAdded;
+        final class Event implements EventEngineDescription
+        {
+            public const CLASS_MAP = [self::BUILDING_ADDED => BuildingAdded::class];
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    /**
+     * @test
+     */
+    public function it_creates_api_event_description_with_class_map(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $event = new Event($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $event->generateApiDescription(
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
+            $fileCollection,
+            '/service/src/Domain/Api/_schema/BUILDING_ADDED.json'
+        );
+        $event->generateApiDescriptionClassMap(
+            $this->analyzer->connection($connection->to()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            $this->assertApiDescriptionWithClassMap($file);
+        }
+    }
+
+    private function assertApiDescriptionWithClassMap(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        use MyService\Domain\Model\Building\Event\BuildingAdded;
+        final class Event implements EventEngineDescription
+        {
+            public const BUILDING_ADDED = 'building_added';
+            public const CLASS_MAP = [self::BUILDING_ADDED => BuildingAdded::class];
+            public static function describe(EventEngine $eventEngine) : void
+            {
+                $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
+            }
+        }
+        EOF;
+
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
@@ -181,7 +301,7 @@ PHP;
 
         $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
-        $expected = <<<'PHP'
+        $expected = <<<'EOF'
 <?php
 
 declare (strict_types=1);
@@ -207,7 +327,7 @@ final class BuildingAdded implements ImmutableRecord
         return $this->name;
     }
 }
-PHP;
+EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

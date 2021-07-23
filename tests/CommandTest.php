@@ -38,8 +38,6 @@ final class CommandTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $connection = $this->analyzer->analyse($node);
-//        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
-//        $this->analyzer->analyse($node);
 
         $command = new Command($this->config);
 
@@ -69,25 +67,145 @@ final class CommandTest extends BaseTestCase
 
         $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
-        $expected = <<<'PHP'
-<?php
-
-declare (strict_types=1);
-namespace MyService\Domain\Api;
-
-use EventEngine\EventEngine;
-use EventEngine\EventEngineDescription;
-use EventEngine\JsonSchema\JsonSchema;
-use EventEngine\JsonSchema\JsonSchemaArray;
-final class Command implements EventEngineDescription
-{
-    public const ADD_BUILDING = 'add_building';
-    public static function describe(EventEngine $eventEngine) : void
-    {
-        $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        final class Command implements EventEngineDescription
+        {
+            public const ADD_BUILDING = 'add_building';
+            public static function describe(EventEngine $eventEngine) : void
+            {
+                $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+            }
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
-}
-PHP;
+
+    /**
+     * @test
+     */
+    public function it_creates_api_command_class_map(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $command = new Command($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $command->generateApiDescriptionClassMap(
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            $this->assertApiDescriptionClassMap($file);
+        }
+    }
+
+    private function assertApiDescriptionClassMap(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        use MyService\Domain\Model\Building\Command\AddBuilding;
+        final class Command implements EventEngineDescription
+        {
+            public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    /**
+     * @test
+     */
+    public function it_creates_api_command_description_with_class_map(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $command = new Command($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $command->generateApiDescription(
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
+            $fileCollection,
+            '/service/src/Domain/Api/_schema/ADD_BUILDING.json'
+        );
+        $command->generateApiDescriptionClassMap(
+            $this->analyzer->connection($connection->from()->current()->id()),
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            $this->assertApiDescriptionWithClassMap($file);
+        }
+    }
+
+    private function assertApiDescriptionWithClassMap(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        use MyService\Domain\Model\Building\Command\AddBuilding;
+        final class Command implements EventEngineDescription
+        {
+            public const ADD_BUILDING = 'add_building';
+            public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
+            public static function describe(EventEngine $eventEngine) : void
+            {
+                $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+            }
+        }
+        EOF;
+
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
@@ -184,33 +302,33 @@ PHP;
 
         $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
-        $expected = <<<'PHP'
-<?php
-
-declare (strict_types=1);
-namespace MyService\Domain\Model\Building\Command;
-
-use EventEngine\Data\ImmutableRecord;
-use EventEngine\Data\ImmutableRecordLogic;
-use MyService\Domain\Model\Building\ValueObject\Name;
-use MyService\Domain\Model\ValueObject\BuildingId;
-final class AddBuilding implements ImmutableRecord
-{
-    use ImmutableRecordLogic;
-    public const BUILDING_ID = 'building_id';
-    public const NAME = 'name';
-    private BuildingId $buildingId;
-    private Name $name;
-    public function buildingId() : BuildingId
-    {
-        return $this->buildingId;
-    }
-    public function name() : Name
-    {
-        return $this->name;
-    }
-}
-PHP;
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Model\Building\Command;
+        
+        use EventEngine\Data\ImmutableRecord;
+        use EventEngine\Data\ImmutableRecordLogic;
+        use MyService\Domain\Model\Building\ValueObject\Name;
+        use MyService\Domain\Model\ValueObject\BuildingId;
+        final class AddBuilding implements ImmutableRecord
+        {
+            use ImmutableRecordLogic;
+            public const BUILDING_ID = 'building_id';
+            public const NAME = 'name';
+            private BuildingId $buildingId;
+            private Name $name;
+            public function buildingId() : BuildingId
+            {
+                return $this->buildingId;
+            }
+            public function name() : Name
+            {
+                return $this->name;
+            }
+        }
+        EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }
