@@ -37,7 +37,7 @@ final class EventEngineConfig implements Base
     {
         $this->filterClassName = FilterFactory::classNameFilter();
         $this->filterConstName = FilterFactory::constantNameFilter();
-        $this->filterConstValue = FilterFactory::constantValueFilter();
+        $this->filterConstValue = FilterFactory::propertyNameFilter();
         $this->filterMethodName = FilterFactory::methodNameFilter();
         $this->filterPropertyName = FilterFactory::propertyNameFilter();
         $this->filterDirectoryToNamespace = FilterFactory::directoryToNamespaceFilter();

@@ -79,7 +79,7 @@ final class CommandTest extends BaseTestCase
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Command implements EventEngineDescription
         {
-            public const ADD_BUILDING = 'add_building';
+            public const ADD_BUILDING = 'addBuilding';
             public static function describe(EventEngine $eventEngine) : void
             {
                 $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
@@ -197,7 +197,7 @@ final class CommandTest extends BaseTestCase
         use MyService\Domain\Model\Building\Command\AddBuilding;
         final class Command implements EventEngineDescription
         {
-            public const ADD_BUILDING = 'add_building';
+            public const ADD_BUILDING = 'addBuilding';
             public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
             public static function describe(EventEngine $eventEngine) : void
             {
@@ -315,7 +315,7 @@ final class CommandTest extends BaseTestCase
         final class AddBuilding implements ImmutableRecord
         {
             use ImmutableRecordLogic;
-            public const BUILDING_ID = 'building_id';
+            public const BUILDING_ID = 'buildingId';
             public const NAME = 'name';
             private BuildingId $buildingId;
             private Name $name;

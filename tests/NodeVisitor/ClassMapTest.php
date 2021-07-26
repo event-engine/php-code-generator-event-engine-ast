@@ -78,7 +78,7 @@ use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
 final class Command implements EventEngineDescription
 {
-    public const ADD_BUILDING = 'add_building';
+    public const ADD_BUILDING = 'addBuilding';
     public const CLASS_MAP = [];
     public static function describe(EventEngine $eventEngine) : void
     {
@@ -103,7 +103,7 @@ use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
 final class Command implements EventEngineDescription
 {
-    public const ADD_BUILDING = 'add_building';
+    public const ADD_BUILDING = 'addBuilding';
     public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
     public static function describe(EventEngine $eventEngine) : void
     {

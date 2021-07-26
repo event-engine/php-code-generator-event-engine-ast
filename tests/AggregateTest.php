@@ -324,7 +324,7 @@ final class AggregateTest extends BaseTestCase
         final class BuildingState implements ImmutableRecord
         {
             use ImmutableRecordLogic;
-            public const BUILDING_ID = 'building_id';
+            public const BUILDING_ID = 'buildingId';
             public const NAME = 'name';
             private BuildingId $buildingId;
             private Name $name;

@@ -79,7 +79,7 @@ final class EventTest extends BaseTestCase
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Event implements EventEngineDescription
         {
-            public const BUILDING_ADDED = 'building_added';
+            public const BUILDING_ADDED = 'buildingAdded';
             public static function describe(EventEngine $eventEngine) : void
             {
                 $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
@@ -197,7 +197,7 @@ final class EventTest extends BaseTestCase
         use MyService\Domain\Model\Building\Event\BuildingAdded;
         final class Event implements EventEngineDescription
         {
-            public const BUILDING_ADDED = 'building_added';
+            public const BUILDING_ADDED = 'buildingAdded';
             public const CLASS_MAP = [self::BUILDING_ADDED => BuildingAdded::class];
             public static function describe(EventEngine $eventEngine) : void
             {
@@ -314,7 +314,7 @@ use MyService\Domain\Model\ValueObject\BuildingId;
 final class BuildingAdded implements ImmutableRecord
 {
     use ImmutableRecordLogic;
-    public const BUILDING_ID = 'building_id';
+    public const BUILDING_ID = 'buildingId';
     public const NAME = 'name';
     private BuildingId $buildingId;
     private Name $name;
