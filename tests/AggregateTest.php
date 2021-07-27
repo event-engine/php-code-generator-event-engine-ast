@@ -65,13 +65,13 @@ final class AggregateTest extends BaseTestCase
         use EventEngine\EventEngineDescription;
         use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
-        use MyService\Domain\Model\Building\Building;
+        use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription
         {
             public const BUILDING = 'Building';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
+                $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([BuildingBehaviour::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([BuildingBehaviour::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
             }
         }
         EOF;
@@ -123,10 +123,10 @@ final class AggregateTest extends BaseTestCase
         use EventEngine\EventEngineDescription;
         use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
-        use MyService\Domain\Model\Building\Building;
+        use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription
         {
-            public const CLASS_MAP = [self::BUILDING => Building::class];
+            public const CLASS_MAP = [self::BUILDING => BuildingBehaviour::class];
         }
         EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
@@ -184,14 +184,14 @@ final class AggregateTest extends BaseTestCase
         use EventEngine\EventEngineDescription;
         use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
-        use MyService\Domain\Model\Building\Building;
+        use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription
         {
             public const BUILDING = 'Building';
-            public const CLASS_MAP = [self::BUILDING => Building::class];
+            public const CLASS_MAP = [self::BUILDING => BuildingBehaviour::class];
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
+                $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([BuildingBehaviour::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([BuildingBehaviour::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
             }
         }
         EOF;
@@ -221,7 +221,7 @@ final class AggregateTest extends BaseTestCase
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
-                case 'Building':
+                case 'BuildingBehaviour':
                     $this->assertAggregateFile($file);
                     break;
                 case 'BuildingId':
@@ -252,16 +252,16 @@ final class AggregateTest extends BaseTestCase
         use Generator;
         use MyService\Domain\Api\Command;
         use MyService\Domain\Api\Event;
-        use MyService\Domain\Model\Building\BuildingState;
-        final class Building
+        use MyService\Domain\Model\ValueObject\Building;
+        final class BuildingBehaviour
         {
             public static function addBuilding(Message $addBuilding) : Generator
             {
                 (yield [Event::BUILDING_ADDED, $addBuilding->payload()]);
             }
-            public static function whenBuildingAdded(Message $buildingAdded) : BuildingState
+            public static function whenBuildingAdded(Message $buildingAdded) : Building
             {
-                return BuildingState::fromArray($buildingAdded->payload());
+                return Building::fromArray($buildingAdded->payload());
             }
         }
         EOF;
@@ -290,7 +290,7 @@ final class AggregateTest extends BaseTestCase
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
-                case 'BuildingState':
+                case 'Building':
                     $this->assertAggregateStateFile($file);
                     break;
                 case 'BuildingId':
@@ -315,13 +315,11 @@ final class AggregateTest extends BaseTestCase
         <?php
         
         declare (strict_types=1);
-        namespace MyService\Domain\Model\Building;
+        namespace MyService\Domain\Model\ValueObject;
         
         use EventEngine\Data\ImmutableRecord;
         use EventEngine\Data\ImmutableRecordLogic;
-        use MyService\Domain\Model\ValueObject\BuildingId;
-        use MyService\Domain\Model\ValueObject\Name;
-        final class BuildingState implements ImmutableRecord
+        final class Building implements ImmutableRecord
         {
             use ImmutableRecordLogic;
             public const BUILDING_ID = 'buildingId';

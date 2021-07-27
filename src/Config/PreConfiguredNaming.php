@@ -48,19 +48,13 @@ final class PreConfiguredNaming implements Naming
         AggregateType $type,
         EventSourcingAnalyzer $analyzer
     ): string {
-        $namespace = $this->getClassNamespaceFromPath(
-            $this->config->determinePath($type, $analyzer)
-        );
-
         $aggregateState = $this->findAggregateState($type->id(), VertexConnectionMap::WALK_FORWARD, $analyzer);
 
         if ($aggregateState === null) {
             throw new RuntimeException(\sprintf('Could not find aggregate state for aggregate "%s" - "%s"', $type->id(), $type->name()));
         }
 
-        $className = ($this->config->getFilterClassName())($aggregateState->identity()->name());
-
-        return $namespace . '\\' . $className . 'State';
+        return $this->getFullyQualifiedClassName($aggregateState->identity(), $analyzer);
     }
 
     public function getAggregateBehaviourFullyQualifiedClassName(
@@ -73,7 +67,7 @@ final class PreConfiguredNaming implements Naming
 
         $className = ($this->config->getFilterClassName())($type->name());
 
-        return $namespace . '\\' . $className;
+        return $namespace . '\\' . $className . 'Behaviour';
     }
 
     public function getAggregateIdFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string

@@ -56,7 +56,7 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
-                case 'BuildingState':
+                case 'Building':
                     $this->assertAggregateStateFile($file);
                     break;
                 default:
@@ -78,11 +78,11 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 <?php
 
 declare (strict_types=1);
-namespace MyService\Domain\Model\Building;
+namespace MyService\Domain\Model\ValueObject;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
-final class BuildingState implements ImmutableRecord
+final class Building implements ImmutableRecord
 {
     use ImmutableRecordLogic;
     private array $state = [];

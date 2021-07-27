@@ -14,6 +14,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMap;
+use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\VertexConnection;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
@@ -61,7 +62,12 @@ trait ApiDescriptionClassMapTrait
         $classBuilder = $this->getApiDescriptionClassBuilder($connection, $analyzer, $files, $type);
 
         $identity = $connection->identity();
-        $identityFqcn = $this->config->getFullyQualifiedClassName($identity, $analyzer);
+
+        if ($identity instanceof AggregateType) {
+            $identityFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($identity, $analyzer);
+        } else {
+            $identityFqcn = $this->config->getFullyQualifiedClassName($identity, $analyzer);
+        }
 
         $classBuilder->addNamespaceImport(
             $identityFqcn
