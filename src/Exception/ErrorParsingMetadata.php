@@ -16,4 +16,16 @@ final class ErrorParsingMetadata extends RuntimeException
     {
         return new self($message, $previousException->getCode(), $previousException);
     }
+
+    public static function forVertex(\Throwable $previousException, string $name, string $type): self
+    {
+        $message = \sprintf(
+            'Could not parse metadata for "%s" (%s) due: %s',
+            $name,
+            $type,
+            $previousException->getMessage()
+        );
+
+        return new self($message, $previousException->getCode(), $previousException);
+    }
 }
