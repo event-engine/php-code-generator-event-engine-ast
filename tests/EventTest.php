@@ -302,32 +302,32 @@ final class EventTest extends BaseTestCase
         $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'EOF'
-<?php
-
-declare (strict_types=1);
-namespace MyService\Domain\Model\Building\Event;
-
-use EventEngine\Data\ImmutableRecord;
-use EventEngine\Data\ImmutableRecordLogic;
-use MyService\Domain\Model\Building\ValueObject\Name;
-use MyService\Domain\Model\ValueObject\BuildingId;
-final class BuildingAdded implements ImmutableRecord
-{
-    use ImmutableRecordLogic;
-    public const BUILDING_ID = 'buildingId';
-    public const NAME = 'name';
-    private BuildingId $buildingId;
-    private Name $name;
-    public function buildingId() : BuildingId
-    {
-        return $this->buildingId;
-    }
-    public function name() : Name
-    {
-        return $this->name;
-    }
-}
-EOF;
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Model\Building\Event;
+        
+        use EventEngine\Data\ImmutableRecord;
+        use EventEngine\Data\ImmutableRecordLogic;
+        use MyService\Domain\Model\ValueObject\BuildingId;
+        use MyService\Domain\Model\ValueObject\Name;
+        final class BuildingAdded implements ImmutableRecord
+        {
+            use ImmutableRecordLogic;
+            public const BUILDING_ID = 'buildingId';
+            public const NAME = 'name';
+            private BuildingId $buildingId;
+            private Name $name;
+            public function buildingId() : BuildingId
+            {
+                return $this->buildingId;
+            }
+            public function name() : Name
+            {
+                return $this->name;
+            }
+        }
+        EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

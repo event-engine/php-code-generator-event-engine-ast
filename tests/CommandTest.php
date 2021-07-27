@@ -310,8 +310,8 @@ final class CommandTest extends BaseTestCase
         
         use EventEngine\Data\ImmutableRecord;
         use EventEngine\Data\ImmutableRecordLogic;
-        use MyService\Domain\Model\Building\ValueObject\Name;
         use MyService\Domain\Model\ValueObject\BuildingId;
+        use MyService\Domain\Model\ValueObject\Name;
         final class AddBuilding implements ImmutableRecord
         {
             use ImmutableRecordLogic;

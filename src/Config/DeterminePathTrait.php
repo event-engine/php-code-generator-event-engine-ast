@@ -35,8 +35,14 @@ trait DeterminePathTrait
             case $type instanceof EventType:
             case $type instanceof AggregateType:
             case $type instanceof DocumentType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'ValueObject';
             default:
+                $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
+                $namespace = \str_replace('\\', '//', \trim($namespace, '\\'));
+
+                if ($namespace !== '') {
+                    return $this->determineValueObjectSharedPath() . DIRECTORY_SEPARATOR . $namespace;
+                }
+
                 return $this->determineValueObjectSharedPath();
         }
     }
@@ -120,8 +126,9 @@ trait DeterminePathTrait
         if ($namespace === '') {
             $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
         }
-
-        $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
+        if ($namespace !== '') {
+            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
+        }
 
         switch (true) {
             case $type instanceof CommandType:
@@ -131,7 +138,15 @@ trait DeterminePathTrait
             case $type instanceof AggregateType:
                 return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . $namespace;
             case $type instanceof DocumentType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'ValueObject' . $namespace;
+                if ($namespace === '') {
+                    $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
+                    $namespace = \str_replace('\\', '//', \trim($namespace, '\\'));
+                }
+                if ($namespace !== '') {
+                    return $this->determineValueObjectSharedPath() . DIRECTORY_SEPARATOR . $namespace;
+                }
+
+                return $this->determineValueObjectSharedPath() . $namespace;
             default:
                 throw new RuntimeException(
                     \sprintf('Can not determine path for sticky type "%s"', \get_class($type))
@@ -150,6 +165,8 @@ trait DeterminePathTrait
             && $jsonSchemaType instanceof CustomSupport
         ) {
             return $jsonSchemaType->custom()[$key] ?? null;
+        } elseif ($metadataInstance instanceof HasCustomData) {
+            return $metadataInstance->customData()[$key] ?? null;
         }
 
         return null;
@@ -309,5 +326,16 @@ trait DeterminePathTrait
         }
 
         return $feature;
+    }
+
+    private function determineFeatureValueObjectNamespace(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = '';
+
+        if ($feature = $this->findFeature($type, $analyzer)) {
+            $namespace = $this->getCustomMetadata($feature, 'voNamespace') ?? '';
+        }
+
+        return $namespace;
     }
 }
