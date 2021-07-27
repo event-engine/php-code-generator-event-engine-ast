@@ -68,7 +68,7 @@ final class AggregateTest extends BaseTestCase
         use MyService\Domain\Model\Building\Building;
         final class Aggregate implements EventEngineDescription
         {
-            public const BUILDING = 'building';
+            public const BUILDING = 'Building';
             public static function describe(EventEngine $eventEngine) : void
             {
                 $eventEngine->process(Command::ADD_BUILDING)->withNew(self::BUILDING)->identifiedBy('buildingId')->handle([Building::class, 'addBuilding'])->recordThat(Event::BUILDING_ADDED)->apply([Building::class, 'whenBuildingAdded'])->storeStateIn('buildings')->storeEventsIn('building_stream');
@@ -187,7 +187,7 @@ final class AggregateTest extends BaseTestCase
         use MyService\Domain\Model\Building\Building;
         final class Aggregate implements EventEngineDescription
         {
-            public const BUILDING = 'building';
+            public const BUILDING = 'Building';
             public const CLASS_MAP = [self::BUILDING => Building::class];
             public static function describe(EventEngine $eventEngine) : void
             {

@@ -30,6 +30,8 @@ interface Base
 
     public function getFilterConstValue(): callable;
 
+    public function getFilterMessageName(): callable;
+
     public function getFilterDirectoryToNamespace(): callable;
 
     public function getFilterNamespaceToDirectory(): callable;

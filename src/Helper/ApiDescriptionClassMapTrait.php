@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Helper;
 
 use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMap;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
@@ -24,6 +25,8 @@ use OpenCodeModeling\CodeAst\Builder\PhpFile;
 
 trait ApiDescriptionClassMapTrait
 {
+    private Naming $config;
+
     private function generateApiDescriptionFor(
         VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
@@ -42,7 +45,7 @@ trait ApiDescriptionClassMapTrait
         $classBuilder->addConstant(
             ClassConstBuilder::fromScratch(
                 ($this->config->config()->getFilterConstName())($identity->label()),
-                ($this->config->config()->getFilterConstValue())($identity->label()),
+                ($this->config->config()->getFilterMessageName())($identity->label()),
             )
         );
 
