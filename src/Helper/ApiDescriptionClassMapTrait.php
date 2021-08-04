@@ -38,7 +38,9 @@ trait ApiDescriptionClassMapTrait
 
         $classBuilder->addMethod(
             ClassMethodBuilder::fromNode(
-                DescriptionFileMethod::generate()->generate()
+                DescriptionFileMethod::generate()->generate(),
+                true,
+                $this->config->config()->getPrinter()
             )
         );
         $identity = $connection->identity();

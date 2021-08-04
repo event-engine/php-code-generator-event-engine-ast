@@ -191,7 +191,9 @@ final class Aggregate
                         $command,
                         // @phpstan-ignore-next-line
                         ...$events->vertices()
-                    )->generate()
+                    )->generate(),
+                    true,
+                    $this->config->config()->getPrinter()
                 )
             );
             /** @var \EventEngine\InspectioGraph\EventType $event */
@@ -204,7 +206,9 @@ final class Aggregate
                             $command,
                             $event,
                             $aggregateStateClassName
-                        )->generate()
+                        )->generate(),
+                        true,
+                        $this->config->config()->getPrinter()
                     )
                 );
             }
@@ -248,7 +252,9 @@ final class Aggregate
             foreach ($files->filter(fn (ClassBuilder $classBuilder) => $classBuilder->getName() === $aggregateStateClassName) as $aggregateState) {
                 $aggregateState->addMethod(
                     ClassMethodBuilder::fromNode(
-                        $this->aggregateStateMethod->generate($event)->generate()
+                        $this->aggregateStateMethod->generate($event)->generate(),
+                        true,
+                        $this->config->config()->getPrinter()
                     )
                 );
             }
