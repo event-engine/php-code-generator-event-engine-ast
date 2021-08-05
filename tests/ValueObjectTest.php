@@ -87,6 +87,9 @@ final class ValueObjectTest extends BaseTestCase
             {
                 return $this->name;
             }
+            /**
+             * @param mixed $other
+             */
             public function equals($other) : bool
             {
                 if (!$other instanceof self) {

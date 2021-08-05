@@ -43,7 +43,7 @@
         "ext-json": "*",
         "event-engine/php-inspectio-graph-cody": "dev-feature/simplify-connections as dev-master",
         "open-code-modeling/json-schema-to-php": "^0.3",
-        "open-code-modeling/json-schema-to-php-ast": "^0.5.3",
+        "open-code-modeling/json-schema-to-php-ast": "0.6.x-dev",
         "open-code-modeling/php-code-ast": "0.13.x-dev",
         "open-code-modeling/php-filter": "^0.2.0"
     },
