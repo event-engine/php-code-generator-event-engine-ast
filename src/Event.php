@@ -84,6 +84,10 @@ final class Event
     ): void {
         $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_EVENT);
 
+        if ($jsonSchemaFileName !== null) {
+            $this->addSchemaPathConstant($classBuilder, $jsonSchemaFileName);
+        }
+
         /** @var EventType $event */
         $event = $connection->identity();
 

@@ -80,9 +80,10 @@ final class EventTest extends BaseTestCase
         final class Event implements EventEngineDescription
         {
             public const BUILDING_ADDED = 'BuildingAdded';
+            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
+                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'BUILDING_ADDED.json'));
             }
         }
         EOF;
@@ -198,10 +199,11 @@ final class EventTest extends BaseTestCase
         final class Event implements EventEngineDescription
         {
             public const BUILDING_ADDED = 'BuildingAdded';
+            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
             public const CLASS_MAP = [self::BUILDING_ADDED => BuildingAdded::class];
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerEvent(self::BUILDING_ADDED, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/BUILDING_ADDED.json'), true, 512, \JSON_THROW_ON_ERROR)));
+                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'BUILDING_ADDED.json'));
             }
         }
         EOF;

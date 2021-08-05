@@ -80,9 +80,10 @@ final class CommandTest extends BaseTestCase
         final class Command implements EventEngineDescription
         {
             public const ADD_BUILDING = 'AddBuilding';
+            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'ADD_BUILDING.json'));
             }
         }
         EOF;
@@ -198,10 +199,11 @@ final class CommandTest extends BaseTestCase
         final class Command implements EventEngineDescription
         {
             public const ADD_BUILDING = 'AddBuilding';
+            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
             public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerCommand(self::ADD_BUILDING, new JsonSchemaArray(\json_decode(file_get_contents('/service/src/Domain/Api/_schema/ADD_BUILDING.json'), true, 512, \JSON_THROW_ON_ERROR)));
+                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'ADD_BUILDING.json'));
             }
         }
         EOF;

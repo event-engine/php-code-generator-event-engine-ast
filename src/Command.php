@@ -84,6 +84,10 @@ final class Command
     ): void {
         $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_COMMAND);
 
+        if ($jsonSchemaFileName !== null) {
+            $this->addSchemaPathConstant($classBuilder, $jsonSchemaFileName);
+        }
+
         /** @var CommandType $command */
         $command = $connection->identity();
 

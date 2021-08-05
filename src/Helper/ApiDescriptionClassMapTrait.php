@@ -55,6 +55,16 @@ trait ApiDescriptionClassMapTrait
         return $classBuilder;
     }
 
+    public function addSchemaPathConstant(ClassBuilder $classBuilder, string $jsonSchemaFilename): void
+    {
+        $classBuilder->addConstant(
+            ClassConstBuilder::fromScratch(
+                'SCHEMA_PATH',
+                \substr($jsonSchemaFilename, 0, \strrpos($jsonSchemaFilename, DIRECTORY_SEPARATOR) + 1)
+            )->setPrivate()
+        );
+    }
+
     private function generateApiDescriptionClassMapFor(
         VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,

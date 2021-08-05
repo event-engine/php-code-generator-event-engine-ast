@@ -50,12 +50,10 @@ final class CommandDescription
             $code = \sprintf(
                 '$eventEngine->registerCommand(
                         self::%s, 
-                        new JsonSchemaArray(
-                            \json_decode(file_get_contents(\'%s\'), true, 512, \JSON_THROW_ON_ERROR)
-                        )
+                        JsonSchemaArray::fromFile(self::SCHEMA_PATH . \'%s\')
                     );',
                 $commandConstName,
-                $jsonSchemaFilename
+                \substr($jsonSchemaFilename, \strrpos($jsonSchemaFilename, DIRECTORY_SEPARATOR) + 1)
             );
         }
 
