@@ -10,17 +10,14 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
-use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\DocumentType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
 use PhpParser\Parser;
 
-final class CommandDescription
+final class TypeDescription
 {
-    /**
-     * @var Parser
-     **/
-    private $parser;
+    private Parser $parser;
 
     /**
      * @var callable
@@ -36,29 +33,29 @@ final class CommandDescription
     }
 
     public function generate(
-        CommandType $command,
+        DocumentType $document,
         ?string $jsonSchemaFilename = null
     ): IdentifierGenerator {
-        $commandConstName = ($this->filterConstName)($command->label());
+        $documentConstName = ($this->filterConstName)($document->label());
 
         $code = \sprintf(
-            '$eventEngine->registerCommand(self::%s, JsonSchema::object([], [], true));',
-            $commandConstName
+            '$eventEngine->registerType(self::%s, JsonSchema::object([], [], true));',
+            $documentConstName
         );
 
         if ($jsonSchemaFilename) {
             $code = \sprintf(
-                '$eventEngine->registerCommand(
+                '$eventEngine->registerType(
                         self::%s, 
                         JsonSchemaArray::fromFile(self::SCHEMA_PATH . \'%s\')
                     );',
-                $commandConstName,
+                $documentConstName,
                 $jsonSchemaFilename
             );
         }
 
         return new IdentifierGenerator(
-            $command->name(),
+            $document->name(),
             new BodyGenerator($this->parser, $code)
         );
     }

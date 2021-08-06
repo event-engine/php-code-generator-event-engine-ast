@@ -10,22 +10,23 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Helper;
 
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\VertexType;
-use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
-trait MetadataTypeSetTrait
+trait MetadataSchemaTrait
 {
-    public function getMetadataTypeSetFromVertex(VertexType $vertexType): ?TypeSet
+    /**
+     * @param VertexType $vertexType
+     * @return mixed|null
+     */
+    public function getMetadataSchemaFromVertex(VertexType $vertexType)
     {
         $metadataInstance = $vertexType->metadataInstance();
 
-        $typeSet = null;
-
-        if ($metadataInstance instanceof HasTypeSet) {
-            $typeSet = $metadataInstance->typeSet();
+        if ($metadataInstance === null || ! $metadataInstance instanceof HasSchema) {
+            return null;
         }
 
-        return $typeSet;
+        return $metadataInstance->schema();
     }
 }

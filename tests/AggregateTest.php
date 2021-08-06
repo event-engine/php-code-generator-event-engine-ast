@@ -213,7 +213,7 @@ final class AggregateTest extends BaseTestCase
 
         $fileCollection = FileCollection::emptyList();
 
-        $aggregate->generateAggregateFile($connection, $this->analyzer, $fileCollection, $this->apiEventFilename);
+        $aggregate->generateAggregateFile($connection, $this->analyzer, $fileCollection);
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 

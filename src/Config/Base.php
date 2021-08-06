@@ -69,4 +69,10 @@ interface Base
     public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function determineFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaPath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaRoot(): string;
 }

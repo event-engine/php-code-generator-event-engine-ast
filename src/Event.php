@@ -15,7 +15,6 @@ use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\EventMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeEvent;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
@@ -41,51 +40,30 @@ final class Event
         );
     }
 
-    public function generateJsonSchemaFiles(
+    public function generateJsonSchemaFile(
         VertexConnection $connection,
-        EventSourcingAnalyzer $analyzer,
-        string $pathSchema
+        EventSourcingAnalyzer $analyzer
     ): array {
-        if ($connection->identity()->type() !== VertexType::TYPE_EVENT) {
-            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_EVENT);
-        }
-
-        /** @var EventType $event */
-        $event = $connection->identity();
-
-        $files = [];
-
-        $pathSchema = \rtrim(\rtrim($pathSchema), '\/\\') . DIRECTORY_SEPARATOR;
-
-        $metadata = $event->metadataInstance();
-
-        if ($metadata === null || ! $metadata instanceof EventMetadata) {
-            return $files;
-        }
-        $schema = $metadata->schema();
-
-        if ($schema === null) {
-            return $files;
-        }
-
-        $files[$event->name()] = [
-            'filename' => $pathSchema . ($this->config->config()->getFilterConstName())($event->label()) . '.json',
-            'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
-        ];
-
-        return $files;
+        return $this->generateJsonSchemaFileFor($connection, $analyzer, VertexType::TYPE_EVENT);
     }
 
     public function generateApiDescription(
         VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
-        FileCollection $files,
-        string $jsonSchemaFileName = null
+        FileCollection $files
     ): void {
         $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_EVENT);
 
+        $jsonSchemaFileName = '';
+        $jsonSchemaRoot = '';
+
+        if ($this->getMetadataSchemaFromVertex($connection->identity()) !== null) {
+            $jsonSchemaFileName = $this->config->config()->determineSchemaFilename($connection->identity(), $analyzer);
+        }
+
         if ($jsonSchemaFileName !== null) {
-            $this->addSchemaPathConstant($classBuilder, $jsonSchemaFileName);
+            $jsonSchemaRoot = $this->config->config()->determineSchemaRoot();
+            $this->addSchemaPathConstant($classBuilder, $jsonSchemaRoot);
         }
 
         /** @var EventType $event */
@@ -93,7 +71,7 @@ final class Event
 
         $classBuilder->addNodeVisitor(
             new ClassMethodDescribeEvent(
-                $this->eventDescription->generate($event, $jsonSchemaFileName)
+                $this->eventDescription->generate($event, \str_replace($jsonSchemaRoot, '', $jsonSchemaFileName))
             )
         );
 

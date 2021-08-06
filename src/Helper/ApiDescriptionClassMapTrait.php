@@ -26,6 +26,8 @@ use OpenCodeModeling\CodeAst\Builder\PhpFile;
 
 trait ApiDescriptionClassMapTrait
 {
+    use MetadataSchemaTrait;
+
     private Naming $config;
 
     private function generateApiDescriptionFor(
@@ -55,12 +57,14 @@ trait ApiDescriptionClassMapTrait
         return $classBuilder;
     }
 
-    public function addSchemaPathConstant(ClassBuilder $classBuilder, string $jsonSchemaFilename): void
+    private function addSchemaPathConstant(ClassBuilder $classBuilder, string $schemaPath): void
     {
+        $classInfo = $this->config->config()->getClassInfoList()->classInfoForPath($schemaPath);
+
         $classBuilder->addConstant(
             ClassConstBuilder::fromScratch(
                 'SCHEMA_PATH',
-                \substr($jsonSchemaFilename, 0, \strrpos($jsonSchemaFilename, DIRECTORY_SEPARATOR) + 1)
+                \trim(\str_replace($classInfo->getSourceFolder(), 'src', $schemaPath), DIRECTORY_SEPARATOR)
             )->setPrivate()
         );
     }
@@ -114,7 +118,8 @@ trait ApiDescriptionClassMapTrait
         $className = $this->config->getClassNameFromFullyQualifiedClassName($apiFqcn);
 
         $classBuilderFile = $files->filter(
-            fn (File $file) => $file instanceof PhpFile && $file->getNamespace() === $classNamespace && $file->getName() === $className
+            fn (File $file
+            ) => $file instanceof PhpFile && $file->getNamespace() === $classNamespace && $file->getName() === $className
         );
 
         if ($classBuilderFile->valid() && $classBuilderFile->current() instanceof ClassBuilder) {
@@ -129,12 +134,36 @@ trait ApiDescriptionClassMapTrait
         $classBuilder->addNamespaceImport(
             'EventEngine\EventEngine',
             'EventEngine\EventEngineDescription',
-            'EventEngine\JsonSchema\JsonSchema',
             'EventEngine\JsonSchema\JsonSchemaArray'
         );
 
         $classBuilder->addImplement('EventEngineDescription');
 
         return $classBuilder;
+    }
+
+    private function generateJsonSchemaFileFor(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        string $type
+    ): array {
+        if ($connection->identity()->type() !== $type) {
+            throw WrongVertexConnection::forConnection($connection, $type);
+        }
+        $identity = $connection->identity();
+        $schema = $this->getMetadataSchemaFromVertex($identity);
+
+        if ($schema === null) {
+            return [];
+        }
+
+        $filename = $this->config->config()->determineSchemaFilename($identity, $analyzer);
+
+        return [
+            $filename => [
+                'filename' => $filename,
+                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+            ],
+        ];
     }
 }

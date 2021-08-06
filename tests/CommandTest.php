@@ -46,8 +46,7 @@ final class CommandTest extends BaseTestCase
         $command->generateApiDescription(
             $this->analyzer->connection($connection->from()->current()->id()),
             $this->analyzer,
-            $fileCollection,
-            '/service/src/Domain/Api/_schema/ADD_BUILDING.json'
+            $fileCollection
         );
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
@@ -80,10 +79,10 @@ final class CommandTest extends BaseTestCase
         final class Command implements EventEngineDescription
         {
             public const ADD_BUILDING = 'AddBuilding';
-            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
+            private const SCHEMA_PATH = 'src/Domain/Api/_schema';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'ADD_BUILDING.json'));
+                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/Building/Command/AddBuilding.json'));
             }
         }
         EOF;
@@ -159,8 +158,7 @@ final class CommandTest extends BaseTestCase
         $command->generateApiDescription(
             $this->analyzer->connection($connection->from()->current()->id()),
             $this->analyzer,
-            $fileCollection,
-            '/service/src/Domain/Api/_schema/ADD_BUILDING.json'
+            $fileCollection
         );
         $command->generateApiDescriptionClassMap(
             $this->analyzer->connection($connection->from()->current()->id()),
@@ -199,11 +197,11 @@ final class CommandTest extends BaseTestCase
         final class Command implements EventEngineDescription
         {
             public const ADD_BUILDING = 'AddBuilding';
-            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
+            private const SCHEMA_PATH = 'src/Domain/Api/_schema';
             public const CLASS_MAP = [self::ADD_BUILDING => AddBuilding::class];
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'ADD_BUILDING.json'));
+                $eventEngine->registerCommand(self::ADD_BUILDING, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/Building/Command/AddBuilding.json'));
             }
         }
         EOF;
@@ -221,17 +219,17 @@ final class CommandTest extends BaseTestCase
 
         $command = new Command($this->config);
 
-        $files = $command->generateJsonSchemaFiles(
+        $files = $command->generateJsonSchemaFile(
             $this->analyzer->connection($connection->from()->current()->id()),
-            $this->analyzer,
-            '/service/src/Domain/Api/_schema'
+            $this->analyzer
         );
 
+        $filename = '/service/src/Domain/Api/_schema/Building/Command/AddBuilding.json';
         $this->assertCount(1, $files);
 
-        $this->assertArrayHasKey('ADD_BUILDING', $files);
-        $this->assertArrayHasKey('code', $files['ADD_BUILDING']);
-        $this->assertArrayHasKey('filename', $files['ADD_BUILDING']);
+        $this->assertArrayHasKey($filename, $files);
+        $this->assertArrayHasKey('code', $files[$filename]);
+        $this->assertArrayHasKey('filename', $files[$filename]);
 
         $json = <<<JSON
         {
@@ -255,8 +253,8 @@ final class CommandTest extends BaseTestCase
         }
         JSON;
 
-        $this->assertSame('/service/src/Domain/Api/_schema/ADD_BUILDING.json', $files['ADD_BUILDING']['filename']);
-        $this->assertSame($json, $files['ADD_BUILDING']['code']);
+        $this->assertSame('/service/src/Domain/Api/_schema/Building/Command/AddBuilding.json', $files[$filename]['filename']);
+        $this->assertSame($json, $files[$filename]['code']);
     }
 
     /**

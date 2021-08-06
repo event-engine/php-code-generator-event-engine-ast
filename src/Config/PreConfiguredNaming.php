@@ -170,6 +170,9 @@ final class PreConfiguredNaming implements Naming
             case VertexType::TYPE_EVENT:
                 $namespace .= 'Event';
                 break;
+            case VertexType::TYPE_DOCUMENT:
+                $namespace .= 'Type';
+                break;
             default:
                 throw new RuntimeException(
                     \sprintf('Could not determine API description class name for type "%s" - "%s"', $type->type(), $type->name())

@@ -53,7 +53,7 @@ final class EventDescription
                         JsonSchemaArray::fromFile(self::SCHEMA_PATH . \'%s\')
                     );',
                 $eventConstName,
-                \substr($jsonSchemaFilename, \strrpos($jsonSchemaFilename, DIRECTORY_SEPARATOR) + 1)
+                $jsonSchemaFilename
             );
         }
 

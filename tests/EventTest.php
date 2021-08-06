@@ -46,8 +46,7 @@ final class EventTest extends BaseTestCase
         $event->generateApiDescription(
             $this->analyzer->connection($connection->to()->current()->id()),
             $this->analyzer,
-            $fileCollection,
-            '/service/src/Domain/Api/_schema/BUILDING_ADDED.json'
+            $fileCollection
         );
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
@@ -80,10 +79,10 @@ final class EventTest extends BaseTestCase
         final class Event implements EventEngineDescription
         {
             public const BUILDING_ADDED = 'BuildingAdded';
-            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
+            private const SCHEMA_PATH = 'src/Domain/Api/_schema';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'BUILDING_ADDED.json'));
+                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/Building/Event/BuildingAdded.json'));
             }
         }
         EOF;
@@ -159,8 +158,7 @@ final class EventTest extends BaseTestCase
         $event->generateApiDescription(
             $this->analyzer->connection($connection->to()->current()->id()),
             $this->analyzer,
-            $fileCollection,
-            '/service/src/Domain/Api/_schema/BUILDING_ADDED.json'
+            $fileCollection
         );
         $event->generateApiDescriptionClassMap(
             $this->analyzer->connection($connection->to()->current()->id()),
@@ -199,11 +197,11 @@ final class EventTest extends BaseTestCase
         final class Event implements EventEngineDescription
         {
             public const BUILDING_ADDED = 'BuildingAdded';
-            private const SCHEMA_PATH = '/service/src/Domain/Api/_schema/';
+            private const SCHEMA_PATH = 'src/Domain/Api/_schema';
             public const CLASS_MAP = [self::BUILDING_ADDED => BuildingAdded::class];
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . 'BUILDING_ADDED.json'));
+                $eventEngine->registerEvent(self::BUILDING_ADDED, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/Building/Event/BuildingAdded.json'));
             }
         }
         EOF;
@@ -221,17 +219,17 @@ final class EventTest extends BaseTestCase
 
         $event = new Event($this->config);
 
-        $files = $event->generateJsonSchemaFiles(
+        $files = $event->generateJsonSchemaFile(
             $this->analyzer->connection($connection->to()->current()->id()),
-            $this->analyzer,
-            '/service/src/Domain/Api/_schema'
+            $this->analyzer
         );
 
         $this->assertCount(1, $files);
 
-        $this->assertArrayHasKey('BUILDING_ADDED', $files);
-        $this->assertArrayHasKey('code', $files['BUILDING_ADDED']);
-        $this->assertArrayHasKey('filename', $files['BUILDING_ADDED']);
+        $filename = '/service/src/Domain/Api/_schema/Building/Event/BuildingAdded.json';
+        $this->assertArrayHasKey($filename, $files);
+        $this->assertArrayHasKey('code', $files[$filename]);
+        $this->assertArrayHasKey('filename', $files[$filename]);
 
         $json = <<<JSON
         {
@@ -254,8 +252,8 @@ final class EventTest extends BaseTestCase
         }
         JSON;
 
-        $this->assertSame('/service/src/Domain/Api/_schema/BUILDING_ADDED.json', $files['BUILDING_ADDED']['filename']);
-        $this->assertSame($json, $files['BUILDING_ADDED']['code']);
+        $this->assertSame('/service/src/Domain/Api/_schema/Building/Event/BuildingAdded.json', $files[$filename]['filename']);
+        $this->assertSame($json, $files[$filename]['code']);
     }
 
     /**

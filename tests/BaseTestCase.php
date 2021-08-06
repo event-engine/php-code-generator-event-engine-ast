@@ -57,11 +57,6 @@ abstract class BaseTestCase extends TestCase
 
         $this->initComposerFile();
 
-        $this->apiAggregateFilename = $this->srcFolder . '/Domain/Api/Aggregate.php';
-        $this->apiEventFilename = $this->srcFolder . '/Domain/Api/Event.php';
-        $this->apiCommandFilename = $this->srcFolder . '/Domain/Api/Command.php';
-        $this->modelPath = $this->srcFolder . '/Domain/Model';
-
         $this->classInfoList = new ClassInfoList();
 
         $this->classInfoList->addClassInfo(

@@ -121,14 +121,7 @@ trait DeterminePathTrait
 
     public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string
     {
-        $namespace = $this->getCustomMetadata($type, 'namespace') ?? '';
-
-        if ($namespace === '') {
-            $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
-        }
-        if ($namespace !== '') {
-            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
-        }
+        $namespace = $this->determineNamespace($type, $analyzer);
 
         switch (true) {
             case $type instanceof CommandType:
@@ -136,22 +129,74 @@ trait DeterminePathTrait
             case $type instanceof EventType:
                 return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'Event' . $namespace;
             case $type instanceof AggregateType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . $namespace;
+                return $this->determineDomainPath($type, $analyzer) . $namespace;
             case $type instanceof DocumentType:
-                if ($namespace === '') {
-                    $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
-                    $namespace = \str_replace('\\', '//', \trim($namespace, '\\'));
-                }
-                if ($namespace !== '') {
-                    return $this->determineValueObjectSharedPath() . DIRECTORY_SEPARATOR . $namespace;
-                }
-
                 return $this->determineValueObjectSharedPath() . $namespace;
             default:
                 throw new RuntimeException(
                     \sprintf('Can not determine path for sticky type "%s"', \get_class($type))
                 );
         }
+    }
+
+    public function determineSchemaRoot(): string
+    {
+        return $this->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api' . DIRECTORY_SEPARATOR . '_schema';
+    }
+
+    public function determineSchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $path = $this->determineSchemaPath($type, $analyzer);
+
+        return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.json';
+    }
+
+    public function determineSchemaPath(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $schemaPath = $this->determineSchemaRoot();
+        $schemaPathAggregate = $schemaPath;
+
+        $filterFolder = $this->getFilterClassName();
+
+        $aggregate = $this->determineAggregate($type, $analyzer);
+
+        if ($aggregate !== null) {
+            $schemaPathAggregate .= DIRECTORY_SEPARATOR . ($filterFolder)($aggregate->label());
+        }
+
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        switch (true) {
+            case $type instanceof CommandType:
+                return $schemaPathAggregate . DIRECTORY_SEPARATOR . 'Command' . $namespace;
+            case $type instanceof EventType:
+                return $schemaPathAggregate . DIRECTORY_SEPARATOR . 'Event' . $namespace;
+            case $type instanceof AggregateType:
+                return $schemaPathAggregate . $namespace;
+            case $type instanceof DocumentType:
+                return $schemaPath . DIRECTORY_SEPARATOR . 'ValueObject' . $namespace;
+            default:
+                throw new RuntimeException(
+                    \sprintf('Can not determine JSON schema path for sticky type "%s"', \get_class($type))
+                );
+        }
+    }
+
+    private function determineNamespace(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getCustomMetadata($type, 'namespace') ?? '';
+
+        if ($namespace === '') {
+            $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
+        }
+        if ($namespace === '' && $type instanceof DocumentType) {
+            $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
+        }
+        if ($namespace !== '') {
+            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
+        }
+
+        return $namespace;
     }
 
     private function getCustomMetadata(VertexType $type, string $key)

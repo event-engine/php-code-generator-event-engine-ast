@@ -170,4 +170,91 @@ final class ValueObjectTest extends BaseTestCase
         EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
+
+    /**
+     * @test
+     */
+    public function it_creates_api_type_description(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'name_vo.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $valueObject = new ValueObject($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $valueObject->generateApiDescription(
+            $connection,
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->assertCount(1, $fileCollection);
+
+        foreach ($fileCollection as $file) {
+            $this->assertApiDescription($file);
+        }
+    }
+
+    private function assertApiDescription(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Domain\Api;
+        
+        use EventEngine\EventEngine;
+        use EventEngine\EventEngineDescription;
+        use EventEngine\JsonSchema\JsonSchema;
+        use EventEngine\JsonSchema\JsonSchemaArray;
+        final class Type implements EventEngineDescription
+        {
+            public const NAME = 'Name';
+            private const SCHEMA_PATH = 'src/Domain/Api/_schema';
+            public static function describe(EventEngine $eventEngine) : void
+            {
+                $eventEngine->registerType(self::NAME, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/ValueObject/Building/Name.json'));
+            }
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    /**
+     * @test
+     */
+    public function it_creates_api_document_json_schema_file(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'name_vo.json'));
+        $connection = $this->analyzer->analyse($node);
+
+        $valueObject = new ValueObject($this->config);
+
+        $files = $valueObject->generateJsonSchemaFile(
+            $connection,
+            $this->analyzer
+        );
+
+        $this->assertCount(1, $files);
+        $filename = '/service/src/Domain/Api/_schema/ValueObject/Building/Name.json';
+        $this->assertArrayHasKey('code', $files[$filename]);
+        $this->assertArrayHasKey('filename', $files[$filename]);
+
+        $json = <<<JSON
+        {
+            "type": "string",
+            "name": "Name"
+        }
+        JSON;
+
+        $this->assertSame('/service/src/Domain/Api/_schema/ValueObject/Building/Name.json', $files[$filename]['filename']);
+        $this->assertSame($json, $files[$filename]['code']);
+    }
 }
