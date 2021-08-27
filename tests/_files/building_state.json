@@ -128,7 +128,7 @@
                     "x": 527,
                     "y": 633.5
                 },
-                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+                "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  }\n}"
             }
         ],
         "targetsList": [
@@ -206,6 +206,6 @@
             "x": 880,
             "y": 409.5
         },
-        "metadata": "{\n  \"shorthand\": true,\n  \"aggregateState\": true,\n  \"collection\": \"buildings\",\n  \"schema\": {\n    \"buildingId\": \"BuildingId|ns:Common|shared:false\",\n    \"name\": \"Name|ns:Common|shared:true\"\n  }\n}  \n"
+        "metadata": "{\n  \"shorthand\": true,\n  \"aggregateState\": true,\n  \"collection\": \"buildings\",\n  \"voNamespace\": \"NotUsed\",\n  \"ns\": \"/\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"/Building/Name\"\n  }\n}  \n"
     }
 }

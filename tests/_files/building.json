@@ -128,7 +128,7 @@
                     "x": 528,
                     "y": 184.5
                 },
-                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  } \n}\n"
+                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  } \n}\n"
             }
         ],
         "targetsList": [
@@ -199,13 +199,13 @@
                     "x": 527,
                     "y": 633.5
                 },
-                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+                "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  }\n}"
             }
         ],
         "geometry": {
             "x": 528,
             "y": 409.5
         },
-        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"stream\": \"building_stream\",\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"stream\": \"building_stream\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"/Building/string\"\n  }\n}"
     }
 }

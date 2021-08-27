@@ -16,8 +16,6 @@ use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Builder\PhpFile;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
-use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
-use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
 final class ObjectGenerator
@@ -136,101 +134,15 @@ final class ObjectGenerator
                 $objectClassBuilder,
                 $fileCollection,
                 $jsonSchemaSet,
-                $valueObjectFolder
+                $valueObjectFolder,
+                null,
+                $sharedValueObjectFolder
             );
-            $fqcnClassInfo = $this->config->getClassInfoList()
-                ->classInfoForNamespace($fqcn);
-
-            $valueObjectNamespace = $this->config->getClassInfoList()
-                ->classInfoForPath($valueObjectFolder)
-                ->getClassNamespaceFromPath($valueObjectFolder);
-
-            $fqcnClassNamespace = $fqcnClassInfo->getClassNamespace($fqcn);
-            $fqcnClassName = $fqcnClassInfo->getClassName($fqcn);
-
-            $sharedValueObjectNamespace = $this->config->getClassInfoList()
-                ->classInfoForPath($sharedValueObjectFolder)
-                ->getClassNamespaceFromPath($sharedValueObjectFolder);
-
-            $jsonSchemaType = $jsonSchemaSet->first();
-
-            if ($jsonSchemaType instanceof ObjectType) {
-                foreach ($jsonSchemaType->properties() as $property) {
-                    $propertyJsonSchemaType = $property->first();
-
-                    if (
-                        $propertyJsonSchemaType instanceof CustomSupport
-                        && ($propertyJsonSchemaType->custom()['shared'] ?? false) === true
-                    ) {
-                        $namespace = $propertyJsonSchemaType->custom()['namespace'] ?? '';
-
-                        if ($namespace === '') {
-                            $namespace = $propertyJsonSchemaType->custom()['ns'] ?? '';
-                        }
-
-                        $currentNamespace = \trim($valueObjectNamespace . '\\' . $namespace, '\\');
-                        $className = ($this->config->getFilterClassName())($propertyJsonSchemaType->name());
-
-                        $filtered = $fileCollection->filter(fn (PhpFile $file) => $file->getNamespace() === $currentNamespace && $file->getName() === $className);
-
-                        if (\count($filtered) === 1) {
-                            $filtered->rewind();
-                            /** @var PhpFile $classBuilder */
-                            $classBuilder = $filtered->current();
-                            $oldFqcn = $classBuilder->getNamespace() . '\\' . $classBuilder->getName();
-
-                            if ($classBuilder instanceof ClassBuilder) {
-                                $fileCollection->remove($classBuilder);
-
-                                $classBuilder->setNamespace(\trim($sharedValueObjectNamespace . '\\' . $namespace, '\\'));
-                                $fileCollection->add($classBuilder);
-                                $newFqcn = $classBuilder->getNamespace() . '\\' . $classBuilder->getName();
-
-                                $this->replaceNamespaceImports($fileCollection, $oldFqcn, $newFqcn);
-                            }
-                        } else {
-                            $filtered = $fileCollection->filter(
-                                fn (PhpFile $file) => $file->getNamespace() === $fqcnClassNamespace
-                                    && $file->getName() === $fqcnClassName
-                            );
-                            $filtered->rewind();
-                            $classBuilder = $filtered->current();
-
-                            if ($classBuilder instanceof ClassBuilder) {
-                                $this->replaceNamespaceImports(
-                                    $fileCollection,
-                                    $currentNamespace . '\\' . $className,
-                                    \trim($sharedValueObjectNamespace . '\\' . $namespace, '\\') . '\\' . $className
-                                );
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         $this->addGetterMethodsForProperties($fileCollection);
 
         return $fileCollection;
-    }
-
-    private function replaceNamespaceImports(FileCollection $fileCollection, string $search, string $replace): void
-    {
-        foreach ($fileCollection as $classBuilder) {
-            if (! $classBuilder instanceof ClassBuilder) {
-                continue;
-            }
-            $namespaceImports = [];
-
-            foreach ($classBuilder->getNamespaceImports() as $namespaceImport) {
-                if ($namespaceImport !== $search) {
-                    $namespaceImports[] = $namespaceImport;
-                } else {
-                    $namespaceImports[] = $replace;
-                }
-            }
-            $classBuilder->setNamespaceImports(...$namespaceImports);
-        }
     }
 
     /**

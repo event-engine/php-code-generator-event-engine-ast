@@ -189,6 +189,8 @@ trait DeterminePathTrait
         if ($namespace === '') {
             $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
         }
+        $namespace = \str_replace('/', '\\', $namespace);
+
         if ($namespace === '' && $type instanceof DocumentType) {
             $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
         }
@@ -381,6 +383,6 @@ trait DeterminePathTrait
             $namespace = $this->getCustomMetadata($feature, 'voNamespace') ?? '';
         }
 
-        return $namespace;
+        return \str_replace('/', '\\', $namespace);
     }
 }

@@ -230,11 +230,12 @@ final class EventTest extends BaseTestCase
 
         $json = <<<JSON
         {
+            "voNamespace": "Building",
             "type": "object",
             "properties": {
                 "buildingId": {
-                    "shared": true,
-                    "\$ref": "#\/definitions\/BuildingId"
+                    "\$ref": "#\/definitions\/BuildingId",
+                    "namespace": "\/"
                 },
                 "name": {
                     "type": "string"

@@ -145,12 +145,11 @@ final class ValueObjectTest extends BaseTestCase
         <?php
         
         declare (strict_types=1);
-        namespace MyService\Domain\Model\ValueObject\Building;
+        namespace MyService\Domain\Model\ValueObject;
 
         use EventEngine\Data\ImmutableRecord;
         use EventEngine\Data\ImmutableRecordLogic;
-        use MyService\Domain\Model\ValueObject\Building\Common\BuildingId;
-        use MyService\Domain\Model\ValueObject\Common\Name;
+        use MyService\Domain\Model\ValueObject\Building\Name;
         final class Building implements ImmutableRecord
         {
             use ImmutableRecordLogic;

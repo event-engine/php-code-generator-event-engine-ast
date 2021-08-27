@@ -25,7 +25,7 @@ final class AggregateTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $connection = $this->analyzer->analyse($node);
-        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
@@ -137,7 +137,7 @@ final class AggregateTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $connection = $this->analyzer->analyse($node);
-        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
@@ -203,7 +203,7 @@ final class AggregateTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $connection = $this->analyzer->analyse($node);
-        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
@@ -272,7 +272,7 @@ final class AggregateTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building.json'));
         $connection = $this->analyzer->analyse($node);
-        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $this->analyzer->analyse($node);
 
         $aggregate = new Aggregate($this->config);
@@ -316,6 +316,7 @@ final class AggregateTest extends BaseTestCase
         
         use EventEngine\Data\ImmutableRecord;
         use EventEngine\Data\ImmutableRecordLogic;
+        use MyService\Domain\Model\ValueObject\Building\Name;
         final class Building implements ImmutableRecord
         {
             use ImmutableRecordLogic;

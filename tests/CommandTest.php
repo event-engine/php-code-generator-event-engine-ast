@@ -231,11 +231,12 @@ final class CommandTest extends BaseTestCase
         $json = <<<JSON
         {
             "newAggregate": true,
+            "voNamespace": "Building",
             "type": "object",
             "properties": {
                 "buildingId": {
-                    "shared": true,
-                    "\$ref": "#\/definitions\/BuildingId"
+                    "\$ref": "#\/definitions\/BuildingId",
+                    "namespace": "\/"
                 },
                 "name": {
                     "type": "string"

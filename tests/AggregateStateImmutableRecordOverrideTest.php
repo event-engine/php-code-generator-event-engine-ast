@@ -39,7 +39,7 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
         $connection = $this->analyzer->analyse($node);
-        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $this->analyzer->analyse($node);
 
         $override = new AggregateStateImmutableRecordOverride($this->config);
