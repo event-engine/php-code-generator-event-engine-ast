@@ -63,7 +63,6 @@ final class AggregateTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription
@@ -121,7 +120,6 @@ final class AggregateTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription
@@ -182,7 +180,6 @@ final class AggregateTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\BuildingBehaviour;
         final class Aggregate implements EventEngineDescription

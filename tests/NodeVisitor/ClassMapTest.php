@@ -74,7 +74,6 @@ namespace MyService\Domain\Api;
 
 use EventEngine\EventEngine;
 use EventEngine\EventEngineDescription;
-use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
 final class Command implements EventEngineDescription
 {
@@ -99,7 +98,6 @@ namespace MyService\Domain\Api;
 use MyService\Domain\Model\Building\Command\AddBuilding;
 use EventEngine\EventEngine;
 use EventEngine\EventEngineDescription;
-use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaArray;
 final class Command implements EventEngineDescription
 {

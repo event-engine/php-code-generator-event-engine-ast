@@ -74,7 +74,6 @@ final class EventTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Event implements EventEngineDescription
         {
@@ -132,7 +131,6 @@ final class EventTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\Event\BuildingAdded;
         final class Event implements EventEngineDescription
@@ -191,7 +189,6 @@ final class EventTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\Event\BuildingAdded;
         final class Event implements EventEngineDescription

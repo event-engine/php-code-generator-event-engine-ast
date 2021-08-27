@@ -74,7 +74,6 @@ final class CommandTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Command implements EventEngineDescription
         {
@@ -132,7 +131,6 @@ final class CommandTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\Command\AddBuilding;
         final class Command implements EventEngineDescription
@@ -191,7 +189,6 @@ final class CommandTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         use MyService\Domain\Model\Building\Command\AddBuilding;
         final class Command implements EventEngineDescription

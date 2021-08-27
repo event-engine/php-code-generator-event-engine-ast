@@ -212,7 +212,6 @@ final class ValueObjectTest extends BaseTestCase
         
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
-        use EventEngine\JsonSchema\JsonSchema;
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Type implements EventEngineDescription
         {
