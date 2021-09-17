@@ -27,6 +27,7 @@ use OpenCodeModeling\CodeAst\Builder\PhpFile;
 trait ApiDescriptionClassMapTrait
 {
     use MetadataSchemaTrait;
+    use MetadataCustomTrait;
 
     private Naming $config;
 
@@ -45,12 +46,18 @@ trait ApiDescriptionClassMapTrait
                 $this->config->config()->getPrinter()
             )
         );
+
         $identity = $connection->identity();
+        $namespace = $this->getCustomMetadata($identity, 'ns', $this->getCustomMetadata($identity, 'namespace', ''));
+
+        if ($namespace !== '') {
+            $namespace = \trim($namespace, '/') . '/';
+        }
 
         $classBuilder->addConstant(
             ClassConstBuilder::fromScratch(
-                ($this->config->config()->getFilterConstName())($identity->label()),
-                ($this->config->config()->getFilterMessageName())($identity->label()),
+                ($this->config->config()->getFilterConstName())($namespace . $identity->label()),
+                $namespace . ($this->config->config()->getFilterMessageName())($identity->label()),
             )
         );
 

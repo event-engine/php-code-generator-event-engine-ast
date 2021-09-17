@@ -57,7 +57,7 @@
                 "x": 288,
                 "y": 201
             },
-            "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\"\n}\n"
+            "metadata": "{\n  \"shorthand\": true\n}\n"
         },
         "childrenList": [],
         "sourcesList": [],
@@ -136,6 +136,6 @@
             "x": 224,
             "y": 419.5
         },
-        "metadata": "{\n  \"shorthand\": true,\n  \"schema\": \"string\"\n}  \n"
+        "metadata": "{\n  \"shorthand\": true,\n  \"ns\": \"Building\",\n  \"schema\": \"string\"\n}  \n"
     }
 }

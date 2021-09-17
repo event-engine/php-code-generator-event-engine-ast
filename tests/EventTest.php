@@ -282,7 +282,10 @@ final class EventTest extends BaseTestCase
                     $this->assertEventFile($file);
                     break;
                 case 'BuildingId':
+                    $this->assertSame('MyService\Domain\Model\ValueObject', $file->getNamespace());
+                    break;
                 case 'Name':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Building', $file->getNamespace());
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
@@ -308,7 +311,7 @@ final class EventTest extends BaseTestCase
         use EventEngine\Data\ImmutableRecord;
         use EventEngine\Data\ImmutableRecordLogic;
         use MyService\Domain\Model\ValueObject\BuildingId;
-        use MyService\Domain\Model\ValueObject\Name;
+        use MyService\Domain\Model\ValueObject\Building\Name;
         final class BuildingAdded implements ImmutableRecord
         {
             use ImmutableRecordLogic;

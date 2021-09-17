@@ -45,7 +45,7 @@
         "open-code-modeling/json-schema-to-php": "^0.4.x-dev",
         "open-code-modeling/json-schema-to-php-ast": "0.6.x-dev",
         "open-code-modeling/php-code-ast": "0.13.x-dev",
-        "open-code-modeling/php-filter": "^0.2.0"
+        "open-code-modeling/php-filter": "^0.2.1 || 0.3.x-dev"
     },
     "require-dev": {
         "laminas/laminas-filter": "^2.10",

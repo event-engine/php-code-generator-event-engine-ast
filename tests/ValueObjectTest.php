@@ -214,11 +214,11 @@ final class ValueObjectTest extends BaseTestCase
         use EventEngine\JsonSchema\JsonSchemaArray;
         final class Type implements EventEngineDescription
         {
-            public const NAME = 'Name';
+            public const BUILDING_NAME = 'Building/Name';
             private const SCHEMA_PATH = 'src/Domain/Api/_schema';
             public static function describe(EventEngine $eventEngine) : void
             {
-                $eventEngine->registerType(self::NAME, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/ValueObject/Building/Name.json'));
+                $eventEngine->registerType(self::BUILDING_NAME, JsonSchemaArray::fromFile(self::SCHEMA_PATH . '/ValueObject/Building/Name.json'));
             }
         }
         EOF;
@@ -247,6 +247,7 @@ final class ValueObjectTest extends BaseTestCase
 
         $json = <<<JSON
         {
+            "ns": "Building",
             "type": "string",
             "name": "Name"
         }

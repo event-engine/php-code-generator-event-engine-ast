@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataCustomTrait;
 use EventEngine\InspectioGraph\DocumentType;
 use OpenCodeModeling\CodeAst\Code\BodyGenerator;
 use OpenCodeModeling\CodeAst\Code\IdentifierGenerator;
@@ -17,6 +18,8 @@ use PhpParser\Parser;
 
 final class TypeDescription
 {
+    use MetadataCustomTrait;
+
     private Parser $parser;
 
     /**
@@ -36,7 +39,9 @@ final class TypeDescription
         DocumentType $document,
         ?string $jsonSchemaFilename = null
     ): IdentifierGenerator {
-        $documentConstName = ($this->filterConstName)($document->label());
+        $namespace = $this->getCustomMetadata($document, 'ns', $this->getCustomMetadata($document, 'namespace', ''));
+
+        $documentConstName = ($this->filterConstName)($namespace . $document->label());
 
         $code = \sprintf(
             '$eventEngine->registerType(self::%s, JsonSchema::object([], [], true));',

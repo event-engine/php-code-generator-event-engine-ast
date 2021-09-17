@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataCustomTrait;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\DocumentType;
@@ -20,10 +20,11 @@ use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\FeatureType;
 use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\VertexType;
-use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
 
 trait DeterminePathTrait
 {
+    use MetadataCustomTrait;
+
     abstract public function getBasePath(): string;
 
     abstract public function getFilterClassName(): callable;
@@ -36,7 +37,7 @@ trait DeterminePathTrait
             case $type instanceof AggregateType:
             case $type instanceof DocumentType:
             default:
-                $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
+                $namespace = $this->determineValueObjectNamespace($type);
                 $namespace = \str_replace('\\', '//', \trim($namespace, '\\'));
 
                 if ($namespace !== '') {
@@ -192,31 +193,13 @@ trait DeterminePathTrait
         $namespace = \str_replace('/', '\\', $namespace);
 
         if ($namespace === '' && $type instanceof DocumentType) {
-            $namespace = $this->determineFeatureValueObjectNamespace($type, $analyzer);
+            $namespace = $this->determineValueObjectNamespace($type);
         }
         if ($namespace !== '') {
-            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
+            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '/', \trim($namespace, '\\'));
         }
 
         return $namespace;
-    }
-
-    private function getCustomMetadata(VertexType $type, string $key)
-    {
-        $metadataInstance = $type->metadataInstance();
-
-        if (
-            $metadataInstance instanceof HasTypeSet
-            && ($jsonSchemaTypeSet = $metadataInstance->typeSet())
-            && ($jsonSchemaType = $jsonSchemaTypeSet->first())
-            && $jsonSchemaType instanceof CustomSupport
-        ) {
-            return $jsonSchemaType->custom()[$key] ?? null;
-        } elseif ($metadataInstance instanceof HasCustomData) {
-            return $metadataInstance->customData()[$key] ?? null;
-        }
-
-        return null;
     }
 
     public function determineFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -375,13 +358,9 @@ trait DeterminePathTrait
         return $feature;
     }
 
-    private function determineFeatureValueObjectNamespace(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    private function determineValueObjectNamespace(VertexType $type): string
     {
-        $namespace = '';
-
-        if ($feature = $this->findFeature($type, $analyzer)) {
-            $namespace = $this->getCustomMetadata($feature, 'voNamespace') ?? '';
-        }
+        $namespace = $this->getCustomMetadata($type, 'voNamespace') ?? '';
 
         return \str_replace('/', '\\', $namespace);
     }
