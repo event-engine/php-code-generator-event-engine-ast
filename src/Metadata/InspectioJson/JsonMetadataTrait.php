@@ -13,8 +13,17 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\ErrorParsingMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
+use EventEngine\InspectioGraph\VertexConnectionMap;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\JsonSchemaToPhp\Exception\RuntimeException;
 use OpenCodeModeling\JsonSchemaToPhp\Shorthand\Shorthand;
+use OpenCodeModeling\JsonSchemaToPhp\Type\AllOfType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\AnyOfType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ArrayType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\NotType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\OneOfType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ReferenceType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\Type;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
@@ -73,5 +82,74 @@ trait JsonMetadataTrait
         }
 
         return $self;
+    }
+
+    public function resolveMetadataReferences(VertexConnectionMap $vertexConnectionMap, callable $filterName): void
+    {
+        if ($this->typeSet === null) {
+            return;
+        }
+        $this->resolveTypes($this->typeSet, $vertexConnectionMap, $filterName);
+    }
+
+    private function resolveTypes(TypeSet $typeSet, VertexConnectionMap $vertexConnectionMap, callable $filterName): void
+    {
+        foreach ($typeSet->types() as $type) {
+            switch (true) {
+                case $type instanceof ObjectType:
+                    foreach ($type->properties() as $property) {
+                        $this->resolveTypes($property, $vertexConnectionMap, $filterName);
+                    }
+                    break;
+                case $type instanceof ArrayType:
+                    foreach ($type->items() as $item) {
+                        $this->resolveTypes($item, $vertexConnectionMap, $filterName);
+                    }
+                    foreach ($type->definitions() as $definition) {
+                        $this->resolveTypes($definition, $vertexConnectionMap, $filterName);
+                    }
+                    foreach ($type->contains() as $contain) {
+                        $this->resolveTypes($contain, $vertexConnectionMap, $filterName);
+                    }
+                    foreach ($type->additionalItems() as $additionalItems) {
+                        $this->resolveTypes($additionalItems, $vertexConnectionMap, $filterName);
+                    }
+                    break;
+                case $type instanceof AllOfType:
+                case $type instanceof AnyOfType:
+                case $type instanceof OneOfType:
+                    foreach ($type->getTypeSets() as $ofTypeSet) {
+                        $this->resolveTypes($ofTypeSet, $vertexConnectionMap, $filterName);
+                    }
+                    break;
+                case $type instanceof NotType:
+                    $this->resolveTypes($type->getTypeSet(), $vertexConnectionMap, $filterName);
+                    break;
+                default:
+                    break;
+            }
+
+            if (! $type instanceof ReferenceType || $type->resolvedType() !== null) {
+                return;
+            }
+
+            $namespace = \trim($type->custom()['ns'] ?? $type->custom()['namespace'] ?? '', '/');
+
+            $name = ($filterName)($type->extractNameFromReference());
+            $documents = $vertexConnectionMap->filterByNameAndType($name, VertexType::TYPE_DOCUMENT);
+
+            foreach ($documents as $document) {
+                $documentMetadata = $document->identity()->metadataInstance();
+
+                $documentNamespace = \trim($documentMetadata->customData()['ns'] ?? $type->custom()['namespace'] ?? '', '/');
+
+                if ($namespace === $documentNamespace
+                    && $documentMetadata instanceof HasTypeSet
+                    && ($docTypeSet = $documentMetadata->typeSet())
+                ) {
+                    $type->setResolvedType($docTypeSet);
+                }
+            }
+        }
     }
 }
