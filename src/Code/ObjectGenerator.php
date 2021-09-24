@@ -102,7 +102,8 @@ final class ObjectGenerator
             || $classBuilder->hasMethod('toString')
             || $classBuilder->hasMethod('toInt')
             || $classBuilder->hasMethod('toFloat')
-            || $classBuilder->hasMethod('toBool');
+            || $classBuilder->hasMethod('toBool')
+            || \strpos($classBuilder->getFqcn(), 'Exception') !== false;
     }
 
     /**
