@@ -60,7 +60,7 @@ final class TypeDescription
         }
 
         return new IdentifierGenerator(
-            $document->name(),
+            $documentConstName,
             new BodyGenerator($this->parser, $code)
         );
     }
