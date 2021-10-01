@@ -10,16 +10,10 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-use EventEngine\InspectioGraph\Metadata\HasCustomData;
-use EventEngine\InspectioGraph\Metadata\HasQuery;
-use EventEngine\InspectioGraph\Metadata\HasSchema;
-use EventEngine\InspectioGraph\Metadata\Metadata;
+use EventEngine\InspectioGraph\Metadata\ResolvesMetadataReference;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
-interface DocumentMetadata extends Metadata, HasSchema, HasQuery, HasQueryTypeSet, HasCustomData
+interface HasQueryTypeSet extends ResolvesMetadataReference
 {
-    public function query(): ?array;
-
-    public function schema(): ?array;
-
-    public function isAggregateState(): bool;
+    public function queryTypeSet(): ?TypeSet;
 }

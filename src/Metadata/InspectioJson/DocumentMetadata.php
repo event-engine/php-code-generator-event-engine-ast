@@ -19,6 +19,8 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
 
     private ?array $query;
 
+    private ?TypeSet $queryTypeSet = null;
+
     private function __construct()
     {
     }
@@ -33,6 +35,11 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
         return $this->typeSet;
     }
 
+    public function queryTypeSet(): ?TypeSet
+    {
+        return $this->queryTypeSet;
+    }
+
     public function customData(): array
     {
         return $this->customData;
@@ -40,7 +47,7 @@ final class DocumentMetadata implements \EventEngine\CodeGenerator\EventEngineAs
 
     public function query(): ?array
     {
-        return $this->customData['query'] ?? null;
+        return $this->query ?? null;
     }
 
     public function isAggregateState(): bool

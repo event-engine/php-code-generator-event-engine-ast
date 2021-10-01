@@ -13,16 +13,22 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Helper;
 use EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMap;
 use EventEngine\InspectioGraph\AggregateType;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
+use EventEngine\InspectioGraph\Metadata\HasQuery;
+use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Builder\PhpFile;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeDefinition;
 
 trait ApiDescriptionClassMapTrait
 {
@@ -39,6 +45,25 @@ trait ApiDescriptionClassMapTrait
     ): ClassBuilder {
         $classBuilder = $this->getApiDescriptionClassBuilder($connection, $analyzer, $files, $type);
 
+        $this->addDescriptionMethod($classBuilder, $connection);
+
+        return $classBuilder;
+    }
+
+    private function generateApiQueryDescriptionFor(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): ClassBuilder {
+        $classBuilder = $this->getApiQueryDescriptionClassBuilder($connection, $analyzer, $files);
+
+        $this->addDescriptionMethod($classBuilder, $connection);
+
+        return $classBuilder;
+    }
+
+    private function addDescriptionMethod(ClassBuilder $classBuilder, VertexConnection $connection): void
+    {
         $classBuilder->addMethod(
             ClassMethodBuilder::fromNode(
                 DescriptionFileMethod::generate()->generate(),
@@ -47,11 +72,16 @@ trait ApiDescriptionClassMapTrait
             )
         );
 
-        $identity = $connection->identity();
-        $namespace = $this->getCustomMetadata($identity, 'ns', $this->getCustomMetadata($identity, 'namespace', ''));
+        $namespace = '';
 
-        if ($namespace !== '') {
-            $namespace = \trim($namespace, '/') . '/';
+        $identity = $connection->identity();
+
+        $metadata = $identity->metadataInstance();
+
+        if ($metadata instanceof HasTypeSet
+            && $metadata->typeSet() !== null
+        ) {
+            $namespace = $this->getNamespace($metadata->typeSet()->first());
         }
 
         $classBuilder->addConstant(
@@ -60,8 +90,25 @@ trait ApiDescriptionClassMapTrait
                 $namespace . ($this->config->config()->getFilterMessageName())($identity->label()),
             )
         );
+    }
 
-        return $classBuilder;
+    private function getNamespace(TypeDefinition $typeDefinition): string
+    {
+        $namespace = $this->getCustomMetadataFromTypeDefinition(
+            $typeDefinition,
+            'ns',
+            $this->getCustomMetadataFromTypeDefinition($typeDefinition, 'namespace', '')
+        );
+
+        if ($namespace !== '') {
+            $namespace = \trim($namespace, '/') . '/';
+        }
+
+        if ($namespace === '/') {
+            return '';
+        }
+
+        return $namespace;
     }
 
     private function addSchemaPathConstant(ClassBuilder $classBuilder, string $schemaPath): void
@@ -86,12 +133,61 @@ trait ApiDescriptionClassMapTrait
 
         $identity = $connection->identity();
 
-        if ($identity instanceof AggregateType) {
-            $identityFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($identity, $analyzer);
-        } else {
-            $identityFqcn = $this->config->getFullyQualifiedClassName($identity, $analyzer);
+        switch (true) {
+            case $identity instanceof AggregateType:
+                $identityFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($identity, $analyzer);
+                break;
+            default:
+                $identityFqcn = $this->config->getFullyQualifiedClassName($identity, $analyzer);
+                break;
         }
 
+        $metadata = $identity->metadataInstance();
+
+        $namespace = '';
+
+        if ($metadata instanceof HasTypeSet
+            && $metadata->typeSet() !== null
+        ) {
+            $namespace = $this->getNamespace($metadata->typeSet()->first());
+        }
+
+        $this->addClassMap($classBuilder, $identityFqcn, $namespace . $identity->label());
+
+        return $classBuilder;
+    }
+
+    private function generateApiQueryDescriptionClassMapFor(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): ClassBuilder {
+        $classBuilder = $this->getApiQueryDescriptionClassBuilder($connection, $analyzer, $files);
+
+        /** @var DocumentType $identity */
+        $identity = $connection->identity();
+
+        $identityFqcn = $this->config->getQueryFullyQualifiedClassName($identity, $analyzer);
+
+        $metadata = $identity->metadataInstance();
+
+        $namespace = '';
+
+        if ($metadata instanceof HasTypeSet
+            && $metadata->typeSet() !== null
+        ) {
+            $namespace = $this->getNamespace($metadata->typeSet()->first());
+        }
+
+        $this->addClassMap($classBuilder, $identityFqcn, $namespace . $identity->label());
+
+        $classBuilder->addNamespaceImport($this->config->getResolverFullyQualifiedClassName($identity, $analyzer));
+
+        return $classBuilder;
+    }
+
+    private function addClassMap(ClassBuilder $classBuilder, string $identityFqcn, string $identityLabel): void
+    {
         $classBuilder->addNamespaceImport(
             $identityFqcn
         );
@@ -102,12 +198,10 @@ trait ApiDescriptionClassMapTrait
 
         $classBuilder->addNodeVisitor(
             new ClassMap(
-                ($this->config->config()->getFilterConstName())($identity->label()),
+                ($this->config->config()->getFilterConstName())($identityLabel),
                 $this->config->getClassNameFromFullyQualifiedClassName($identityFqcn)
             )
         );
-
-        return $classBuilder;
     }
 
     private function getApiDescriptionClassBuilder(
@@ -121,6 +215,27 @@ trait ApiDescriptionClassMapTrait
         }
         $apiFqcn = $this->config->getApiDescriptionFullyQualifiedClassName($connection->identity(), $analyzer);
 
+        return $this->getClassBuilder($apiFqcn, $files);
+    }
+
+    private function getApiQueryDescriptionClassBuilder(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): ClassBuilder {
+        if ($connection->identity()->type() !== VertexType::TYPE_DOCUMENT) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_DOCUMENT);
+        }
+        /** @var DocumentType $identity */
+        $identity = $connection->identity();
+
+        $apiFqcn = $this->config->getApiQueryDescriptionFullyQualifiedClassName($identity, $analyzer);
+
+        return $this->getClassBuilder($apiFqcn, $files);
+    }
+
+    private function getClassBuilder(string $apiFqcn, FileCollection $files): ClassBuilder
+    {
         $classNamespace = $this->config->getClassNamespaceFromFullyQualifiedClassName($apiFqcn);
         $className = $this->config->getClassNameFromFullyQualifiedClassName($apiFqcn);
 
@@ -158,19 +273,31 @@ trait ApiDescriptionClassMapTrait
             throw WrongVertexConnection::forConnection($connection, $type);
         }
         $identity = $connection->identity();
-        $schema = $this->getMetadataSchemaFromVertex($identity);
 
-        if ($schema === null) {
-            return [];
+        $files = [];
+
+        if ($identity->metadataInstance() instanceof HasQuery) {
+            $schema = $this->getMetadataQuerySchemaFromVertex($identity);
+            if ($schema !== null) {
+                $filename = $this->config->config()->determineQuerySchemaFilename($identity, $analyzer);
+
+                $files[$filename] = [
+                    'filename' => $filename,
+                    'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+                ];
+            }
+        }
+        if ($identity->metadataInstance() instanceof HasSchema) {
+            $schema = $this->getMetadataSchemaFromVertex($identity);
+            if ($schema !== null) {
+                $filename = $this->config->config()->determineSchemaFilename($identity, $analyzer);
+                $files[$filename] = [
+                    'filename' => $filename,
+                    'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
+                ];
+            }
         }
 
-        $filename = $this->config->config()->determineSchemaFilename($identity, $analyzer);
-
-        return [
-            $filename => [
-                'filename' => $filename,
-                'code' => \json_encode($schema, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT),
-            ],
-        ];
+        return $files;
     }
 }

@@ -239,7 +239,8 @@ final class CommandTest extends BaseTestCase
                     "namespace": "\/"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "namespace": "\/Building"
                 }
             },
             "required": [

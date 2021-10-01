@@ -15,6 +15,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\VertexConnectionMap;
@@ -92,6 +93,34 @@ final class PreConfiguredNaming implements Naming
         $voName = ($this->config->getFilterClassName())($identifier);
 
         return $namespace . '\\' . $voName;
+    }
+
+    public function getQueryFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineQueryPath($type, $analyzer)
+        );
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())('Get_' . $type->name());
+    }
+
+    public function getResolverFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineResolverPath($type, $analyzer)
+        );
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())($type->name() . '_Resolver');
+    }
+
+    public function getFinderFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineInfrastructureRoot()
+        );
+        $voName = ($this->config->getFilterClassName())($type->name() . '_Finder');
+
+        return $namespace . '\\Finder\\' . $voName;
     }
 
     public function getFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -180,6 +209,13 @@ final class PreConfiguredNaming implements Naming
         }
 
         return $namespace;
+    }
+
+    public function getApiQueryDescriptionFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath($this->config->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api');
+
+        return $namespace . '\\' . 'Query';
     }
 
     public function getContextName(VertexType $type, EventSourcingAnalyzer $analyzer): string

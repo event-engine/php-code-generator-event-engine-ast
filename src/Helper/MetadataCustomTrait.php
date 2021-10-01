@@ -14,6 +14,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
 use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
+use OpenCodeModeling\JsonSchemaToPhp\Type\TypeDefinition;
 
 trait MetadataCustomTrait
 {
@@ -36,6 +37,15 @@ trait MetadataCustomTrait
             return $jsonSchemaType->custom()[$key] ?? $defaultValue;
         } elseif ($metadataInstance instanceof HasCustomData) {
             return $metadataInstance->customData()[$key] ?? $defaultValue;
+        }
+
+        return $defaultValue;
+    }
+
+    private function getCustomMetadataFromTypeDefinition(TypeDefinition $type, string $key, $defaultValue = null)
+    {
+        if ($type instanceof CustomSupport) {
+            return $type->custom()[$key] ?? $defaultValue;
         }
 
         return $defaultValue;

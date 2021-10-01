@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Helper;
 
+use EventEngine\InspectioGraph\Metadata\HasQuery;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\VertexType;
 
@@ -23,10 +24,25 @@ trait MetadataSchemaTrait
     {
         $metadataInstance = $vertexType->metadataInstance();
 
-        if ($metadataInstance === null || ! $metadataInstance instanceof HasSchema) {
+        if (! $metadataInstance instanceof HasSchema) {
             return null;
         }
 
         return $metadataInstance->schema();
+    }
+
+    /**
+     * @param VertexType $vertexType
+     * @return mixed|null
+     */
+    public function getMetadataQuerySchemaFromVertex(VertexType $vertexType)
+    {
+        $metadataInstance = $vertexType->metadataInstance();
+
+        if (! $metadataInstance instanceof HasQuery) {
+            return null;
+        }
+
+        return $metadataInstance->query();
     }
 }

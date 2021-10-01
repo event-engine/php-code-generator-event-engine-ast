@@ -256,4 +256,80 @@ final class ValueObjectTest extends BaseTestCase
         $this->assertSame('/service/src/Domain/Api/_schema/ValueObject/Building/Name.json', $files[$filename]['filename']);
         $this->assertSame($json, $files[$filename]['code']);
     }
+
+    /**
+     * @test
+     */
+    public function it_generates_value_objects_in_different_namespace(): void
+    {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_info.json'));
+        $connectionInfo = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_info_image.json'));
+        $connectionImage = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_info_image_crop.json'));
+        $connectionCrop = $this->analyzer->analyse($node);
+
+        $valueObject = new ValueObject($this->config);
+
+        $fileCollection = FileCollection::emptyList();
+
+        $valueObject->generate(
+            $connectionImage,
+            $this->analyzer,
+            $fileCollection
+        );
+
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
+
+        $this->assertCount(10, $fileCollection);
+
+        /** @var ClassBuilder $file */
+        foreach ($fileCollection as $file) {
+            switch ($file->getName()) {
+                case 'Image':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getFqcn());
+                    break;
+                case 'Alt':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\Alt', $file->getFqcn());
+                    break;
+                case 'CropList':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\CropList', $file->getFqcn());
+                    break;
+                case 'MediaAsset':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\MediaAsset', $file->getFqcn());
+                    break;
+                case 'Src':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\Src', $file->getFqcn());
+                    break;
+                case 'Height':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Height', $file->getFqcn());
+                    break;
+                case 'ImageCrop':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\ImageCrop', $file->getFqcn());
+                    break;
+                case 'Width':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Width', $file->getFqcn());
+                    break;
+                case 'X':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\X', $file->getFqcn());
+                    break;
+                case 'Y':
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
+                    $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Y', $file->getFqcn());
+                    break;
+                default:
+                    $this->assertFalse(true, 'Unexpected class generated');
+                    break;
+            }
+        }
+    }
 }

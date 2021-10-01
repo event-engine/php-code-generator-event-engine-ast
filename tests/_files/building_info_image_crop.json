@@ -1,9 +1,9 @@
 {
     "node": {
-        "id": "4gYkBjXufnkWMN5ybfBvPq",
-        "name": "Building ",
+        "id": "qFxDLYYGbo9hDSfrzinTiu",
+        "name": "Image Crop",
         "type": "document",
-        "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=4gYkBjXufnkWMN5ybfBvPq&clicks=1",
+        "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=qFxDLYYGbo9hDSfrzinTiu&clicks=1",
         "tags": [],
         "layer": false,
         "defaultLayer": false,
@@ -57,15 +57,15 @@
                 "x": 176.5,
                 "y": 199
             },
-            "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\"\n}\n"
+            "metadata": null
         },
         "childrenList": [],
         "sourcesList": [
             {
-                "id": "tF2ZuZCXsdQMhRmRXydfuW",
-                "name": "Building Added",
-                "type": "event",
-                "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=tF2ZuZCXsdQMhRmRXydfuW&clicks=1",
+                "id": "hhWL7ZTvVawRiH9BUthxdi",
+                "name": "Image",
+                "type": "document",
+                "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=hhWL7ZTvVawRiH9BUthxdi&clicks=1",
                 "tags": [],
                 "layer": false,
                 "defaultLayer": false,
@@ -125,87 +125,17 @@
                 "sourcesList": [],
                 "targetsList": [],
                 "geometry": {
-                    "x": 527,
-                    "y": 633.5
+                    "x": 64,
+                    "y": 687
                 },
-                "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  }\n}"
+                "metadata": "{\n  \"shorthand\": true,\n  \"ns\": \"/Common\",\n  \"voNamespace\": \"/Common/Image\",\n  \"schema\": {\n    \"src\": \"string\",\n    \"alt\": \"string\",\n    \"mediaAsset?\": {\n      \"file\": \"/Common/MediaAsset/MediaAssetFile\",\n      \"cropList\": \"/Common/MediaAsset/Crop/ImageCrop[]\"           \n    }\n  }\n}"
             }
         ],
-        "targetsList": [
-            {
-                "id": "aKvhibi95v18MKjNjb6tL3",
-                "name": "Check In User\n",
-                "type": "command",
-                "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=aKvhibi95v18MKjNjb6tL3&clicks=1",
-                "tags": [],
-                "layer": false,
-                "defaultLayer": false,
-                "parent": {
-                    "id": "stW5qRRPsQbowcqux7M2QX",
-                    "name": "Building",
-                    "type": "feature",
-                    "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
-                    "tags": [],
-                    "layer": false,
-                    "defaultLayer": false,
-                    "parent": {
-                        "id": "2FqsFfW5xGzooq2fdFTfaa",
-                        "name": "Hotel",
-                        "type": "boundedContext",
-                        "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
-                        "tags": [],
-                        "layer": false,
-                        "defaultLayer": false,
-                        "parent": {
-                            "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
-                            "name": "Board",
-                            "type": "layer",
-                            "link": null,
-                            "tags": [],
-                            "layer": true,
-                            "defaultLayer": true,
-                            "parent": null,
-                            "childrenList": [],
-                            "sourcesList": [],
-                            "targetsList": [],
-                            "geometry": {
-                                "x": 0,
-                                "y": 0
-                            },
-                            "metadata": null
-                        },
-                        "childrenList": [],
-                        "sourcesList": [],
-                        "targetsList": [],
-                        "geometry": {
-                            "x": -1680,
-                            "y": -201
-                        },
-                        "metadata": null
-                    },
-                    "childrenList": [],
-                    "sourcesList": [],
-                    "targetsList": [],
-                    "geometry": {
-                        "x": 176.5,
-                        "y": 199
-                    },
-                    "metadata": null
-                },
-                "childrenList": [],
-                "sourcesList": [],
-                "targetsList": [],
-                "geometry": {
-                    "x": 1184,
-                    "y": 198.5
-                },
-                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"BuildingId|shared:true\",\n    \"username\": \"string\"\n  }\n}"
-            }
-        ],
+        "targetsList": [],
         "geometry": {
-            "x": 880,
-            "y": 409.5
+            "x": 304,
+            "y": 687
         },
-        "metadata": "{\n  \"shorthand\": true,\n  \"aggregateState\": true,\n  \"collection\": \"buildings\",\n  \"voNamespace\": \"NotUsed\",\n  \"ns\": \"/\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"/Building/Name\"\n  },\n  \"query\": {\n    \"buildingId\": \"/BuildingId\"\n  }\n}  \n"
+        "metadata": "{\n  \"shorthand\": true,\n  \"ns\": \"/Common/MediaAsset/Crop\",\n  \"voNamespace\": \"/Common/MediaAsset/Crop\",\n  \"schema\": {\n    \"x\": \"number\",\n    \"y\": \"number\",\n    \"width\": \"number\",\n    \"height\": \"number\"    \n  }\n}"
     }
 }

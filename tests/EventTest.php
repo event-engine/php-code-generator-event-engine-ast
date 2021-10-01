@@ -238,7 +238,8 @@ final class EventTest extends BaseTestCase
                     "namespace": "\/"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "namespace": "\/Building"
                 }
             },
             "required": [

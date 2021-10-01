@@ -11,7 +11,9 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 
 use EventEngine\CodeGenerator\EventEngineAst\Exception\ErrorParsingMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasQueryTypeSet;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\InspectioGraph\Metadata\HasQuery;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\VertexConnectionMap;
 use EventEngine\InspectioGraph\VertexType;
@@ -53,12 +55,16 @@ trait JsonMetadataTrait
             return $self;
         }
 
-        unset($self->customData['schema'], $self->customData['shorthand']);
+        unset($self->customData['schema'], $self->customData['query'], $self->customData['querySchema'], $self->customData['uiSchema'], $self->customData['shorthand']);
 
         $schema = $data['schema'] ?? null;
+        $querySchema = $data['query'] ?? $data['querySchema'] ?? null;
 
         if ($schema !== null && ($data['shorthand'] ?? false)) {
             $schema = Shorthand::convertToJsonSchema($schema, $self->customData);
+        }
+        if ($querySchema !== null && ($data['shorthand'] ?? false)) {
+            $querySchema = Shorthand::convertToJsonSchema($querySchema, $self->customData);
         }
 
         $self->schema = $schema;
@@ -81,15 +87,43 @@ trait JsonMetadataTrait
             }
         }
 
+        if (! empty($querySchema) && $self instanceof HasQuery) {
+            if (! isset($querySchema['name'])) {
+                $querySchema['name'] = $name;
+            }
+            $self->query = $querySchema;
+        }
+
+        if (! empty($querySchema) && $self instanceof HasQueryTypeSet) {
+            if (! isset($querySchema['name'])) {
+                $querySchema['name'] = $name;
+            }
+
+            try {
+                $self->queryTypeSet = Type::fromDefinition($querySchema);
+            } catch (RuntimeException $e) {
+                throw ErrorParsingMetadata::withError(
+                    \sprintf(
+                        'Could not create JSON schema type set from JSON schema definition. Error: %s (%s:%d)',
+                        $e->getMessage(), $e->getFile(), $e->getLine()
+                    ),
+                    $e
+                );
+            }
+        }
+
         return $self;
     }
 
     public function resolveMetadataReferences(VertexConnectionMap $vertexConnectionMap, callable $filterName): void
     {
-        if ($this->typeSet === null) {
-            return;
+        if ($this->typeSet !== null) {
+            $this->resolveTypes($this->typeSet, $vertexConnectionMap, $filterName);
         }
-        $this->resolveTypes($this->typeSet, $vertexConnectionMap, $filterName);
+
+        if ($this instanceof HasQueryTypeSet && $this->queryTypeSet !== null) {
+            $this->resolveTypes($this->queryTypeSet, $vertexConnectionMap, $filterName);
+        }
     }
 
     private function resolveTypes(TypeSet $typeSet, VertexConnectionMap $vertexConnectionMap, callable $filterName): void
@@ -111,8 +145,8 @@ trait JsonMetadataTrait
                     foreach ($type->contains() as $contain) {
                         $this->resolveTypes($contain, $vertexConnectionMap, $filterName);
                     }
-                    foreach ($type->additionalItems() as $additionalItems) {
-                        $this->resolveTypes($additionalItems, $vertexConnectionMap, $filterName);
+                    if ($type->additionalItems() !== null) {
+                        $this->resolveTypes($type->additionalItems(), $vertexConnectionMap, $filterName);
                     }
                     break;
                 case $type instanceof AllOfType:

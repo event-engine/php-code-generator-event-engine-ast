@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataCustomTrait;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
@@ -24,6 +25,7 @@ use EventEngine\InspectioGraph\VertexType;
 trait DeterminePathTrait
 {
     use MetadataCustomTrait;
+    use FindAggregateTrait;
 
     abstract public function getBasePath(): string;
 
@@ -140,6 +142,20 @@ trait DeterminePathTrait
         }
     }
 
+    public function determineQueryPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        return $this->determineInfrastructureRoot() . '\\Resolver' . $namespace . '\\Query';
+    }
+
+    public function determineResolverPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        return $this->determineInfrastructureRoot() . '\\Resolver' . $namespace;
+    }
+
     public function determineSchemaRoot(): string
     {
         return $this->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api' . DIRECTORY_SEPARATOR . '_schema';
@@ -150,6 +166,19 @@ trait DeterminePathTrait
         $path = $this->determineSchemaPath($type, $analyzer);
 
         return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.json';
+    }
+
+    public function determineQuerySchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $schemaPath = $this->determineSchemaRoot();
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        if ($type instanceof DocumentType) {
+            return $schemaPath . DIRECTORY_SEPARATOR . 'Query' . $namespace . DIRECTORY_SEPARATOR. ($this->getFilterClassName())($type->name()) . '.json';
+        }
+        throw new RuntimeException(
+            \sprintf('Can not determine query JSON schema path for sticky type "%s"', \get_class($type))
+        );
     }
 
     public function determineSchemaPath(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -197,6 +226,10 @@ trait DeterminePathTrait
         }
         if ($namespace !== '') {
             $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '/', \trim($namespace, '\\'));
+
+            if ($namespace === '/') {
+                $namespace = '';
+            }
         }
 
         return $namespace;
@@ -207,20 +240,6 @@ trait DeterminePathTrait
         $path = $this->determinePath($type, $analyzer);
 
         return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.php';
-    }
-
-    private function findAggregate(VertexType $type, EventSourcingAnalyzer $analyzer): ?AggregateType
-    {
-        $connection = $analyzer->connection($type->id());
-
-        foreach ($connection->to()->filterByType(VertexType::TYPE_AGGREGATE) as $vertex) {
-            return $vertex;
-        }
-        foreach ($connection->from()->filterByType(VertexType::TYPE_AGGREGATE) as $vertex) {
-            return $vertex;
-        }
-
-        return null;
     }
 
     private function findFeature(VertexType $type, EventSourcingAnalyzer $analyzer): ?FeatureType
@@ -243,7 +262,7 @@ trait DeterminePathTrait
 
         switch (true) {
             case $type instanceof CommandType:
-                $aggregate = $this->findAggregate($type, $analyzer);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -253,9 +272,10 @@ trait DeterminePathTrait
                         )
                     );
                 }
+                $aggregate = $aggregate->identity();
                 break;
             case $type instanceof EventType:
-                $aggregate = $this->findAggregate($type, $analyzer);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -265,6 +285,7 @@ trait DeterminePathTrait
                         )
                     );
                 }
+                $aggregate = $aggregate->identity();
                 break;
             case $type instanceof AggregateType:
                 if ($analyzer->has($type->id()) === false) {
@@ -278,7 +299,7 @@ trait DeterminePathTrait
                 $aggregate = $analyzer->connection($type->id())->identity();
                 break;
             case $type instanceof DocumentType:
-                $aggregate = $this->findAggregate($type, $analyzer);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     $metadataInstance = $type->metadataInstance();
@@ -290,6 +311,7 @@ trait DeterminePathTrait
                         // TODO check from / to connections with depth
                     }
                 }
+                $aggregate = $aggregate ? $aggregate->identity() : null;
                 break;
             default:
                 break;
