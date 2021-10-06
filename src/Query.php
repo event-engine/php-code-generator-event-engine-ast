@@ -25,8 +25,10 @@ use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassPropertyBuilder;
+use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Builder\ParameterBuilder;
+use OpenCodeModeling\CodeAst\Builder\PhpFile;
 
 final class Query
 {
@@ -129,7 +131,9 @@ final class Query
         EventSourcingAnalyzer $analyzer,
         FileCollection $fileCollection
     ): void {
+        $queryFqcn = $this->config->getQueryFullyQualifiedClassName($document, $analyzer);
         $finderFqcn = $this->config->getFinderFullyQualifiedClassName($document, $analyzer);
+        $valueObjectFqcn = $this->config->getFullyQualifiedClassName($document, $analyzer);
 
         $finderClassBuilder = ClassBuilder::fromScratch(
             $this->config->getClassNameFromFullyQualifiedClassName($finderFqcn),
@@ -148,6 +152,41 @@ final class Query
             ->setBody('$this->documentStore = $documentStore;');
 
         $finderClassBuilder->addMethod($finderConstructMethod);
+
+        $queryClassNamespace = $this->config->getClassNamespaceFromFullyQualifiedClassName($queryFqcn);
+        $queryClassName = $this->config->getClassNameFromFullyQualifiedClassName($queryFqcn);
+
+        $classBuilderFile = $fileCollection->filter(
+            fn (File $file) => $file instanceof PhpFile && $file->getNamespace() === $queryClassNamespace && $file->getName() === $queryClassName
+        );
+
+        if ($classBuilderFile->valid() && $classBuilderFile->current() instanceof ClassBuilder) {
+            /** @var ClassBuilder $queryClassBuilder */
+            $queryClassBuilder = $classBuilderFile->current();
+
+            $findMethod = ClassMethodBuilder::fromScratch(
+                ($this->config->config()->getFilterMethodName())('find_' . $document->label())
+            );
+
+            $parameters = [];
+            $nsImports = $queryClassBuilder->getNamespaceImports();
+
+            foreach ($queryClassBuilder->getProperties() as $property) {
+                $nsImport = \array_filter($nsImports, static fn (string $nsImport) => \strpos($nsImport, $property->getType()) !== false);
+
+                if (! empty($nsImport)) {
+                    $finderClassBuilder->addNamespaceImport(\current($nsImport));
+                }
+
+                $parameters[] = ParameterBuilder::fromScratch($property->getName(), $property->getType());
+            }
+            $findMethod->setParameters(...$parameters);
+            $findMethod->setReturnType(
+                $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn),
+            );
+            $finderClassBuilder->addNamespaceImport($valueObjectFqcn);
+            $finderClassBuilder->addMethod($findMethod);
+        }
 
         $fileCollection->add($finderClassBuilder);
     }

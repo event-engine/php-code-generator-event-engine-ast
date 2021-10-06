@@ -145,12 +145,17 @@ final class QueryTest extends BaseTestCase
         namespace MyService\Infrastructure\Finder;
 
         use EventEngine\DocumentStore\DocumentStore;
+        use MyService\Domain\Model\ValueObject\Building;
+        use MyService\Domain\Model\ValueObject\BuildingId;
         final class BuildingFinder
         {
             private DocumentStore $documentStore;
             public function __construct(DocumentStore $documentStore)
             {
                 $this->documentStore = $documentStore;
+            }
+            public function findBuilding(BuildingId $buildingId) : Building
+            {
             }
         }
         EOF;
