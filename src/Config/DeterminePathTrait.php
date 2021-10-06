@@ -156,6 +156,13 @@ trait DeterminePathTrait
         return $this->determineInfrastructureRoot() . '\\Resolver' . $namespace;
     }
 
+    public function determineFinderPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        return $this->determineInfrastructureRoot() . '\\Finder' . $namespace;
+    }
+
     public function determineSchemaRoot(): string
     {
         return $this->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api' . DIRECTORY_SEPARATOR . '_schema';

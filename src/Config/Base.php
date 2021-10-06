@@ -73,6 +73,8 @@ interface Base
 
     public function determineResolverPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
 
+    public function determineFinderPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
     public function determineFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function determineSchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;

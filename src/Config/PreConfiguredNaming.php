@@ -116,11 +116,10 @@ final class PreConfiguredNaming implements Naming
     public function getFinderFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
     {
         $namespace = $this->getClassNamespaceFromPath(
-            $this->config->determineInfrastructureRoot()
+            $this->config->determineFinderPath($type, $analyzer)
         );
-        $voName = ($this->config->getFilterClassName())($type->name() . '_Finder');
 
-        return $namespace . '\\Finder\\' . $voName;
+        return $namespace . '\\' . ($this->config->getFilterClassName())($type->name() . '_Finder');
     }
 
     public function getFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string

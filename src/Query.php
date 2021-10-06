@@ -24,6 +24,7 @@ use EventEngine\InspectioGraph\VertexConnection;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassPropertyBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Builder\ParameterBuilder;
 
@@ -62,6 +63,7 @@ final class Query
 
         $this->generateResolver($document, $analyzer, $fileCollection);
         $this->generateQuery($document, $analyzer, $fileCollection);
+        $this->generateFinder($document, $analyzer, $fileCollection);
     }
 
     private function generateResolver(
@@ -120,6 +122,34 @@ final class Query
         foreach ($files as $item) {
             $fileCollection->add($item);
         }
+    }
+
+    private function generateFinder(
+        DocumentType $document,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        $finderFqcn = $this->config->getFinderFullyQualifiedClassName($document, $analyzer);
+
+        $finderClassBuilder = ClassBuilder::fromScratch(
+            $this->config->getClassNameFromFullyQualifiedClassName($finderFqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($finderFqcn)
+        );
+
+        $finderClassBuilder->setFinal(true)
+            ->setNamespaceImports(
+                'EventEngine\DocumentStore\DocumentStore',
+            );
+
+        $finderClassBuilder->addProperty(ClassPropertyBuilder::fromScratch('documentStore', 'DocumentStore'));
+
+        $finderConstructMethod = ClassMethodBuilder::fromScratch('__construct');
+        $finderConstructMethod->setParameters(ParameterBuilder::fromScratch('documentStore', 'DocumentStore'))
+            ->setBody('$this->documentStore = $documentStore;');
+
+        $finderClassBuilder->addMethod($finderConstructMethod);
+
+        $fileCollection->add($finderClassBuilder);
     }
 
     public function generateApiDescription(

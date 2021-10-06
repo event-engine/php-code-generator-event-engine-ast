@@ -34,7 +34,7 @@ final class QueryTest extends BaseTestCase
     /**
      * @test
      */
-    public function it_generates_query_and_resolver(): void
+    public function it_generates_query_and_resolver_and_finder(): void
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $connection = $this->analyzer->analyse($node);
@@ -51,7 +51,7 @@ final class QueryTest extends BaseTestCase
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(2, $fileCollection);
+        $this->assertCount(3, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
@@ -60,6 +60,9 @@ final class QueryTest extends BaseTestCase
                     break;
                 case 'BuildingResolver':
                     $this->assertResolver($file);
+                    break;
+                case 'BuildingFinder':
+                    $this->assertFinder($file);
                     break;
                 default:
                     $this->assertFalse(true, 'Unintended class generated: ' . $file->getName());
@@ -121,6 +124,33 @@ final class QueryTest extends BaseTestCase
         {
             public function resolve(Message $query) : Building
             {
+            }
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    private function assertFinder(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Infrastructure\Finder;
+
+        use EventEngine\DocumentStore\DocumentStore;
+        final class BuildingFinder
+        {
+            private DocumentStore $documentStore;
+            public function __construct(DocumentStore $documentStore)
+            {
+                $this->documentStore = $documentStore;
             }
         }
         EOF;
