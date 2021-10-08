@@ -204,6 +204,7 @@ final class QueryTest extends BaseTestCase
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
         use EventEngine\JsonSchema\JsonSchemaArray;
+        use EventEngine\JsonSchema\Type\TypeRef;
         final class Query implements EventEngineDescription
         {
             public const BUILDING = 'Building';
@@ -266,6 +267,7 @@ final class QueryTest extends BaseTestCase
         use EventEngine\EventEngine;
         use EventEngine\EventEngineDescription;
         use EventEngine\JsonSchema\JsonSchemaArray;
+        use EventEngine\JsonSchema\Type\TypeRef;
         use MyService\Infrastructure\Resolver\BuildingResolver;
         use MyService\Infrastructure\Resolver\Query\GetBuilding;
         final class Query implements EventEngineDescription
