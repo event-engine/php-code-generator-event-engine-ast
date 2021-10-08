@@ -119,11 +119,21 @@ final class QueryTest extends BaseTestCase
         use EventEngine\Messaging\Message;
         use EventEngine\Querying\Resolver;
         use MyService\Domain\Model\ValueObject\Building;
+        use MyService\Infrastructure\Finder\BuildingFinder;
         use MyService\Infrastructure\Resolver\Query\GetBuilding;
         final class BuildingResolver implements Resolver
         {
+            private BuildingFinder $finder;
+            public function __construct(BuildingFinder $finder)
+            {
+                $this->finder = $finder;
+            }
             public function resolve(Message $query) : Building
             {
+                /** @var GetBuilding $findBy */
+                $findBy = GetBuilding::fromArray($query->payload());
+                // TODO Cody here, I need your help. Please implement the missing lines.
+                return $this->finder;
             }
         }
         EOF;
@@ -156,6 +166,9 @@ final class QueryTest extends BaseTestCase
             }
             public function findBuilding(BuildingId $buildingId) : Building
             {
+                // TODO Cody here, I need your help. Please implement the missing lines.
+                $doc = $this->documentStore;
+                return Building::fromArray($doc['state']);
             }
         }
         EOF;

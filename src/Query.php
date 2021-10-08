@@ -75,6 +75,7 @@ final class Query
     ): void {
         $queryFqcn = $this->config->getQueryFullyQualifiedClassName($document, $analyzer);
         $resolverFqcn = $this->config->getResolverFullyQualifiedClassName($document, $analyzer);
+        $finderFqcn = $this->config->getFinderFullyQualifiedClassName($document, $analyzer);
         $valueObjectFqcn = $this->config->getFullyQualifiedClassName($document, $analyzer);
 
         $resolverClassBuilder = ClassBuilder::fromScratch(
@@ -86,10 +87,22 @@ final class Query
             ->setNamespaceImports(
                 'EventEngine\Messaging\Message',
                 'EventEngine\Querying\Resolver',
+                $finderFqcn,
                 $valueObjectFqcn,
                 $queryFqcn
             )
             ->setImplements('Resolver');
+
+        $finderClassName = $this->config->getClassNameFromFullyQualifiedClassName($finderFqcn);
+        $resolverClassBuilder->addProperty(ClassPropertyBuilder::fromScratch('finder', $finderClassName));
+
+        $resolverConstructMethod = ClassMethodBuilder::fromScratch('__construct');
+        $resolverConstructMethod->setParameters(
+                ParameterBuilder::fromScratch('finder', $finderClassName)
+            )
+            ->setBody('$this->finder = $finder;');
+
+        $resolverClassBuilder->addMethod($resolverConstructMethod);
 
         $resolveMethodBuilder = ClassMethodBuilder::fromScratch('resolve')
             ->setParameters(
@@ -98,6 +111,21 @@ final class Query
                     'Message',
                 )
             );
+
+        $queryClassName = $this->config->getClassNameFromFullyQualifiedClassName($queryFqcn);
+        $resolveMethodBuilder->setBody(
+            \sprintf(
+                <<<'EOF'
+                /** @var %s $findBy */
+                $findBy = %s::fromArray($query->payload());
+                // TODO Cody here, I need your help. Please implement the missing lines.
+                return $this->finder;
+                EOF,
+                $queryClassName,
+                $queryClassName
+            )
+        );
+
         $resolveMethodBuilder->setReturnType(
             $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn),
         );
@@ -180,9 +208,19 @@ final class Query
 
                 $parameters[] = ParameterBuilder::fromScratch($property->getName(), $property->getType());
             }
+            $voClassName = $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn);
             $findMethod->setParameters(...$parameters);
-            $findMethod->setReturnType(
-                $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn),
+            $findMethod->setReturnType($voClassName);
+
+            $findMethod->setBody(
+                \sprintf(
+                    <<<'EOF'
+                    // TODO Cody here, I need your help. Please implement the missing lines.
+                    $doc = $this->documentStore;
+                    return %s::fromArray($doc['state']);
+                    EOF,
+                    $voClassName
+                )
             );
             $finderClassBuilder->addNamespaceImport($valueObjectFqcn);
             $finderClassBuilder->addMethod($findMethod);
