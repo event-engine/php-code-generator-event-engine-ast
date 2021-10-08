@@ -240,6 +240,8 @@ final class Query
 
         $typeRef = \sprintf('new TypeRef(Type::%s)', ($this->config->config()->getFilterConstName())($namespace . $document->label()));
 
+        $classBuilder->addNamespaceImport('EventEngine\JsonSchema\Type\TypeRef');
+
         $classBuilder->addNodeVisitor(
             new ClassMethodDescribeQuery(
                 $this->queryDescription->generate(
