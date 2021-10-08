@@ -181,7 +181,9 @@ trait JsonMetadataTrait
                     && $documentMetadata instanceof HasTypeSet
                     && ($docTypeSet = $documentMetadata->typeSet())
                 ) {
-                    $type->setResolvedType($docTypeSet);
+                    $resolvedTypeSet = clone $docTypeSet;
+                    $resolvedTypeSet->setIsRequired($type->isRequired());
+                    $type->setResolvedType($resolvedTypeSet);
                 }
             }
         }
