@@ -132,8 +132,7 @@ final class QueryTest extends BaseTestCase
             {
                 /** @var GetBuilding $findBy */
                 $findBy = GetBuilding::fromArray($query->payload());
-                // TODO Cody here, I need your help. Please implement the missing lines.
-                return $this->finder;
+                return $this->finder->findBuilding($findBy->buildingId());
             }
         }
         EOF;

@@ -63,8 +63,8 @@ final class Query
         /** @var DocumentType $document */
         $document = $connection->identity();
 
-        $this->generateResolver($document, $analyzer, $fileCollection);
         $this->generateQuery($document, $analyzer, $fileCollection);
+        $this->generateResolver($document, $analyzer, $fileCollection);
         $this->generateFinder($document, $analyzer, $fileCollection);
     }
 
@@ -112,23 +112,39 @@ final class Query
                 )
             );
 
+        $queryClassNamespace = $this->config->getClassNamespaceFromFullyQualifiedClassName($queryFqcn);
+        $queryClassName = $this->config->getClassNameFromFullyQualifiedClassName($queryFqcn);
+
+        $queryClassBuilder = $this->searchForClassBuilder($fileCollection, $queryClassNamespace, $queryClassName);
+
+        $finderMethodArgs = '';
+
+        if ($queryClassBuilder) {
+            foreach ($queryClassBuilder->getMethods() as $method) {
+                $finderMethodArgs .= '$findBy->' . $method->getName() . '(),';
+            }
+        }
+        $finderMethodArgs = \trim($finderMethodArgs, ',');
+
+        $valueObjectClassName = $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn);
+        $finderMethodName = 'find' . $valueObjectClassName;
+
         $queryClassName = $this->config->getClassNameFromFullyQualifiedClassName($queryFqcn);
         $resolveMethodBuilder->setBody(
             \sprintf(
                 <<<'EOF'
                 /** @var %s $findBy */
                 $findBy = %s::fromArray($query->payload());
-                // TODO Cody here, I need your help. Please implement the missing lines.
-                return $this->finder;
+                return $this->finder->%s(%s);
                 EOF,
                 $queryClassName,
-                $queryClassName
+                $queryClassName,
+                $finderMethodName,
+                $finderMethodArgs
             )
         );
 
-        $resolveMethodBuilder->setReturnType(
-            $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn),
-        );
+        $resolveMethodBuilder->setReturnType($valueObjectClassName);
 
         $resolverClassBuilder->addMethod($resolveMethodBuilder);
 
@@ -184,14 +200,9 @@ final class Query
         $queryClassNamespace = $this->config->getClassNamespaceFromFullyQualifiedClassName($queryFqcn);
         $queryClassName = $this->config->getClassNameFromFullyQualifiedClassName($queryFqcn);
 
-        $classBuilderFile = $fileCollection->filter(
-            fn (File $file) => $file instanceof PhpFile && $file->getNamespace() === $queryClassNamespace && $file->getName() === $queryClassName
-        );
+        $queryClassBuilder = $this->searchForClassBuilder($fileCollection, $queryClassNamespace, $queryClassName);
 
-        if ($classBuilderFile->valid() && $classBuilderFile->current() instanceof ClassBuilder) {
-            /** @var ClassBuilder $queryClassBuilder */
-            $queryClassBuilder = $classBuilderFile->current();
-
+        if ($queryClassBuilder) {
             $findMethod = ClassMethodBuilder::fromScratch(
                 ($this->config->config()->getFilterMethodName())('find_' . $document->label())
             );
@@ -330,5 +341,18 @@ final class Query
         $metadataSchema = $this->getMetadataQueryTypeSetFromVertex($connection->identity());
 
         return $metadataSchema !== null;
+    }
+
+    private function searchForClassBuilder(FileCollection $fileCollection, string $classNamespace, string $className): ?ClassBuilder
+    {
+        $classBuilderFile = $fileCollection->filter(
+            fn (File $file) => $file instanceof PhpFile && $file->getNamespace() === $classNamespace && $file->getName() === $className
+        );
+
+        if ($classBuilderFile->valid() && $classBuilderFile->current() instanceof ClassBuilder) {
+            return $classBuilderFile->current();
+        }
+
+        return null;
     }
 }
