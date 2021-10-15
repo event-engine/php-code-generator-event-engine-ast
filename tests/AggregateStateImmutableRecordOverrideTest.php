@@ -52,12 +52,15 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(1, $fileCollection);
+        $this->assertCount(2, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
                 case 'Building':
                     $this->assertAggregateStateFile($file);
+                    break;
+                case 'Collection':
+                    $this->assertCollectionFile($file);
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
@@ -128,6 +131,28 @@ final class Building implements ImmutableRecord
     }
 }
 PHP;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    private function assertCollectionFile(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Infrastructure;
+        
+        final class Collection
+        {
+            public const BUILDINGS = 'buildings';
+        }
+        EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

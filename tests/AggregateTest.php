@@ -283,7 +283,7 @@ final class AggregateTest extends BaseTestCase
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(2, $fileCollection);
+        $this->assertCount(3, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
@@ -292,6 +292,9 @@ final class AggregateTest extends BaseTestCase
                     break;
                 case 'BuildingId':
                 case 'Name':
+                    break;
+                case 'Collection':
+                    $this->assertCollectionFile($file);
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
@@ -337,6 +340,28 @@ final class AggregateTest extends BaseTestCase
                 $instance = clone $this;
                 return $instance;
             }
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    private function assertCollectionFile(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Infrastructure;
+        
+        final class Collection
+        {
+            public const BUILDINGS = 'buildings';
         }
         EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));

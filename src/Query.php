@@ -14,6 +14,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Code\QueryDescription;
 use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataSchemaTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
@@ -21,6 +22,7 @@ use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeQuer
 use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexConnectionMap;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
@@ -29,12 +31,19 @@ use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 use OpenCodeModeling\CodeAst\Builder\ParameterBuilder;
 use OpenCodeModeling\CodeAst\Builder\PhpFile;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ArrayType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\BooleanType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\IntegerType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\NumberType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\ObjectType;
+use OpenCodeModeling\JsonSchemaToPhp\Type\StringType;
 
 final class Query
 {
     use MetadataTypeSetTrait;
     use MetadataSchemaTrait;
     use ApiDescriptionClassMapTrait;
+    use FindAggregateStateTrait;
 
     private Naming $config;
     private QueryDescription $queryDescription;
@@ -209,6 +218,23 @@ final class Query
 
             $parameters = [];
             $nsImports = $queryClassBuilder->getNamespaceImports();
+            $collectionFqcn = $this->config->getCollectionFullyQualifiedClassName($document, $analyzer);
+
+            $voClassName = $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn);
+
+            $finderClassBuilder->addNamespaceImport($collectionFqcn);
+
+            $body = \sprintf(
+                <<<'EOF'
+                    // TODO Cody here, I need your help. Please implement the missing lines.
+                    $doc = $this->documentStore;
+                    if ($doc !== null) {
+                        return %s::fromArray($doc['state']);
+                    }
+                    return null;
+                    EOF,
+                $voClassName
+            );
 
             foreach ($queryClassBuilder->getProperties() as $property) {
                 $nsImport = \array_filter($nsImports, static fn (string $nsImport) => \strpos($nsImport, $property->getType()) !== false);
@@ -219,20 +245,37 @@ final class Query
 
                 $parameters[] = ParameterBuilder::fromScratch($property->getName(), $property->getType());
             }
-            $voClassName = $this->config->getClassNameFromFullyQualifiedClassName($valueObjectFqcn);
-            $findMethod->setParameters(...$parameters);
-            $findMethod->setReturnType($voClassName);
 
-            $findMethod->setBody(
-                \sprintf(
+            if ($aggregateStoreStateIn = $this->getAggregateStateCollectionName(
+                $document->id(), VertexConnectionMap::WALK_BACKWARD, $analyzer, $this->config->config()->getFilterConstValue()
+            )) {
+                $collection = $this->config->getClassNameFromFullyQualifiedClassName($collectionFqcn) . '::'
+                    . ($this->config->config()->getFilterConstName())($aggregateStoreStateIn);
+
+                $args = '';
+
+                foreach ($parameters as $parameter) {
+                    $args .= '$' . $parameter->getName() . '->' . $this->determineTypeMethod($parameter->getType(), $analyzer) . '(),';
+                }
+
+                $storeMethod = \sprintf('getDoc(%s, %s)', $collection, \trim($args, ','));
+
+                $body = \sprintf(
                     <<<'EOF'
-                    // TODO Cody here, I need your help. Please implement the missing lines.
-                    $doc = $this->documentStore;
-                    return %s::fromArray($doc['state']);
+                    $doc = $this->documentStore->%s;
+                    if ($doc !== null) {
+                        return %s::fromArray($doc['state']);
+                    }
+                    return null;
                     EOF,
+                    $storeMethod,
                     $voClassName
-                )
-            );
+                );
+            }
+
+            $findMethod->setParameters(...$parameters);
+            $findMethod->setReturnType('?' . $voClassName);
+            $findMethod->setBody($body);
             $finderClassBuilder->addNamespaceImport($valueObjectFqcn);
             $finderClassBuilder->addMethod($findMethod);
         }
@@ -354,5 +397,47 @@ final class Query
         }
 
         return null;
+    }
+
+    private function determineTypeMethod(string $type, EventSourcingAnalyzer $analyzer): string
+    {
+        switch ($type) {
+            case 'array':
+            case 'object':
+                return 'toArray';
+            case 'bool':
+                return 'toBool';
+            case 'int':
+                return 'toInt';
+            case 'float':
+                return 'toFloat';
+            case 'string':
+                return 'toString';
+            default:
+                $documents = $analyzer->graph()->filterByNameAndType(($this->config->config()->getFilterConstName())($type), VertexType::TYPE_DOCUMENT);
+
+                foreach ($documents as $document) {
+                    $typeSet = $this->getMetadataTypeSetFromVertex($document->identity());
+
+                    $type = $typeSet->first();
+
+                    switch (true) {
+                        case $type instanceof ArrayType:
+                        case $type instanceof ObjectType:
+                            return 'toArray';
+                        case $type instanceof BooleanType:
+                            return 'toBool';
+                        case $type instanceof IntegerType:
+                            return 'toInt';
+                        case $type instanceof NumberType:
+                            return 'toFloat';
+                        case $type instanceof StringType:
+                        default:
+                            return 'toString';
+                    }
+                }
+
+                return 'toString';
+        }
     }
 }

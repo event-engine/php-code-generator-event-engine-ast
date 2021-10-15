@@ -18,7 +18,6 @@ use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\CommandMetadata;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\DocumentMetadata;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeAggregate;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
@@ -27,6 +26,7 @@ use EventEngine\InspectioGraph\VertexConnection;
 use EventEngine\InspectioGraph\VertexConnectionMap;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
 use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
@@ -100,19 +100,18 @@ final class Aggregate
 
         /** @var CommandType $command */
         foreach ($commands as $command) {
-            $commandMetadataInstance = $command->metadataInstance();
-
             $storeStateIn = null;
+            $commandMetadataInstance = $command->metadataInstance();
 
             if ($commandMetadataInstance instanceof CommandMetadata
                 && true === $commandMetadataInstance->newAggregate()
-                && ($aggregateState = $this->findAggregateState($command->id(), VertexConnectionMap::WALK_FORWARD, $analyzer))
             ) {
-                $aggregateStateMetadata = $aggregateState->identity()->metadataInstance();
-
-                if ($aggregateStateMetadata instanceof DocumentMetadata) {
-                    $storeStateIn = $aggregateStateMetadata->customData()['collection'] ?? null;
-                }
+                $storeStateIn = $this->getAggregateStateCollectionName(
+                    $command->id(),
+                    VertexConnectionMap::WALK_FORWARD,
+                    $analyzer,
+                    $this->config->config()->getFilterConstValue()
+                );
             }
 
             $classBuilder->addNodeVisitor(
@@ -263,5 +262,38 @@ final class Aggregate
         foreach ($files as $file) {
             $fileCollection->add($file);
         }
+
+        $this->generateCollectionClass($aggregate, $analyzer, $fileCollection);
+    }
+
+    private function generateCollectionClass(
+        AggregateType $aggregate,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        $fqcn = $this->config->getCollectionFullyQualifiedClassName($aggregate, $analyzer);
+
+        $classBuilder = ClassBuilder::fromScratch(
+            $this->config->getClassNameFromFullyQualifiedClassName($fqcn),
+            $this->config->getClassNamespaceFromFullyQualifiedClassName($fqcn),
+        )->setFinal(true);
+
+        $aggregateStateCollectionName = $this->getAggregateStateCollectionName(
+            $aggregate->id(),
+            VertexConnectionMap::WALK_FORWARD,
+            $analyzer,
+            $this->config->config()->getFilterConstValue()
+        );
+
+        if ($aggregateStateCollectionName) {
+            $classBuilder->addConstant(
+                ClassConstBuilder::fromScratch(
+                    ($this->config->config()->getFilterConstName())($aggregateStateCollectionName),
+                    $aggregateStateCollectionName
+                )
+            );
+        }
+
+        $fileCollection->add($classBuilder);
     }
 }

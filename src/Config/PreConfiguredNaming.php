@@ -122,6 +122,13 @@ final class PreConfiguredNaming implements Naming
         return $namespace . '\\' . ($this->config->getFilterClassName())($type->name() . '_Finder');
     }
 
+    public function getCollectionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath($this->config()->determineInfrastructureRoot());
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())('Collection');
+    }
+
     public function getFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
     {
         return $this->getClassNamespaceFromPath(

@@ -37,6 +37,8 @@ interface Naming
 
     public function getFinderFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
 
+    public function getCollectionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
     public function getClassNameFromFullyQualifiedClassName(string $fqcn): string;
 
     public function getClassNamespaceFromFullyQualifiedClassName(string $fqcn): string;

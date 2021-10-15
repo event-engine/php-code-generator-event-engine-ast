@@ -36,6 +36,8 @@ final class QueryTest extends BaseTestCase
      */
     public function it_generates_query_and_resolver_and_finder(): void
     {
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_id_vo.json'));
+        $this->analyzer->analyse($node);
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $connection = $this->analyzer->analyse($node);
 
@@ -51,7 +53,7 @@ final class QueryTest extends BaseTestCase
 
         $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(3, $fileCollection);
+        $this->assertCount(4, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
@@ -62,7 +64,9 @@ final class QueryTest extends BaseTestCase
                     $this->assertResolver($file);
                     break;
                 case 'BuildingFinder':
-                    $this->assertFinder($file);
+                    $this->assertFinderWithState($file);
+                    break;
+                case 'BuildingId':
                     break;
                 default:
                     $this->assertFalse(true, 'Unintended class generated: ' . $file->getName());
@@ -139,7 +143,7 @@ final class QueryTest extends BaseTestCase
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 
-    private function assertFinder(ClassBuilder $classBuilder): void
+    private function assertFinderWithState(ClassBuilder $classBuilder): void
     {
         $ast = $this->config->config()->getParser()->parse('');
 
@@ -156,6 +160,7 @@ final class QueryTest extends BaseTestCase
         use EventEngine\DocumentStore\DocumentStore;
         use MyService\Domain\Model\ValueObject\Building;
         use MyService\Domain\Model\ValueObject\BuildingId;
+        use MyService\Infrastructure\Collection;
         final class BuildingFinder
         {
             private DocumentStore $documentStore;
@@ -163,11 +168,13 @@ final class QueryTest extends BaseTestCase
             {
                 $this->documentStore = $documentStore;
             }
-            public function findBuilding(BuildingId $buildingId) : Building
+            public function findBuilding(BuildingId $buildingId) : ?Building
             {
-                // TODO Cody here, I need your help. Please implement the missing lines.
-                $doc = $this->documentStore;
-                return Building::fromArray($doc['state']);
+                $doc = $this->documentStore->getDoc(Collection::BUILDINGS, $buildingId->toString());
+                if ($doc !== null) {
+                    return Building::fromArray($doc['state']);
+                }
+                return null;
             }
         }
         EOF;
