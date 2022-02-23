@@ -17,6 +17,12 @@ Run the following to install this library:
 $ composer require event-engine/php-code-generator-event-engine-ast
 ```
 
+If you want to use `Config\PreConfiguredNaming` please install also `laminas/laminas-filter`.
+
+```bash
+$ composer require laminas/laminas-filter
+```
+
 ## Usage
 
 The code generation is based on the [InspectIO Graph](https://github.com/event-engine/php-inspectio-graph "InspectIO Graph").
@@ -76,9 +82,6 @@ $commandGenerator = new Command($namingConfig);
 
 // contains all generated PHP classes
 $fileCollection = \OpenCodeModeling\CodeAst\Builder\FileCollection::emptyList();
-
-// path where the Command API Event Engine description should be generated based on Composer autoloader info
-$apiCommandFilename = 'src/Domain/Api/Command.php';
 
 // assume that $codyNode is an instance of \EventEngine\InspectioGraphCody\Node which describes a command
 $connection = $analyzer->analyse($codyNode);
