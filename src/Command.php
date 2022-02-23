@@ -10,100 +10,80 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst;
 
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson\CommandMetadata;
+use EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription;
+use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
+use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\NodeVisitor\ClassMethodDescribeCommand;
+use EventEngine\InspectioGraph\CommandType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
-use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
-use OpenCodeModeling\CodeAst\Builder\ClassConstBuilder;
-use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
+use EventEngine\InspectioGraph\VertexConnection;
+use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
 
 final class Command
 {
-    private Config\Command $config;
+    use MetadataTypeSetTrait;
+    use ApiDescriptionClassMapTrait;
 
-    private \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription $commandDescription;
+    private Naming $config;
 
-    public function __construct(Config\Command $config)
+    private CommandDescription $commandDescription;
+
+    public function __construct(Naming $config)
     {
         $this->config = $config;
-        $this->commandDescription = new \EventEngine\CodeGenerator\EventEngineAst\Code\CommandDescription(
-            $this->config->getParser(),
-            $this->config->getFilterConstName()
+        $this->commandDescription = new CommandDescription(
+            $this->config->config()->getParser(),
+            $this->config->config()->getFilterConstName()
         );
     }
 
-    public function generateJsonSchemaFiles(EventSourcingAnalyzer $analyzer, string $pathSchema): array
-    {
-        $files = [];
-
-        $pathSchema = \rtrim(\rtrim($pathSchema), '\/\\') . DIRECTORY_SEPARATOR;
-
-        foreach ($analyzer->commandMap() as $name => $commandVertex) {
-            $metadata = $commandVertex->metadataInstance();
-
-            if ($metadata === null || ! $metadata instanceof CommandMetadata) {
-                continue;
-            }
-            $schema = $metadata->schema();
-
-            if ($schema === null) {
-                continue;
-            }
-
-            $files[$name] = [
-                'filename' => $pathSchema . ($this->config->getFilterConstName())($commandVertex->label()) . '.json',
-                'code' => $schema,
-            ];
-        }
-
-        return $files;
+    public function generateJsonSchemaFile(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer
+    ): array {
+        return $this->generateJsonSchemaFileFor($connection, $analyzer, VertexType::TYPE_COMMAND);
     }
 
     public function generateApiDescription(
+        VertexConnection $connection,
         EventSourcingAnalyzer $analyzer,
-        FileCollection $files,
-        string $apiFileName,
-        string $jsonSchemaFileName = null
+        FileCollection $files
     ): void {
-        $classInfo = $this->config->getClassInfoList()->classInfoForFilename($apiFileName);
-        $fqcn = $classInfo->getFullyQualifiedClassNameFromFilename($apiFileName);
+        $classBuilder = $this->generateApiDescriptionFor($connection, $analyzer, $files, VertexType::TYPE_COMMAND);
 
-        $classBuilder = ClassBuilder::fromScratch(
-            $classInfo->getClassName($fqcn),
-            $classInfo->getClassNamespace($fqcn)
-        )->setFinal(true);
+        $jsonSchemaFileName = '';
+        $jsonSchemaRoot = '';
 
-        $classBuilder->addNamespaceImport(
-            'EventEngine\EventEngine',
-            'EventEngine\EventEngineDescription',
-            'EventEngine\JsonSchema\JsonSchema',
-            'EventEngine\JsonSchema\JsonSchemaArray'
-        );
+        if ($this->getMetadataSchemaFromVertex($connection->identity()) !== null) {
+            $jsonSchemaFileName = $this->config->config()->determineSchemaFilename($connection->identity(), $analyzer);
+        }
 
-        $classBuilder->addImplement('EventEngineDescription');
+        if ($jsonSchemaFileName !== null) {
+            $jsonSchemaRoot = $this->config->config()->determineSchemaRoot();
+            $this->addSchemaPathConstant($classBuilder, $jsonSchemaRoot);
+        }
 
-        $classBuilder->addMethod(
-            ClassMethodBuilder::fromNode(
-                \EventEngine\CodeGenerator\EventEngineAst\Code\DescriptionFileMethod::generate()->generate()
+        /** @var CommandType $command */
+        $command = $connection->identity();
+
+        $classBuilder->addNodeVisitor(
+            new ClassMethodDescribeCommand(
+                $this->commandDescription->generate($command, \str_replace($jsonSchemaRoot, '', $jsonSchemaFileName))
             )
         );
 
-        foreach ($analyzer->commandMap() as $name => $command) {
-            $classBuilder->addConstant(
-                ClassConstBuilder::fromScratch(
-                    ($this->config->getFilterConstName())($command->label()),
-                    ($this->config->getFilterConstValue())($command->label()),
-                )
-            );
+        $files->add($classBuilder);
+    }
 
-            $classBuilder->addNodeVisitor(
-                new ClassMethodDescribeCommand(
-                    $this->commandDescription->generate($command, $jsonSchemaFileName)
-                )
-            );
-        }
+    public function generateApiDescriptionClassMap(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $files
+    ): void {
+        $classBuilder = $this->generateApiDescriptionClassMapFor($connection, $analyzer, $files, VertexType::TYPE_COMMAND);
 
         $files->add($classBuilder);
     }
@@ -111,34 +91,33 @@ final class Command
     /**
      * Generates command files with corresponding value objects depending on given JSON schema metadata.
      *
+     * @param VertexConnection $connection
      * @param EventSourcingAnalyzer $analyzer
      * @param FileCollection $fileCollection
      */
-    public function generateCommandFile(EventSourcingAnalyzer $analyzer, FileCollection $fileCollection): void
-    {
-        foreach ($analyzer->commandMap() as $name => $command) {
-            $pathCommand = $this->config->determinePath($command, $analyzer);
+    public function generateCommandFile(
+        VertexConnection $connection,
+        EventSourcingAnalyzer $analyzer,
+        FileCollection $fileCollection
+    ): void {
+        if ($connection->identity()->type() !== VertexType::TYPE_COMMAND) {
+            throw WrongVertexConnection::forConnection($connection, VertexType::TYPE_COMMAND);
+        }
+        /** @var CommandType $command */
+        $command = $connection->identity();
+        $typeSet = $this->getMetadataTypeSetFromVertex($command);
 
-            $metadataInstance = $command->metadataInstance();
+        $commandFqcn = $this->config->getFullyQualifiedClassName($command, $analyzer);
 
-            $typeSet = null;
+        $code = $this->config->config()->getObjectGenerator()->generateImmutableRecord(
+            $commandFqcn,
+            $this->config->config()->determineValueObjectPath($command, $analyzer),
+            $this->config->config()->determineValueObjectSharedPath(),
+            $typeSet
+        );
 
-            if ($metadataInstance instanceof HasTypeSet
-                && $metadataInstance->typeSet() !== null
-            ) {
-                $typeSet = $metadataInstance->typeSet();
-            }
-
-            $code = $this->config->getObjectGenerator()->generateImmutableRecord(
-                $command->label(),
-                $pathCommand,
-                $this->config->determineValueObjectPath($command, $analyzer),
-                $typeSet
-            );
-
-            foreach ($code as $file) {
-                $fileCollection->add($file);
-            }
+        foreach ($code as $file) {
+            $fileCollection->add($file);
         }
     }
 }

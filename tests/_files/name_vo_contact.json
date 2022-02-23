@@ -1,0 +1,71 @@
+{
+    "node": {
+        "id": "ra4U6o3v8oEucKxQNZ7PAK",
+        "name": "Name",
+        "type": "document",
+        "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=ra4U6o3v8oEucKxQNZ7PAK&clicks=1",
+        "tags": [],
+        "layer": false,
+        "defaultLayer": false,
+        "parent": {
+            "id": "stW5qRRPsQbowcqux7M2QX",
+            "name": "Building",
+            "type": "feature",
+            "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
+            "tags": [],
+            "layer": false,
+            "defaultLayer": false,
+            "parent": {
+                "id": "2FqsFfW5xGzooq2fdFTfaa",
+                "name": "Hotel",
+                "type": "boundedContext",
+                "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
+                "tags": [],
+                "layer": false,
+                "defaultLayer": false,
+                "parent": {
+                    "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                    "name": "Board",
+                    "type": "layer",
+                    "link": null,
+                    "tags": [],
+                    "layer": true,
+                    "defaultLayer": true,
+                    "parent": null,
+                    "childrenList": [],
+                    "sourcesList": [],
+                    "targetsList": [],
+                    "geometry": {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "metadata": null
+                },
+                "childrenList": [],
+                "sourcesList": [],
+                "targetsList": [],
+                "geometry": {
+                    "x": -1680,
+                    "y": -201
+                },
+                "metadata": null
+            },
+            "childrenList": [],
+            "sourcesList": [],
+            "targetsList": [],
+            "geometry": {
+                "x": 176.5,
+                "y": 199
+            },
+            "metadata": null
+        },
+        "childrenList": [],
+        "sourcesList": [],
+        "targetsList": [],
+        "geometry": {
+            "x": 63.71495327102798,
+            "y": 591.785046728972
+        },
+        "metadata": "{\n  \"shorthand\": true,\n  \"ns\": \"Contact\",\n  \"schema\": \"string|minLength:3\"\n}  \n"
+    }
+}

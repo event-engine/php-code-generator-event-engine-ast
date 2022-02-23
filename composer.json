@@ -3,6 +3,15 @@
     "description": "PHP Code Generator for Event Engine based on PHP AST",
     "license": "MIT",
     "type": "library",
+    "keywords": [
+        "php",
+        "code-generator",
+        "code-generation",
+        "ast-php",
+        "ast",
+        "abstract-syntax-tree",
+        "event-engine"
+    ],
     "authors": [
         {
             "name": "Alexander Miertsch",
@@ -32,15 +41,13 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
-        "event-engine/php-inspectio-graph": "^0.3.0",
-        "open-code-modeling/json-schema-to-php": "^0.3",
-        "open-code-modeling/json-schema-to-php-ast": "^0.5.1",
-        "open-code-modeling/php-code-ast": "^0.12.0",
-        "open-code-modeling/php-filter": "^0.1.2",
-        "symfony/console": "^4.4 || ^5.0"
+        "event-engine/php-inspectio-graph-cody": "^0.1.0",
+        "open-code-modeling/json-schema-to-php": "^0.4.x-dev",
+        "open-code-modeling/json-schema-to-php-ast": "0.6.x-dev",
+        "open-code-modeling/php-code-ast": "0.13.x-dev",
+        "open-code-modeling/php-filter": "^0.2.1 || 0.3.x-dev"
     },
     "require-dev": {
-        "event-engine/php-inspectio-graph-cody": "dev-master",
         "laminas/laminas-filter": "^2.10",
         "league/flysystem": "^2.0",
         "league/flysystem-memory": "^2.0",
@@ -48,8 +55,11 @@
         "phpstan/phpstan": "^0.12.33",
         "phpstan/phpstan-strict-rules": "^0.12.4",
         "phpunit/phpunit": "^9.5.0",
-        "prooph/php-cs-fixer-config": "^0.4",
-        "roave/security-advisories": "dev-master"
+        "prooph/php-cs-fixer-config": "^0.5.0",
+        "roave/security-advisories": "dev-latest"
+    },
+    "suggest": {
+        "laminas/laminas-filter": "If you want to use PreConfiguredNaming configuration"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

@@ -10,13 +10,14 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\HasNewAggregate;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
-interface CommandMetadata extends Metadata, HasSchema, HasNewAggregate
+interface CommandMetadata extends Metadata, HasSchema, HasNewAggregate, HasCustomData
 {
     public function newAggregate(): bool;
 
-    public function schema(): ?string;
+    public function schema(): ?array;
 }

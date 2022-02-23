@@ -12,25 +12,24 @@ namespace EventEngineTest\CodeGenerator\EventEngineAst;
 
 use EventEngine\CodeGenerator\EventEngineAst\Aggregate;
 use EventEngine\CodeGenerator\EventEngineAst\AggregateStateImmutableRecordOverride;
-use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredAggregate;
-use EventEngine\InspectioGraphCody\EventSourcingAnalyzer;
+use EventEngine\CodeGenerator\EventEngineAst\Config\EventEngineConfig;
+use EventEngine\CodeGenerator\EventEngineAst\Config\PreConfiguredNaming;
 use EventEngine\InspectioGraphCody\JsonNode;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
-use OpenCodeModeling\Filter\FilterFactory;
 use PhpParser\NodeTraverser;
 
 final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 {
-    private PreConfiguredAggregate $config;
-
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->config = new PreConfiguredAggregate();
-        $this->config->setBasePath($this->basePath);
-        $this->config->setClassInfoList($this->classInfoList);
+        $config = new EventEngineConfig();
+        $config->setBasePath($this->basePath);
+        $config->setClassInfoList($this->classInfoList);
+
+        $this->config = new PreConfiguredNaming($config);
     }
 
     /**
@@ -38,29 +37,36 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
      */
     public function it_creates_aggregate_state_immutable_record_override(): void
     {
-        $aggregate = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_without_metadata.json'));
+        $connection = $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
+        $this->analyzer->analyse($node);
 
-        $analyzer = new EventSourcingAnalyzer($aggregate, FilterFactory::constantNameFilter(), $this->metadataFactory);
-
-        $override = new AggregateStateImmutableRecordOverride($this->config->getParser());
+        $override = new AggregateStateImmutableRecordOverride($this->config);
         $aggregate = new Aggregate($this->config);
 
         $fileCollection = FileCollection::emptyList();
 
-        $aggregate->generateAggregateStateFile($analyzer, $fileCollection);
+        $aggregate->generateAggregateStateFile($connection, $this->analyzer, $fileCollection);
         $override->generateImmutableRecordOverride($fileCollection);
 
-        $this->config->getObjectGenerator()->sortThings($fileCollection);
+        $this->config->config()->getObjectGenerator()->sortThings($fileCollection);
 
-        $this->assertCount(1, $fileCollection);
+        $this->assertCount(2, $fileCollection);
 
         foreach ($fileCollection as $file) {
             switch ($file->getName()) {
-                case 'BuildingState':
+                case 'Building':
                     $this->assertAggregateStateFile($file);
+
+                    break;
+                case 'Collection':
+                    $this->assertCollectionFile($file);
+
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+
                     break;
             }
         }
@@ -68,21 +74,21 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
 
     private function assertAggregateStateFile(ClassBuilder $classBuilder): void
     {
-        $ast = $this->config->getParser()->parse('');
+        $ast = $this->config->config()->getParser()->parse('');
 
         $nodeTraverser = new NodeTraverser();
 
-        $classBuilder->injectVisitors($nodeTraverser, $this->config->getParser());
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
 
         $expected = <<<'PHP'
 <?php
 
 declare (strict_types=1);
-namespace MyService\Domain\Model\Building;
+namespace MyService\Domain\Model\ValueObject;
 
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\ImmutableRecordLogic;
-final class BuildingState implements ImmutableRecord
+final class Building implements ImmutableRecord
 {
     use ImmutableRecordLogic;
     private array $state = [];
@@ -128,6 +134,28 @@ final class BuildingState implements ImmutableRecord
     }
 }
 PHP;
-        $this->assertSame($expected, $this->config->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
+    }
+
+    private function assertCollectionFile(ClassBuilder $classBuilder): void
+    {
+        $ast = $this->config->config()->getParser()->parse('');
+
+        $nodeTraverser = new NodeTraverser();
+
+        $classBuilder->injectVisitors($nodeTraverser, $this->config->config()->getParser());
+
+        $expected = <<<'EOF'
+        <?php
+        
+        declare (strict_types=1);
+        namespace MyService\Infrastructure;
+        
+        final class Collection
+        {
+            public const BUILDINGS = 'buildings';
+        }
+        EOF;
+        $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));
     }
 }

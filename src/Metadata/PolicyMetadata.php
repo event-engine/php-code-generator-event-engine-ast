@@ -12,10 +12,11 @@ namespace EventEngine\InspectioGraph\Metadata;
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\HasStreams;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
-interface PolicyMetadata extends Metadata, HasStreams
+interface PolicyMetadata extends Metadata, HasStreams, HasCustomData
 {
-    public function streams();
+    public function streams(): array;
 }
