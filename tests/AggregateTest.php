@@ -220,12 +220,14 @@ final class AggregateTest extends BaseTestCase
             switch ($file->getName()) {
                 case 'BuildingBehaviour':
                     $this->assertAggregateFile($file);
+
                     break;
                 case 'BuildingId':
                 case 'Name':
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+
                     break;
             }
         }
@@ -289,15 +291,18 @@ final class AggregateTest extends BaseTestCase
             switch ($file->getName()) {
                 case 'Building':
                     $this->assertAggregateStateFile($file);
+
                     break;
                 case 'BuildingId':
                 case 'Name':
                     break;
                 case 'Collection':
                     $this->assertCollectionFile($file);
+
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+
                     break;
             }
         }

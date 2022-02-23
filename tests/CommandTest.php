@@ -282,15 +282,19 @@ final class CommandTest extends BaseTestCase
             switch ($file->getName()) {
                 case 'AddBuilding':
                     $this->assertCommandFile($file);
+
                     break;
                 case 'BuildingId':
                     $this->assertSame('MyService\Domain\Model\ValueObject', $file->getNamespace());
+
                     break;
                 case 'Name':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Building', $file->getNamespace());
+
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+
                     break;
             }
         }

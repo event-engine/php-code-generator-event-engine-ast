@@ -80,7 +80,9 @@ trait JsonMetadataTrait
                 throw ErrorParsingMetadata::withError(
                     \sprintf(
                         'Could not create JSON schema type set from JSON schema definition. Error: %s (%s:%d)',
-                        $e->getMessage(), $e->getFile(), $e->getLine()
+                        $e->getMessage(),
+                        $e->getFile(),
+                        $e->getLine()
                     ),
                     $e
                 );
@@ -105,7 +107,9 @@ trait JsonMetadataTrait
                 throw ErrorParsingMetadata::withError(
                     \sprintf(
                         'Could not create JSON schema type set from JSON schema definition. Error: %s (%s:%d)',
-                        $e->getMessage(), $e->getFile(), $e->getLine()
+                        $e->getMessage(),
+                        $e->getFile(),
+                        $e->getLine()
                     ),
                     $e
                 );
@@ -134,6 +138,7 @@ trait JsonMetadataTrait
                     foreach ($type->properties() as $property) {
                         $this->resolveTypes($property, $vertexConnectionMap, $filterName);
                     }
+
                     break;
                 case $type instanceof ArrayType:
                     foreach ($type->items() as $item) {
@@ -148,6 +153,7 @@ trait JsonMetadataTrait
                     if ($type->additionalItems() !== null) {
                         $this->resolveTypes($type->additionalItems(), $vertexConnectionMap, $filterName);
                     }
+
                     break;
                 case $type instanceof AllOfType:
                 case $type instanceof AnyOfType:
@@ -155,9 +161,11 @@ trait JsonMetadataTrait
                     foreach ($type->getTypeSets() as $ofTypeSet) {
                         $this->resolveTypes($ofTypeSet, $vertexConnectionMap, $filterName);
                     }
+
                     break;
                 case $type instanceof NotType:
                     $this->resolveTypes($type->getTypeSet(), $vertexConnectionMap, $filterName);
+
                     break;
                 default:
                     break;

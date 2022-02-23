@@ -136,9 +136,11 @@ trait ApiDescriptionClassMapTrait
         switch (true) {
             case $identity instanceof AggregateType:
                 $identityFqcn = $this->config->getAggregateBehaviourFullyQualifiedClassName($identity, $analyzer);
+
                 break;
             default:
                 $identityFqcn = $this->config->getFullyQualifiedClassName($identity, $analyzer);
+
                 break;
         }
 
@@ -240,7 +242,8 @@ trait ApiDescriptionClassMapTrait
         $className = $this->config->getClassNameFromFullyQualifiedClassName($apiFqcn);
 
         $classBuilderFile = $files->filter(
-            fn (File $file
+            fn (
+                File $file
             ) => $file instanceof PhpFile && $file->getNamespace() === $classNamespace && $file->getName() === $className
         );
 

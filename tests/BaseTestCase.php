@@ -28,15 +28,23 @@ abstract class BaseTestCase extends TestCase
     protected const FILES_DIR = __DIR__ . DIRECTORY_SEPARATOR . '_files' . DIRECTORY_SEPARATOR;
 
     protected string $basePath = '/service';
+
     protected string $srcFolder = '/service/src';
+
     protected string $appNamespace = 'MyService';
+
     protected string $apiAggregateFilename;
+
     protected string $apiEventFilename;
+
     protected string $apiCommandFilename;
+
     protected string $modelPath;
 
     protected Filesystem $fileSystem;
+
     protected EventSourcingAnalyzer $analyzer;
+
     protected Naming $config;
 
     /**

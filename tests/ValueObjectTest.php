@@ -289,45 +289,56 @@ final class ValueObjectTest extends BaseTestCase
                 case 'Image':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getFqcn());
+
                     break;
                 case 'Alt':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\Alt', $file->getFqcn());
+
                     break;
                 case 'CropList':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\CropList', $file->getFqcn());
+
                     break;
                 case 'MediaAsset':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\MediaAsset', $file->getFqcn());
+
                     break;
                 case 'Src':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\Image\Src', $file->getFqcn());
+
                     break;
                 case 'Height':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Height', $file->getFqcn());
+
                     break;
                 case 'ImageCrop':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\ImageCrop', $file->getFqcn());
+
                     break;
                 case 'Width':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Width', $file->getFqcn());
+
                     break;
                 case 'X':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\X', $file->getFqcn());
+
                     break;
                 case 'Y':
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop', $file->getNamespace());
                     $this->assertSame('MyService\Domain\Model\ValueObject\Common\MediaAsset\Crop\Y', $file->getFqcn());
+
                     break;
                 default:
                     $this->assertFalse(true, 'Unexpected class generated');
+
                     break;
             }
         }

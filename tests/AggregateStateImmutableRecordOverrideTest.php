@@ -58,12 +58,15 @@ final class AggregateStateImmutableRecordOverrideTest extends BaseTestCase
             switch ($file->getName()) {
                 case 'Building':
                     $this->assertAggregateStateFile($file);
+
                     break;
                 case 'Collection':
                     $this->assertCollectionFile($file);
+
                     break;
                 default:
                     $this->assertTrue(false, \sprintf('Class "%s" not checked', $file->getName()));
+
                     break;
             }
         }

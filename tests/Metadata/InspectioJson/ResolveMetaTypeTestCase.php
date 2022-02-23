@@ -44,6 +44,7 @@ abstract class ResolveMetaTypeTestCase extends BaseTestCase
                     $resolvedType = $resolvedTypeSet->first();
                     $this->assertInstanceOf(StringType::class, $resolvedType);
                     $this->assertSame('Building Id', $resolvedType->name());
+
                     break;
                 case 'name':
                     $propertyType = $property->first();
@@ -65,6 +66,7 @@ abstract class ResolveMetaTypeTestCase extends BaseTestCase
                         $this->assertInstanceOf(StringType::class, $propertyType);
                         $this->assertSame('name', $propertyType->name());
                     }
+
                     break;
                 default:
                     $this->assertFalse(true, \sprintf('Property "%s" not expected', $propertyName));

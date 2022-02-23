@@ -15,6 +15,7 @@ use EventEngine\CodeGenerator\EventEngineAst\Config\Naming;
 use EventEngine\CodeGenerator\EventEngineAst\Exception\WrongVertexConnection;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\ApiDescriptionClassMapTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataSchemaTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataTypeSetTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
@@ -44,8 +45,10 @@ final class Query
     use MetadataSchemaTrait;
     use ApiDescriptionClassMapTrait;
     use FindAggregateStateTrait;
+    use FindAggregateTrait;
 
     private Naming $config;
+
     private QueryDescription $queryDescription;
 
     public function __construct(Naming $config)
@@ -107,8 +110,8 @@ final class Query
 
         $resolverConstructMethod = ClassMethodBuilder::fromScratch('__construct');
         $resolverConstructMethod->setParameters(
-                ParameterBuilder::fromScratch('finder', $finderClassName)
-            )
+            ParameterBuilder::fromScratch('finder', $finderClassName)
+        )
             ->setBody('$this->finder = $finder;');
 
         $resolverClassBuilder->addMethod($resolverConstructMethod);
@@ -247,18 +250,28 @@ final class Query
             }
 
             if ($aggregateStoreStateIn = $this->getAggregateStateCollectionName(
-                $document->id(), VertexConnectionMap::WALK_BACKWARD, $analyzer, $this->config->config()->getFilterConstValue()
+                $document->id(),
+                VertexConnectionMap::WALK_BACKWARD,
+                $analyzer,
+                $this->config->config()->getFilterConstValue()
             )) {
                 $collection = $this->config->getClassNameFromFullyQualifiedClassName($collectionFqcn) . '::'
                     . ($this->config->config()->getFilterConstName())($aggregateStoreStateIn);
 
                 $args = '';
+                if (\count($parameters) === 1 && ($aggregate = $this->findAggregate($document->id(), $analyzer, VertexConnectionMap::WALK_BACKWARD))) {
+                    foreach ($parameters as $parameter) {
+                        $args .= '$' . $parameter->getName() . '->' . $this->determineTypeMethod($parameter->getType(), $analyzer) . '(),';
+                    }
 
-                foreach ($parameters as $parameter) {
-                    $args .= '$' . $parameter->getName() . '->' . $this->determineTypeMethod($parameter->getType(), $analyzer) . '(),';
+                    $storeMethod = \sprintf('getDoc(%s, %s)', $collection, \trim($args, ','));
+                } else {
+                    foreach ($parameters as $parameter) {
+                        $args .= '$' . $parameter->getName() . '->' . $this->determineTypeMethod($parameter->getType(), $analyzer) . '(),';
+                    }
+
+                    $storeMethod = \sprintf('findDocs(%s, %s)', $collection, \trim($args, ','));
                 }
-
-                $storeMethod = \sprintf('getDoc(%s, %s)', $collection, \trim($args, ','));
 
                 $body = \sprintf(
                     <<<'EOF'

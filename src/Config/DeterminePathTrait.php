@@ -183,6 +183,7 @@ trait DeterminePathTrait
         if ($type instanceof DocumentType) {
             return $schemaPath . DIRECTORY_SEPARATOR . 'Query' . $namespace . DIRECTORY_SEPARATOR. ($this->getFilterClassName())($type->name()) . '.json';
         }
+
         throw new RuntimeException(
             \sprintf('Can not determine query JSON schema path for sticky type "%s"', \get_class($type))
         );
@@ -280,6 +281,7 @@ trait DeterminePathTrait
                     );
                 }
                 $aggregate = $aggregate->identity();
+
                 break;
             case $type instanceof EventType:
                 $aggregate = $this->findAggregate($type->id(), $analyzer);
@@ -293,6 +295,7 @@ trait DeterminePathTrait
                     );
                 }
                 $aggregate = $aggregate->identity();
+
                 break;
             case $type instanceof AggregateType:
                 if ($analyzer->has($type->id()) === false) {
@@ -304,6 +307,7 @@ trait DeterminePathTrait
                     );
                 }
                 $aggregate = $analyzer->connection($type->id())->identity();
+
                 break;
             case $type instanceof DocumentType:
                 $aggregate = $this->findAggregate($type->id(), $analyzer);
@@ -319,6 +323,7 @@ trait DeterminePathTrait
                     }
                 }
                 $aggregate = $aggregate ? $aggregate->identity() : null;
+
                 break;
             default:
                 break;
@@ -343,6 +348,7 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof EventType:
                 $feature = $this->findFeature($type, $analyzer);
@@ -355,6 +361,7 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof AggregateType:
                 $feature = $this->findFeature($type, $analyzer);
@@ -367,6 +374,7 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof DocumentType:
                 $feature = $this->findFeature($type, $analyzer);
@@ -379,6 +387,7 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             default:
                 break;

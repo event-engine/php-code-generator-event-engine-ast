@@ -32,6 +32,7 @@ final class PreConfiguredNaming implements Naming
     use FindAggregateStateTrait;
 
     private Base $config;
+
     private ?string $defaultContextName = null;
 
     public function __construct(Base $config)
@@ -132,8 +133,8 @@ final class PreConfiguredNaming implements Naming
     public function getFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
     {
         return $this->getClassNamespaceFromPath(
-                $this->config->determinePath($type, $analyzer)
-            ) . '\\' . ($this->config->getFilterClassName())($type->name());
+            $this->config->determinePath($type, $analyzer)
+        ) . '\\' . ($this->config->getFilterClassName())($type->name());
     }
 
     public function getMessageName(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -198,15 +199,19 @@ final class PreConfiguredNaming implements Naming
         switch ($type->type()) {
             case VertexType::TYPE_COMMAND:
                 $namespace .= 'Command';
+
                 break;
             case VertexType::TYPE_AGGREGATE:
                 $namespace .= 'Aggregate';
+
                 break;
             case VertexType::TYPE_EVENT:
                 $namespace .= 'Event';
+
                 break;
             case VertexType::TYPE_DOCUMENT:
                 $namespace .= 'Type';
+
                 break;
             default:
                 throw new RuntimeException(

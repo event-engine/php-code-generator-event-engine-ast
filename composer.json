@@ -41,7 +41,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
-        "event-engine/php-inspectio-graph-cody": "dev-feature/simplify-connections as dev-master",
+        "event-engine/php-inspectio-graph-cody": "^0.1.0",
         "open-code-modeling/json-schema-to-php": "^0.4.x-dev",
         "open-code-modeling/json-schema-to-php-ast": "0.6.x-dev",
         "open-code-modeling/php-code-ast": "0.13.x-dev",
@@ -55,8 +55,8 @@
         "phpstan/phpstan": "^0.12.33",
         "phpstan/phpstan-strict-rules": "^0.12.4",
         "phpunit/phpunit": "^9.5.0",
-        "prooph/php-cs-fixer-config": "^0.4",
-        "roave/security-advisories": "dev-master"
+        "prooph/php-cs-fixer-config": "^0.5.0",
+        "roave/security-advisories": "dev-latest"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

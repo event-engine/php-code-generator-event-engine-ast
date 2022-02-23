@@ -38,6 +38,8 @@ final class QueryTest extends BaseTestCase
     {
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_id_vo.json'));
         $this->analyzer->analyse($node);
+        $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_added.json'));
+        $this->analyzer->analyse($node);
         $node = JsonNode::fromJson(\file_get_contents(self::FILES_DIR . 'building_state.json'));
         $connection = $this->analyzer->analyse($node);
 
@@ -59,17 +61,21 @@ final class QueryTest extends BaseTestCase
             switch ($file->getName()) {
                 case 'GetBuilding':
                     $this->assertQuery($file);
+
                     break;
                 case 'BuildingResolver':
                     $this->assertResolver($file);
+
                     break;
                 case 'BuildingFinder':
                     $this->assertFinderWithState($file);
+
                     break;
                 case 'BuildingId':
                     break;
                 default:
                     $this->assertFalse(true, 'Unintended class generated: ' . $file->getName());
+
                     break;
             }
         }

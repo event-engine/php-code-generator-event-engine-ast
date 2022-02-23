@@ -32,6 +32,7 @@ final class EventEngineConfig implements Base
     use PhpPrinterTrait;
 
     private ObjectGenerator $objectGenerator;
+
     private ValueObjectFactory $valueObjectFactory;
 
     public function __construct()

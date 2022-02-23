@@ -18,6 +18,7 @@ use PhpParser\NodeVisitorAbstract;
 final class ClassMap extends NodeVisitorAbstract
 {
     private string $constName;
+
     private string $className;
 
     public function __construct(string $constName, string $className)

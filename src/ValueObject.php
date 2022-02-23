@@ -30,6 +30,7 @@ final class ValueObject
     use ApiDescriptionClassMapTrait;
 
     private Naming $config;
+
     private TypeDescription $typeDescription;
 
     public function __construct(Naming $config)

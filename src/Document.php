@@ -25,8 +25,11 @@ final class Document
     use MetadataSchemaTrait;
 
     private Naming $config;
+
     private TypeDescription $typeDescription;
+
     private ValueObject $valueObject;
+
     private Query $query;
 
     public function __construct(Naming $config)

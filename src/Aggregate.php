@@ -39,8 +39,11 @@ final class Aggregate
     private Naming $config;
 
     private Code\AggregateDescription $aggregateDescription;
+
     private Code\AggregateBehaviourEventMethod $eventMethod;
+
     private Code\AggregateBehaviourCommandMethod $commandMethod;
+
     private Code\AggregateStateMethod $aggregateStateMethod;
 
     public function __construct(Naming $config)
