@@ -10,13 +10,16 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\HasQuery;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
-interface DocumentMetadata extends Metadata, HasSchema, HasQuery
+interface DocumentMetadata extends Metadata, HasSchema, HasQuery, HasQueryTypeSet, HasCustomData
 {
     public function query(): ?array;
 
     public function schema(): ?array;
+
+    public function isAggregateState(): bool;
 }

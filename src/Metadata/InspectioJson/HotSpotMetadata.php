@@ -8,22 +8,18 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Config;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 
-trait FilterCommandFolderTrait
+final class HotSpotMetadata implements \EventEngine\CodeGenerator\EventEngineAst\Metadata\HotSpotMetadata
 {
-    /**
-     * @var callable
-     **/
-    private $filterCommandFolder;
+    use JsonMetadataTrait;
 
-    public function getFilterCommandFolder(): ?callable
+    private function __construct()
     {
-        return $this->filterCommandFolder;
     }
 
-    public function setFilterCommandFolder(?callable $filterCommandFolder): void
+    public function customData(): array
     {
-        $this->filterCommandFolder = $filterCommandFolder;
+        return $this->customData;
     }
 }

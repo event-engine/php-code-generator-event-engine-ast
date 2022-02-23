@@ -12,17 +12,32 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\VertexType;
 
 interface Naming
 {
+    public function getContextName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getApiDescriptionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getApiQueryDescriptionFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
     public function getAggregateStateFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function getAggregateBehaviourFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function getAggregateIdFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getQueryFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getResolverFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getFinderFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function getCollectionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 
     public function getClassNameFromFullyQualifiedClassName(string $fqcn): string;
 
@@ -51,6 +66,4 @@ interface Naming
     public function getFilterEventMethodName(): callable;
 
     public function getFilterWithMethodName(): callable;
-
-    public function getFilterAggregateStoreStateIn(): ?callable;
 }

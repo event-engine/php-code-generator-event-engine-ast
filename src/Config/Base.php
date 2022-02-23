@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\CodeGenerator\EventEngineAst\Code\ObjectGenerator;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\CodeAst\Package\ClassInfoList;
@@ -29,6 +30,8 @@ interface Base
     public function getFilterConstName(): callable;
 
     public function getFilterConstValue(): callable;
+
+    public function getFilterMessageName(): callable;
 
     public function getFilterDirectoryToNamespace(): callable;
 
@@ -66,5 +69,19 @@ interface Base
 
     public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
 
+    public function determineQueryPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineResolverPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineFinderPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string;
+
     public function determineFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineQuerySchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaPath(VertexType $type, EventSourcingAnalyzer $analyzer): string;
+
+    public function determineSchemaRoot(): string;
 }

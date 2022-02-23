@@ -11,21 +11,22 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
-use EventEngine\CodeGenerator\EventEngineAst\Metadata\HasTypeSet;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateTrait;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\MetadataCustomTrait;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
-use EventEngine\InspectioGraph\Connection\AggregateConnectionAnalyzer;
-use EventEngine\InspectioGraph\Connection\FeatureConnectionAnalyzer;
 use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
 use EventEngine\InspectioGraph\FeatureType;
 use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\VertexType;
-use OpenCodeModeling\JsonSchemaToPhp\Type\CustomSupport;
 
 trait DeterminePathTrait
 {
+    use MetadataCustomTrait;
+    use FindAggregateTrait;
+
     abstract public function getBasePath(): string;
 
     abstract public function getFilterClassName(): callable;
@@ -37,8 +38,14 @@ trait DeterminePathTrait
             case $type instanceof EventType:
             case $type instanceof AggregateType:
             case $type instanceof DocumentType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'ValueObject';
             default:
+                $namespace = $this->determineValueObjectNamespace($type);
+                $namespace = \str_replace('\\', '//', \trim($namespace, '\\'));
+
+                if ($namespace !== '') {
+                    return $this->determineValueObjectSharedPath() . DIRECTORY_SEPARATOR . $namespace;
+                }
+
                 return $this->determineValueObjectSharedPath();
         }
     }
@@ -117,13 +124,7 @@ trait DeterminePathTrait
 
     public function determinePath(VertexType $type, EventSourcingAnalyzer $analyzer): string
     {
-        $namespace = $this->getCustomMetadata($type, 'namespace') ?? '';
-
-        if ($namespace === '') {
-            $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
-        }
-
-        $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '//', \trim($namespace, '\\'));
+        $namespace = $this->determineNamespace($type, $analyzer);
 
         switch (true) {
             case $type instanceof CommandType:
@@ -131,9 +132,9 @@ trait DeterminePathTrait
             case $type instanceof EventType:
                 return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'Event' . $namespace;
             case $type instanceof AggregateType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . $namespace;
+                return $this->determineDomainPath($type, $analyzer) . $namespace;
             case $type instanceof DocumentType:
-                return $this->determineDomainPath($type, $analyzer) . DIRECTORY_SEPARATOR . 'ValueObject' . $namespace;
+                return $this->determineValueObjectSharedPath() . $namespace;
             default:
                 throw new RuntimeException(
                     \sprintf('Can not determine path for sticky type "%s"', \get_class($type))
@@ -141,20 +142,105 @@ trait DeterminePathTrait
         }
     }
 
-    private function getCustomMetadata(VertexType $type, string $key)
+    public function determineQueryPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
     {
-        $metadataInstance = $type->metadataInstance();
+        $namespace = $this->determineNamespace($type, $analyzer);
 
-        if (
-            $metadataInstance instanceof HasTypeSet
-            && ($jsonSchemaTypeSet = $metadataInstance->typeSet())
-            && ($jsonSchemaType = $jsonSchemaTypeSet->first())
-            && $jsonSchemaType instanceof CustomSupport
-        ) {
-            return $jsonSchemaType->custom()[$key] ?? null;
+        return $this->determineInfrastructureRoot() . '\\Resolver' . $namespace . '\\Query';
+    }
+
+    public function determineResolverPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        return $this->determineInfrastructureRoot() . '\\Resolver' . $namespace;
+    }
+
+    public function determineFinderPath(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        return $this->determineInfrastructureRoot() . '\\Finder' . $namespace;
+    }
+
+    public function determineSchemaRoot(): string
+    {
+        return $this->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api' . DIRECTORY_SEPARATOR . '_schema';
+    }
+
+    public function determineSchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $path = $this->determineSchemaPath($type, $analyzer);
+
+        return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.json';
+    }
+
+    public function determineQuerySchemaFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $schemaPath = $this->determineSchemaRoot();
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        if ($type instanceof DocumentType) {
+            return $schemaPath . DIRECTORY_SEPARATOR . 'Query' . $namespace . DIRECTORY_SEPARATOR. ($this->getFilterClassName())($type->name()) . '.json';
         }
 
-        return null;
+        throw new RuntimeException(
+            \sprintf('Can not determine query JSON schema path for sticky type "%s"', \get_class($type))
+        );
+    }
+
+    public function determineSchemaPath(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $schemaPath = $this->determineSchemaRoot();
+        $schemaPathAggregate = $schemaPath;
+
+        $filterFolder = $this->getFilterClassName();
+
+        $aggregate = $this->determineAggregate($type, $analyzer);
+
+        if ($aggregate !== null) {
+            $schemaPathAggregate .= DIRECTORY_SEPARATOR . ($filterFolder)($aggregate->label());
+        }
+
+        $namespace = $this->determineNamespace($type, $analyzer);
+
+        switch (true) {
+            case $type instanceof CommandType:
+                return $schemaPathAggregate . DIRECTORY_SEPARATOR . 'Command' . $namespace;
+            case $type instanceof EventType:
+                return $schemaPathAggregate . DIRECTORY_SEPARATOR . 'Event' . $namespace;
+            case $type instanceof AggregateType:
+                return $schemaPathAggregate . $namespace;
+            case $type instanceof DocumentType:
+                return $schemaPath . DIRECTORY_SEPARATOR . 'ValueObject' . $namespace;
+            default:
+                throw new RuntimeException(
+                    \sprintf('Can not determine JSON schema path for sticky type "%s"', \get_class($type))
+                );
+        }
+    }
+
+    private function determineNamespace(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getCustomMetadata($type, 'namespace') ?? '';
+
+        if ($namespace === '') {
+            $namespace = $this->getCustomMetadata($type, 'ns') ?? '';
+        }
+        $namespace = \str_replace('/', '\\', $namespace);
+
+        if ($namespace === '' && $type instanceof DocumentType) {
+            $namespace = $this->determineValueObjectNamespace($type);
+        }
+        if ($namespace !== '') {
+            $namespace = DIRECTORY_SEPARATOR . \str_replace('\\', '/', \trim($namespace, '\\'));
+
+            if ($namespace === '/') {
+                $namespace = '';
+            }
+        }
+
+        return $namespace;
     }
 
     public function determineFilename(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -164,13 +250,27 @@ trait DeterminePathTrait
         return $path . DIRECTORY_SEPARATOR . ($this->getFilterClassName())($type->name()) . '.php';
     }
 
-    private function determineAggregate(VertexType $type, AggregateConnectionAnalyzer $analyzer): ?AggregateType
+    private function findFeature(VertexType $type, EventSourcingAnalyzer $analyzer): ?FeatureType
+    {
+        $connection = $analyzer->connection($type->id());
+
+        if (($parent = $connection->parent())
+            && $parent->type() === VertexType::TYPE_FEATURE
+        ) {
+            // @phpstan-ignore-next-line
+            return $parent;
+        }
+
+        return null;
+    }
+
+    private function determineAggregate(VertexType $type, EventSourcingAnalyzer $analyzer): ?AggregateType
     {
         $aggregate = null;
 
         switch (true) {
             case $type instanceof CommandType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByCommand($type);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -180,9 +280,11 @@ trait DeterminePathTrait
                         )
                     );
                 }
+                $aggregate = $aggregate->identity();
+
                 break;
             case $type instanceof EventType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByEvent($type);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     throw new RuntimeException(
@@ -192,9 +294,11 @@ trait DeterminePathTrait
                         )
                     );
                 }
+                $aggregate = $aggregate->identity();
+
                 break;
             case $type instanceof AggregateType:
-                if ($analyzer->aggregateConnectionMap()->has($type->id()) === false) {
+                if ($analyzer->has($type->id()) === false) {
                     throw new RuntimeException(
                         \sprintf(
                             'Aggregate "%s" not found in aggregate map. Can not use aggregate name for path.',
@@ -202,23 +306,24 @@ trait DeterminePathTrait
                         )
                     );
                 }
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateConnection($type->id())->aggregate();
+                $aggregate = $analyzer->connection($type->id())->identity();
+
                 break;
             case $type instanceof DocumentType:
-                $aggregate = $analyzer->aggregateConnectionMap()->aggregateByDocument($type);
+                $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
                     $metadataInstance = $type->metadataInstance();
                     if ($metadataInstance instanceof HasCustomData) {
-                        $aggregateName = ($this->getFilterClassName())($metadataInstance->customData()['aggregate'] ?? '');
+                        $aggregateName = ($this->getFilterConstName())($metadataInstance->customData()['aggregate'] ?? '');
 
-                        $aggregateMap = $analyzer->aggregateConnectionMap()->aggregateVertexMap();
+                        $aggregate = $analyzer->aggregateMap()->filterByName($aggregateName)->current() ?: null;
 
-                        if ($aggregateMap->has($aggregateName)) {
-                            $aggregate = $aggregateMap->vertex($aggregateName);
-                        }
+                        // TODO check from / to connections with depth
                     }
                 }
+                $aggregate = $aggregate ? $aggregate->identity() : null;
+
                 break;
             default:
                 break;
@@ -227,13 +332,13 @@ trait DeterminePathTrait
         return $aggregate;
     }
 
-    private function determineFeature(VertexType $type, FeatureConnectionAnalyzer $analyzer): ?FeatureType
+    private function determineFeature(VertexType $type, EventSourcingAnalyzer $analyzer): ?FeatureType
     {
         $feature = null;
 
         switch (true) {
             case $type instanceof CommandType:
-                $feature = $analyzer->featureConnectionMap()->featureByCommand($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -243,9 +348,10 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof EventType:
-                $feature = $analyzer->featureConnectionMap()->featureByEvent($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -255,9 +361,10 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof AggregateType:
-                $feature = $analyzer->featureConnectionMap()->featureByAggregate($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -267,9 +374,10 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             case $type instanceof DocumentType:
-                $feature = $analyzer->featureConnectionMap()->featureByDocument($type);
+                $feature = $this->findFeature($type, $analyzer);
 
                 if ($feature === null) {
                     throw new RuntimeException(
@@ -279,11 +387,19 @@ trait DeterminePathTrait
                         )
                     );
                 }
+
                 break;
             default:
                 break;
         }
 
         return $feature;
+    }
+
+    private function determineValueObjectNamespace(VertexType $type): string
+    {
+        $namespace = $this->getCustomMetadata($type, 'voNamespace') ?? '';
+
+        return \str_replace('/', '\\', $namespace);
     }
 }

@@ -8,9 +8,13 @@
 
 declare(strict_types=1);
 
+namespace EventEngine\InspectioGraph\Metadata;
+
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
-interface HasCustomData
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
+use EventEngine\InspectioGraph\Metadata\Metadata;
+
+interface ExternalSystemMetadata extends Metadata, HasCustomData
 {
-    public function customData(): array;
 }

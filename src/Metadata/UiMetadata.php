@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
 interface UiMetadata extends Metadata, HasCustomData

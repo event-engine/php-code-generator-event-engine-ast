@@ -10,9 +10,10 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\ResolvesMetadataReference;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
 
-interface HasTypeSet
+interface HasTypeSet extends ResolvesMetadataReference
 {
     public function typeSet(): ?TypeSet;
 }

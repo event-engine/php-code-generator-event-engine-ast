@@ -11,23 +11,29 @@ declare(strict_types=1);
 namespace EventEngine\CodeGenerator\EventEngineAst\Config;
 
 use EventEngine\CodeGenerator\EventEngineAst\Exception\RuntimeException;
+use EventEngine\CodeGenerator\EventEngineAst\Helper\FindAggregateStateTrait;
 use EventEngine\CodeGenerator\EventEngineAst\Metadata\AggregateMetadata;
 use EventEngine\InspectioGraph\AggregateType;
 use EventEngine\InspectioGraph\CommandType;
+use EventEngine\InspectioGraph\DocumentType;
 use EventEngine\InspectioGraph\EventSourcingAnalyzer;
 use EventEngine\InspectioGraph\EventType;
+use EventEngine\InspectioGraph\VertexConnectionMap;
 use EventEngine\InspectioGraph\VertexType;
 use OpenCodeModeling\Filter\FilterFactory;
 
 final class PreConfiguredNaming implements Naming
 {
     use FilterAggregateIdNameTrait;
-    use FilterAggregateStoreStateInTrait;
     use FilterCommandMethodNameTrait;
+    use FilterContextNameTrait;
     use FilterEventMethodNameTrait;
     use FilterWithMethodNameTrait;
+    use FindAggregateStateTrait;
 
     private Base $config;
+
+    private ?string $defaultContextName = null;
 
     public function __construct(Base $config)
     {
@@ -37,20 +43,20 @@ final class PreConfiguredNaming implements Naming
         $this->injectFilterEventMethodName(FilterFactory::methodNameFilter());
         $this->injectFilterAggregateIdName(FilterFactory::propertyNameFilter());
         $this->injectFilterWithMethodName(FilterFactory::methodNameFilter());
-        $this->injectFilterAggregateStoreStateIn($this->config->getFilterConstValue());
+        $this->setFilterContextName(FilterFactory::classNameFilter());
     }
 
     public function getAggregateStateFullyQualifiedClassName(
         AggregateType $type,
         EventSourcingAnalyzer $analyzer
     ): string {
-        $namespace = $this->getClassNamespaceFromPath(
-            $this->config->determinePath($type, $analyzer)
-        );
+        $aggregateState = $this->findAggregateState($type->id(), VertexConnectionMap::WALK_FORWARD, $analyzer);
 
-        $className = ($this->config->getFilterClassName())($type->name());
+        if ($aggregateState === null) {
+            throw new RuntimeException(\sprintf('Could not find aggregate state for aggregate "%s" - "%s"', $type->id(), $type->name()));
+        }
 
-        return $namespace . '\\' . $className . 'State';
+        return $this->getFullyQualifiedClassName($aggregateState->identity(), $analyzer);
     }
 
     public function getAggregateBehaviourFullyQualifiedClassName(
@@ -63,7 +69,7 @@ final class PreConfiguredNaming implements Naming
 
         $className = ($this->config->getFilterClassName())($type->name());
 
-        return $namespace . '\\' . $className;
+        return $namespace . '\\' . $className . 'Behaviour';
     }
 
     public function getAggregateIdFullyQualifiedClassName(AggregateType $type, EventSourcingAnalyzer $analyzer): string
@@ -90,11 +96,45 @@ final class PreConfiguredNaming implements Naming
         return $namespace . '\\' . $voName;
     }
 
+    public function getQueryFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineQueryPath($type, $analyzer)
+        );
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())('Get_' . $type->name());
+    }
+
+    public function getResolverFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineResolverPath($type, $analyzer)
+        );
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())($type->name() . '_Resolver');
+    }
+
+    public function getFinderFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath(
+            $this->config->determineFinderPath($type, $analyzer)
+        );
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())($type->name() . '_Finder');
+    }
+
+    public function getCollectionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath($this->config()->determineInfrastructureRoot());
+
+        return $namespace . '\\' . ($this->config->getFilterClassName())('Collection');
+    }
+
     public function getFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
     {
         return $this->getClassNamespaceFromPath(
-                $this->config->determinePath($type, $analyzer)
-            ) . '\\' . ($this->config->getFilterClassName())($type->name());
+            $this->config->determinePath($type, $analyzer)
+        ) . '\\' . ($this->config->getFilterClassName())($type->name());
     }
 
     public function getMessageName(VertexType $type, EventSourcingAnalyzer $analyzer): string
@@ -150,5 +190,77 @@ final class PreConfiguredNaming implements Naming
     public function config(): Base
     {
         return $this->config;
+    }
+
+    public function getApiDescriptionFullyQualifiedClassName(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath($this->config->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api') . '\\';
+
+        switch ($type->type()) {
+            case VertexType::TYPE_COMMAND:
+                $namespace .= 'Command';
+
+                break;
+            case VertexType::TYPE_AGGREGATE:
+                $namespace .= 'Aggregate';
+
+                break;
+            case VertexType::TYPE_EVENT:
+                $namespace .= 'Event';
+
+                break;
+            case VertexType::TYPE_DOCUMENT:
+                $namespace .= 'Type';
+
+                break;
+            default:
+                throw new RuntimeException(
+                    \sprintf('Could not determine API description class name for type "%s" - "%s"', $type->type(), $type->name())
+                );
+        }
+
+        return $namespace;
+    }
+
+    public function getApiQueryDescriptionFullyQualifiedClassName(DocumentType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $namespace = $this->getClassNamespaceFromPath($this->config->determineDomainRoot() . DIRECTORY_SEPARATOR . 'Api');
+
+        return $namespace . '\\' . 'Query';
+    }
+
+    public function getContextName(VertexType $type, EventSourcingAnalyzer $analyzer): string
+    {
+        $loop = true;
+        $orgType = $type;
+
+        do {
+            if ($type->type() === VertexType::TYPE_BOUNDED_CONTEXT) {
+                return ($this->filterContextName)($type->name());
+            }
+
+            if ($analyzer->has($type->id()) && ($parent = $analyzer->connection($type->id())->parent())) {
+                $type = $parent;
+            } else {
+                $loop = false;
+            }
+        } while ($loop === true);
+
+        if ($this->defaultContextName !== null) {
+            return $this->defaultContextName;
+        }
+
+        throw new RuntimeException(
+            \sprintf(
+                'Could not determine context name for vertex "%s" of type "%s" and no default context name is configured.',
+                $orgType->name(),
+                $orgType->type(),
+            )
+        );
+    }
+
+    public function setDefaultContextName(?string $defaultContextName): void
+    {
+        $this->defaultContextName = $defaultContextName;
     }
 }

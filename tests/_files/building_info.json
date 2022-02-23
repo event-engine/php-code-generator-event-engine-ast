@@ -1,0 +1,71 @@
+{
+    "node": {
+        "id": "sqG1buBHxAHoArWrh9nzJr",
+        "name": "Building Info",
+        "type": "document",
+        "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=sqG1buBHxAHoArWrh9nzJr&clicks=1",
+        "tags": [],
+        "layer": false,
+        "defaultLayer": false,
+        "parent": {
+            "id": "stW5qRRPsQbowcqux7M2QX",
+            "name": "Building",
+            "type": "feature",
+            "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=stW5qRRPsQbowcqux7M2QX&clicks=1",
+            "tags": [],
+            "layer": false,
+            "defaultLayer": false,
+            "parent": {
+                "id": "2FqsFfW5xGzooq2fdFTfaa",
+                "name": "Hotel",
+                "type": "boundedContext",
+                "link": "https://app.prooph-board.com/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
+                "tags": [],
+                "layer": false,
+                "defaultLayer": false,
+                "parent": {
+                    "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                    "name": "Board",
+                    "type": "layer",
+                    "link": null,
+                    "tags": [],
+                    "layer": true,
+                    "defaultLayer": true,
+                    "parent": null,
+                    "childrenList": [],
+                    "sourcesList": [],
+                    "targetsList": [],
+                    "geometry": {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "metadata": null
+                },
+                "childrenList": [],
+                "sourcesList": [],
+                "targetsList": [],
+                "geometry": {
+                    "x": -1680,
+                    "y": -201
+                },
+                "metadata": null
+            },
+            "childrenList": [],
+            "sourcesList": [],
+            "targetsList": [],
+            "geometry": {
+                "x": 176.5,
+                "y": 199
+            },
+            "metadata": null
+        },
+        "childrenList": [],
+        "sourcesList": [],
+        "targetsList": [],
+        "geometry": {
+            "x": 207.5,
+            "y": 562
+        },
+        "metadata": "{\n  \"shorthand\": true,\n  \"ns\": \"/BuildingInfo\",\n  \"voNamespace\": \"/BuildingInfo\",\n  \"schema\": {\n    \"title\": \"string\",\n    \"description\": \"string\",    \n    \"bgImage\": \"/Common/Image|title:BG Image\",\n    \"logo\": \"/Common/Image|title:Logo\"\n  }\n}"
+    }
+}

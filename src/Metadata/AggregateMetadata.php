@@ -10,13 +10,16 @@ declare(strict_types=1);
 
 namespace EventEngine\CodeGenerator\EventEngineAst\Metadata;
 
+use EventEngine\InspectioGraph\Metadata\HasCustomData;
 use EventEngine\InspectioGraph\Metadata\HasIdentifier;
 use EventEngine\InspectioGraph\Metadata\HasSchema;
 use EventEngine\InspectioGraph\Metadata\Metadata;
 
-interface AggregateMetadata extends Metadata, HasSchema, HasIdentifier
+interface AggregateMetadata extends Metadata, HasSchema, HasIdentifier, HasCustomData
 {
     public function schema(): ?array;
 
     public function identifier(): string;
+
+    public function stream(): ?string;
 }

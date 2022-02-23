@@ -23,6 +23,7 @@ final class EventEngineConfig implements Base
     use FilterConstNameTrait;
     use FilterConstValueTrait;
     use FilterDirectoryToNamespaceTrait;
+    use FilterMessageNameTrait;
     use FilterMethodNameTrait;
     use FilterNamespaceToDirectoryTrait;
     use FilterParameterNameTrait;
@@ -31,14 +32,16 @@ final class EventEngineConfig implements Base
     use PhpPrinterTrait;
 
     private ObjectGenerator $objectGenerator;
+
     private ValueObjectFactory $valueObjectFactory;
 
     public function __construct()
     {
         $this->filterClassName = FilterFactory::classNameFilter();
         $this->filterConstName = FilterFactory::constantNameFilter();
-        $this->filterConstValue = FilterFactory::constantValueFilter();
+        $this->filterConstValue = FilterFactory::propertyNameFilter();
         $this->filterMethodName = FilterFactory::methodNameFilter();
+        $this->filterMessageName = FilterFactory::pascalCaseFilter();
         $this->filterPropertyName = FilterFactory::propertyNameFilter();
         $this->filterDirectoryToNamespace = FilterFactory::directoryToNamespaceFilter();
         $this->filterNamespaceToDirectory = FilterFactory::namespaceToDirectoryFilter();

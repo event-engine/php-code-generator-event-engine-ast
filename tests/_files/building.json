@@ -16,20 +16,37 @@
             "layer": false,
             "defaultLayer": false,
             "parent": {
-                "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
-                "name": "Board",
-                "type": "layer",
-                "link": null,
+                "id": "2FqsFfW5xGzooq2fdFTfaa",
+                "name": "Hotel",
+                "type": "boundedContext",
+                "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
                 "tags": [],
-                "layer": true,
-                "defaultLayer": true,
-                "parent": null,
+                "layer": false,
+                "defaultLayer": false,
+                "parent": {
+                    "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                    "name": "Board",
+                    "type": "layer",
+                    "link": null,
+                    "tags": [],
+                    "layer": true,
+                    "defaultLayer": true,
+                    "parent": null,
+                    "childrenList": [],
+                    "sourcesList": [],
+                    "targetsList": [],
+                    "geometry": {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "metadata": null
+                },
                 "childrenList": [],
                 "sourcesList": [],
                 "targetsList": [],
                 "geometry": {
-                    "x": 0,
-                    "y": 0
+                    "x": -1680,
+                    "y": -201
                 },
                 "metadata": null
             },
@@ -37,8 +54,8 @@
             "sourcesList": [],
             "targetsList": [],
             "geometry": {
-                "x": -656,
-                "y": -320
+                "x": 176.5,
+                "y": 199
             },
             "metadata": null
         },
@@ -61,20 +78,37 @@
                     "layer": false,
                     "defaultLayer": false,
                     "parent": {
-                        "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
-                        "name": "Board",
-                        "type": "layer",
-                        "link": null,
+                        "id": "2FqsFfW5xGzooq2fdFTfaa",
+                        "name": "Hotel",
+                        "type": "boundedContext",
+                        "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
                         "tags": [],
-                        "layer": true,
-                        "defaultLayer": true,
-                        "parent": null,
+                        "layer": false,
+                        "defaultLayer": false,
+                        "parent": {
+                            "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                            "name": "Board",
+                            "type": "layer",
+                            "link": null,
+                            "tags": [],
+                            "layer": true,
+                            "defaultLayer": true,
+                            "parent": null,
+                            "childrenList": [],
+                            "sourcesList": [],
+                            "targetsList": [],
+                            "geometry": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "metadata": null
+                        },
                         "childrenList": [],
                         "sourcesList": [],
                         "targetsList": [],
                         "geometry": {
-                            "x": 0,
-                            "y": 0
+                            "x": -1680,
+                            "y": -201
                         },
                         "metadata": null
                     },
@@ -82,8 +116,8 @@
                     "sourcesList": [],
                     "targetsList": [],
                     "geometry": {
-                        "x": -656,
-                        "y": -320
+                        "x": 176.5,
+                        "y": 199
                     },
                     "metadata": null
                 },
@@ -91,10 +125,10 @@
                 "sourcesList": [],
                 "targetsList": [],
                 "geometry": {
-                    "x": 464,
-                    "y": 319
+                    "x": 528,
+                    "y": 184.5
                 },
-                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid\",\n    \"name\": \"string\"\n  } \n}\n"
+                "metadata": "{\n  \"newAggregate\": true,\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  } \n}\n"
             }
         ],
         "targetsList": [
@@ -115,20 +149,37 @@
                     "layer": false,
                     "defaultLayer": false,
                     "parent": {
-                        "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
-                        "name": "Board",
-                        "type": "layer",
-                        "link": null,
+                        "id": "2FqsFfW5xGzooq2fdFTfaa",
+                        "name": "Hotel",
+                        "type": "boundedContext",
+                        "link": "https://inspect.event-engine.io/inspectio/board/3fc5479e-cf3c-459a-96fd-5b62d002f843?cells=2FqsFfW5xGzooq2fdFTfaa&clicks=1",
                         "tags": [],
-                        "layer": true,
-                        "defaultLayer": true,
-                        "parent": null,
+                        "layer": false,
+                        "defaultLayer": false,
+                        "parent": {
+                            "id": "7fe80d19-d317-4e9d-8296-96c598786d78",
+                            "name": "Board",
+                            "type": "layer",
+                            "link": null,
+                            "tags": [],
+                            "layer": true,
+                            "defaultLayer": true,
+                            "parent": null,
+                            "childrenList": [],
+                            "sourcesList": [],
+                            "targetsList": [],
+                            "geometry": {
+                                "x": 0,
+                                "y": 0
+                            },
+                            "metadata": null
+                        },
                         "childrenList": [],
                         "sourcesList": [],
                         "targetsList": [],
                         "geometry": {
-                            "x": 0,
-                            "y": 0
+                            "x": -1680,
+                            "y": -201
                         },
                         "metadata": null
                     },
@@ -136,8 +187,8 @@
                     "sourcesList": [],
                     "targetsList": [],
                     "geometry": {
-                        "x": -656,
-                        "y": -320
+                        "x": 176.5,
+                        "y": 199
                     },
                     "metadata": null
                 },
@@ -145,16 +196,16 @@
                 "sourcesList": [],
                 "targetsList": [],
                 "geometry": {
-                    "x": 463,
-                    "y": 768
+                    "x": 527,
+                    "y": 633.5
                 },
-                "metadata": "{\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+                "metadata": "{\n  \"shorthand\": true,\n  \"voNamespace\": \"Building\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"string\"\n  }\n}"
             }
         ],
         "geometry": {
-            "x": 464,
-            "y": 544
+            "x": 528,
+            "y": 409.5
         },
-        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"schema\": {\n    \"buildingId\": \"string|format:uuid|shared:true\",\n    \"name\": \"string\"\n  }\n}"
+        "metadata": "{\n  \"identifier\": \"buildingId\",\n  \"shorthand\": true,\n  \"stream\": \"building_stream\",\n  \"schema\": {\n    \"buildingId\": \"/BuildingId\",\n    \"name\": \"/Building/string\"\n  }\n}"
     }
 }

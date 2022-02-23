@@ -8,12 +8,18 @@
 
 declare(strict_types=1);
 
-namespace EventEngine\CodeGenerator\EventEngineAst\Filter;
+namespace EventEngine\CodeGenerator\EventEngineAst\Metadata\InspectioJson;
 
-final class AggregateStateClassName extends AbstractFilter
+final class ExternalSystemMetadata implements \EventEngine\CodeGenerator\EventEngineAst\Metadata\ExternalSystemMetadata
 {
-    public function __invoke(string $value): string
+    use JsonMetadataTrait;
+
+    private function __construct()
     {
-        return ($this->filter)($value) . 'State';
+    }
+
+    public function customData(): array
+    {
+        return $this->customData;
     }
 }
