@@ -273,6 +273,15 @@ trait DeterminePathTrait
                 $aggregate = $this->findAggregate($type->id(), $analyzer);
 
                 if ($aggregate === null) {
+                    $metadataInstance = $type->metadataInstance();
+                    if ($metadataInstance instanceof HasCustomData) {
+                        $aggregateName = ($this->getFilterConstName())($metadataInstance->customData()['aggregate'] ?? '');
+
+                        $aggregate = $analyzer->aggregateMap()->filterByName($aggregateName)->current() ?: null;
+                    }
+                }
+
+                if ($aggregate === null) {
                     throw new RuntimeException(
                         \sprintf(
                             'Command "%s" has no aggregate connection. Can not use aggregate name for path.',
@@ -286,6 +295,14 @@ trait DeterminePathTrait
             case $type instanceof EventType:
                 $aggregate = $this->findAggregate($type->id(), $analyzer);
 
+                if ($aggregate === null) {
+                    $metadataInstance = $type->metadataInstance();
+                    if ($metadataInstance instanceof HasCustomData) {
+                        $aggregateName = ($this->getFilterConstName())($metadataInstance->customData()['aggregate'] ?? '');
+
+                        $aggregate = $analyzer->aggregateMap()->filterByName($aggregateName)->current() ?: null;
+                    }
+                }
                 if ($aggregate === null) {
                     throw new RuntimeException(
                         \sprintf(
