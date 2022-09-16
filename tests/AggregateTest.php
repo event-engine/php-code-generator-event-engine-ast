@@ -340,6 +340,10 @@ final class AggregateTest extends BaseTestCase
             {
                 return $this->name;
             }
+            public static function fromValueObjects(BuildingId $buildingId, Name $name) : self
+            {
+                return self::fromRecordData([self::BUILDING_ID => $buildingId, self::NAME => $name]);
+            }
             public function withBuildingAdded() : self
             {
                 $instance = clone $this;

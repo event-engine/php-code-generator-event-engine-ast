@@ -12,8 +12,11 @@ namespace EventEngine\CodeGenerator\EventEngineAst\Code;
 
 use EventEngine\CodeGenerator\EventEngineAst\Config\Base;
 use OpenCodeModeling\CodeAst\Builder\ClassBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassMethodBuilder;
+use OpenCodeModeling\CodeAst\Builder\ClassPropertyBuilder;
 use OpenCodeModeling\CodeAst\Builder\File;
 use OpenCodeModeling\CodeAst\Builder\FileCollection;
+use OpenCodeModeling\CodeAst\Builder\ParameterBuilder;
 use OpenCodeModeling\CodeAst\Builder\PhpFile;
 use OpenCodeModeling\CodeAst\Code\ClassConstGenerator;
 use OpenCodeModeling\JsonSchemaToPhp\Type\TypeSet;
@@ -93,6 +96,7 @@ final class ObjectGenerator
                 continue;
             }
             $this->codeImmutableRecordLogic($file);
+            $this->addMethodFromValueObjects($file);
         }
     }
 
@@ -184,5 +188,30 @@ final class ObjectGenerator
         );
         $file->addImplement('ImmutableRecord')
             ->addTrait('ImmutableRecordLogic');
+    }
+
+    private function addMethodFromValueObjects(ClassBuilder $classBuilder): void
+    {
+        $method = ClassMethodBuilder::fromScratch('fromValueObjects')->setStatic(true);
+
+        $method->setParameters(
+            ...\array_values(\array_map(
+                static fn (ClassPropertyBuilder $property) => ParameterBuilder::fromScratch($property->getName(), $property->getType()),
+                $classBuilder->getProperties()
+            ))
+        );
+
+        $body = 'return self::fromRecordData([';
+
+        foreach ($classBuilder->getConstants() as $constant) {
+            $body .= 'self::'.$constant->getName().' => $'.($this->config->getFilterPropertyName())($constant->getName()).', ';
+        }
+
+        $body .= ']);';
+
+        $method->setBody($body);
+        $method->setReturnType('self');
+
+        $classBuilder->addMethod($method);
     }
 }

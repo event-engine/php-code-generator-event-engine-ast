@@ -333,6 +333,10 @@ final class CommandTest extends BaseTestCase
             {
                 return $this->name;
             }
+            public static function fromValueObjects(BuildingId $buildingId, Name $name) : self
+            {
+                return self::fromRecordData([self::BUILDING_ID => $buildingId, self::NAME => $name]);
+            }
         }
         EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));

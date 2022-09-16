@@ -133,6 +133,9 @@ final class Query
 
         if ($queryClassBuilder) {
             foreach ($queryClassBuilder->getMethods() as $method) {
+                if ($method->getName() === 'fromValueObjects') {
+                    continue;
+                }
                 $finderMethodArgs .= '$findBy->' . $method->getName() . '(),';
             }
         }

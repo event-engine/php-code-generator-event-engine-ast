@@ -107,6 +107,10 @@ final class QueryTest extends BaseTestCase
             {
                 return $this->buildingId;
             }
+            public static function fromValueObjects(BuildingId $buildingId) : self
+            {
+                return self::fromRecordData([self::BUILDING_ID => $buildingId]);
+            }
         }
         EOF;
         $this->assertSame($expected, $this->config->config()->getPrinter()->prettyPrintFile($nodeTraverser->traverse($ast)));

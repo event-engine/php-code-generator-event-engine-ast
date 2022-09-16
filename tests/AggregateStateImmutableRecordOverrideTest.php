@@ -92,6 +92,10 @@ final class Building implements ImmutableRecord
 {
     use ImmutableRecordLogic;
     private array $state = [];
+    public static function fromValueObjects() : self
+    {
+        return self::fromRecordData([]);
+    }
     public function withBuildingAdded() : self
     {
         $instance = clone $this;
